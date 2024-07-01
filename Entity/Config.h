@@ -9,17 +9,18 @@
 
 
 /// @brief 配置类，单例模式
-class Config
+class Config : public noncopyable
 {
 public:
     static Config* GetInstance();
     static void    DestroyInstance();
 
-    bool                     LoadFromJson(const std::string& jsonPath);
-    [[nodiscard]] unsigned   GetRoomId() const;
-    [[nodiscard]] const Url& GetDanmuSeverConfUrl() const;
-    [[nodiscard]] LogLevel   GetLogLevel() const;
-    [[nodiscard]] std::string ToString() const;
+    bool                                  LoadFromJson(const std::string& jsonPath);
+    [[nodiscard]] unsigned                GetRoomId() const;
+    [[nodiscard]] const Url&              GetDanmuSeverConfUrl() const;
+    [[nodiscard]] LogLevel                GetLogLevel() const;
+    [[nodiscard]] const std::string& GetLogPath() const;
+    [[nodiscard]] std::string             ToString() const;
 
 private:
     Config()                         = default;
@@ -30,11 +31,12 @@ private:
     Config& operator=(Config&&)      = delete;
 
 private:
-    static Config* instance;
+    static Config* pInstance;
 
-    unsigned roomId;
-    Url      danmuSeverConfUrl;
-    LogLevel logLevel;
+    unsigned    roomId;
+    Url         danmuSeverConfUrl;
+    LogLevel    logLevel;
+    std::string logPath;
 };
 
 #endif   // CONFIG_H

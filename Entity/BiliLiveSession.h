@@ -4,6 +4,7 @@
 
 #ifndef BILILIVESESSION_H
 #define BILILIVESESSION_H
+#include "../Base/noncopyable.h"
 #include "Url.h"
 
 #include <boost/asio/ssl.hpp>
@@ -11,6 +12,7 @@
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
 #include <boost/beast/websocket/ssl.hpp>
+#include <boost/core/noncopyable.hpp>
 #include <cstdlib>
 #include <iostream>
 #include <list>
@@ -40,7 +42,7 @@ enum class Operation
     UNREGISTER_REPLY  = 17,
 };
 
-class BiliLiveSession : public std::enable_shared_from_this<BiliLiveSession>
+class BiliLiveSession : public std::enable_shared_from_this<BiliLiveSession>, public noncopyable
 {
 public:
     struct LiveHostUrl
@@ -87,7 +89,7 @@ public:
     void do_ping();
 
 private:
-    boost::asio::io_context&       ioc;         // IO上下文
+    boost::asio::io_context&       ioc;        // IO上下文
     std::list<LiveHostUrl>         liveUrls;   // 直播地址列表
     boost::asio::ssl::context      ctx;        // SSL上下文
     boost::asio::ip::tcp::resolver resolver;   // DNS解析器

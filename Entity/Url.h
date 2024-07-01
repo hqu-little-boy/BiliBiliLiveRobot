@@ -4,12 +4,12 @@
 
 #ifndef URL_H
 #define URL_H
+#include "../Base/copyable.h"
+
 #include <list>
 #include <string>
 #include <unordered_map>
-
-
-class Url
+class Url : public copyable
 {
 public:
     Url() = default;
@@ -22,7 +22,7 @@ public:
     [[nodiscard]] const std::string  GetTargetWithQuery() const;
 
     [[nodiscard]] const std::list<std::pair<std::string, std::string>>& GetQuery() const;
-    [[nodiscard]] std::string                                ToString() const;
+    [[nodiscard]] std::string                                           ToString() const;
 
 private:
     std::string                                    host;

@@ -6,21 +6,23 @@
 
 #include "TimeStamp.h"
 
+#include <cassert>
 #include <chrono>
 #include <iostream>
 #include <thread>
 #include <unistd.h>
 
-Logger* Logger::pInstance = nullptr;
+Logger* Logger::pInstance = new Logger();
 // std::osyncstream Logger::sync_out  = std::osyncstream{std::cout};
 
 
 Logger* Logger::GetInstance()
 {
-    if (pInstance == nullptr)
-    {
-        pInstance = new Logger();
-    }
+    // if (pInstance == nullptr)
+    // {
+    //     pInstance = new Logger();
+    // }
+    assert(pInstance != nullptr);
     return pInstance;
 }
 
@@ -29,39 +31,39 @@ Logger* Logger::GetInstance()
 //     log_level_ = level;
 // }
 
-void Logger::Log(LogLevel level, std::string_view file, int line, std::string_view func,
+bool Logger::Log(LogLevel level, std::string_view file, int line, std::string_view func,
                  std::string_view strMessage)
 {
     if (level > logLevel)
     {
-        return;
+        return false;
     }
     std::string strLevel;
     switch (level)
     {
     case LogLevel::INFO:
     {
-        strLevel = "INFO";
+        strLevel = "\033[32mINFO\033[0m";
         break;
     }
     case LogLevel::WARN:
     {
-        strLevel = "WARN";
+        strLevel = "\033[33mWARN\033[0m";
         break;
     }
     case LogLevel::ERROR:
     {
-        strLevel = "ERROR";
+        strLevel = "\033[31mERROR\033[0m";
         break;
     }
     case LogLevel::FATAL:
     {
-        strLevel = "FATAL";
+        strLevel = "\033[31mFATAL\033[0m";
         break;
     }
     case LogLevel::DEBUG:
     {
-        strLevel = "DEBUG";
+        strLevel = "\033[37mDEBUG\033[0m";
         break;
     }
     default:
@@ -80,7 +82,7 @@ void Logger::Log(LogLevel level, std::string_view file, int line, std::string_vi
     // std::string strLog = std::format("{} {} {} {} {} {} {} {}\n", strTime, pid, tid, file,
     // line, func, strLevel,
     //                                  strMessage);
-    std::string strLog = std::format("[{:<5}] {:<19} {:<5} {:<5} {:<5} {:<5} {:<5} {}",
+    std::string strLog = std::format("[{:<7}] {:<19} {:<5} {:<5} {:<5} {:<5} {:<5} {}",
                                      strLevel,
                                      strTime,
                                      pid,
@@ -93,7 +95,12 @@ void Logger::Log(LogLevel level, std::string_view file, int line, std::string_vi
     std::lock_guard<std::mutex> guard(printMutex);
     // 输出到标准输出
     std::println(std::cout, "{}", strLog);
+    if (isLogInFile)
+    {
+        std::println(this->logFile, "{}", strLog);
+    }
     // Logger::sync_out << strLog << std::endl;
+    return true;
 }
 
 void Logger::SetLogLevel(LogLevel level)
@@ -101,7 +108,28 @@ void Logger::SetLogLevel(LogLevel level)
     logLevel = level;
 }
 
+LogLevel Logger::GetLogLevel() const
+{
+    return logLevel;
+}
+
+void Logger::SetLogPath(const std::string& path)
+{
+    if (path.empty())
+    {
+        isLogInFile = false;
+        return;
+    }
+    logFile.open(path);
+    isLogInFile = true;
+    if (!logFile.is_open())
+    {
+        std::cerr << "Open log file failed!" << std::endl;
+    }
+}
+
 Logger::Logger()
     : logLevel(LogLevel::DEBUG)
+    , isLogInFile(false)
 {
 }

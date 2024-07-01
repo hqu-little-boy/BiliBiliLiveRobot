@@ -1,6 +1,6 @@
 {
-  "roomId": 21548051,
-  "logLevel": 3,
+  "roomId": 27271416,
+  "logLevel": 4,
   "danmuSeverConfUrl": {
     "protocol": "https:",
     "host": "api.live.bilibili.com",
@@ -9,5 +9,6 @@
     "query": {
       "type": "0"
     }
-  }
+  },
+  "logPath": ""
 }

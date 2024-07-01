@@ -8,28 +8,41 @@
 #include "nlohmann/json.hpp"
 
 #include <fstream>
-Config* Config::instance{new Config()};
+Config* Config::pInstance{new Config()};
 Config* Config::GetInstance()
 {
-    // if (instance == nullptr)
-    // {
-    //     instance = new Config();
-    // }
-    assert(instance != nullptr);
-    return instance;
+    if (pInstance == nullptr)
+    {
+        pInstance = new Config();
+    }
+    return pInstance;
 }
 
 void Config::DestroyInstance()
 {
-    if (instance != nullptr)
+    if (pInstance != nullptr)
     {
-        delete instance;
-        instance = nullptr;
+        delete pInstance;
+        pInstance = nullptr;
     }
 }
 
 bool Config::LoadFromJson(const std::string& jsonPath)
 {
+    if (jsonPath.empty())
+    {
+        LOG_MESSAGE(LogLevel::ERROR, "jsonPath is empty");
+        throw std::runtime_error("jsonPath is empty");
+        return false;
+    }
+
+    if (!std::filesystem::exists(jsonPath))
+    {
+        LOG_MESSAGE(LogLevel::ERROR, std::format("File not exists: {}", jsonPath));
+        throw std::runtime_error("File not exists: " + jsonPath);
+        return false;
+    }
+
     std::ifstream ifs(jsonPath);
     if (!ifs.is_open())
     {
@@ -38,23 +51,33 @@ bool Config::LoadFromJson(const std::string& jsonPath)
         return false;
     }
 
-    // 从文件中读取json
-    nlohmann::json configJson;
-    ifs >> configJson;
-    this->roomId       = configJson["roomId"].get<unsigned>();
-    int logLevelInt    = configJson["logLevel"].get<unsigned>();
-    this->logLevel     = static_cast<LogLevel>(logLevelInt);
-    std::string host   = configJson["danmuSeverConfUrl"]["host"].get<std::string>();
-    unsigned    port   = configJson["danmuSeverConfUrl"]["port"].get<unsigned>();
-    std::string target = configJson["danmuSeverConfUrl"]["target"].get<std::string>();
-    std::list<std::pair<std::string, std::string>> query;
-    query.emplace_back(std::string("id"), std::to_string(this->roomId));
-    for (const auto& [key, value] : configJson["danmuSeverConfUrl"]["query"].items())
+    try
     {
-        // query[key] = value.get<std::string>();
-        query.emplace_back(key, value.get<std::string>());
+        // 从文件中读取json
+        nlohmann::json configJson;
+        ifs >> configJson;
+        this->roomId       = configJson["roomId"].get<unsigned>();
+        int logLevelInt    = configJson["logLevel"].get<unsigned>();
+        this->logLevel     = static_cast<LogLevel>(logLevelInt);
+        std::string host   = configJson["danmuSeverConfUrl"]["host"].get<std::string>();
+        unsigned    port   = configJson["danmuSeverConfUrl"]["port"].get<unsigned>();
+        std::string target = configJson["danmuSeverConfUrl"]["target"].get<std::string>();
+        std::list<std::pair<std::string, std::string>> query;
+        query.emplace_back(std::string("id"), std::to_string(this->roomId));
+        for (const auto& [key, value] : configJson["danmuSeverConfUrl"]["query"].items())
+        {
+            // query[key] = value.get<std::string>();
+            query.emplace_back(key, value.get<std::string>());
+        }
+        this->danmuSeverConfUrl = Url(host, port, target, query);
+        this->logPath           = configJson["logPath"].get<std::string>();
     }
-    this->danmuSeverConfUrl = Url(host, port, target, query);
+    catch (const nlohmann::json::exception& e)
+    {
+        LOG_MESSAGE(LogLevel::ERROR, std::format("Failed to parse json: {}", e.what()));
+        // throw std::runtime_error("Failed to parse json: " + std::string(e.what()));
+        return false;
+    }
     return true;
 }
 
@@ -71,6 +94,11 @@ const Url& Config::GetDanmuSeverConfUrl() const
 LogLevel Config::GetLogLevel() const
 {
     return logLevel;
+}
+
+const std::string& Config::GetLogPath() const
+{
+    return logPath;
 }
 
 std::string Config::ToString() const

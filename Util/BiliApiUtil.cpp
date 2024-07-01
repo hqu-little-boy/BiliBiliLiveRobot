@@ -26,7 +26,7 @@ std::string BiliApiUtil::HeaderTuple::ToString() const
 
 std::vector<uint8_t> BiliApiUtil::MakePack(const std::string_view& body, Operation eOperation)
 {
-    LOG_VAR(LogLevel::DEBUG, body.size());
+    // LOG_VAR(LogLevel::DEBUG, body.size());
     // 构建包头
     HeaderTuple header{
         .totalSize  = boost::endian::native_to_big(static_cast<uint32_t>(body.size() + 16)),
@@ -52,12 +52,11 @@ std::vector<uint8_t> BiliApiUtil::MakePack(const std::string_view& body, Operati
     return headerBuffer;
 }
 
-std::list<std::tuple<BiliApiUtil::HeaderTuple, std::string>> BiliApiUtil::Unpack(
-    const std::vector<uint8_t>& buffer)
+std::list<std::string> BiliApiUtil::Unpack(const std::vector<uint8_t>& buffer)
 {
-    uint32_t                                                     start     = 0;
-    size_t                                                       bufferLen = buffer.size();
-    std::list<std::tuple<BiliApiUtil::HeaderTuple, std::string>> res;
+    uint32_t               start     = 0;
+    size_t                 bufferLen = buffer.size();
+    std::list<std::string> res;
     // BiliApiUtil::HeaderTuple header{BiliApiUtil::UnpackHeader(buffer, 0)};
     // // 获取包体
     // std::string body(buffer.begin() + sizeof(HeaderTuple), buffer.begin() + header.totalSize);
@@ -90,9 +89,9 @@ std::list<std::tuple<BiliApiUtil::HeaderTuple, std::string>> BiliApiUtil::Unpack
             //                             static_cast<BiliApiUtil::ZipOperation>(header.version));
             // start += header.totalSize;
             // res.emplace_back(header, std::move(body));
-            LOG_VAR(LogLevel::DEBUG, bufferLen);
-            LOG_VAR(LogLevel::DEBUG, start + sizeof(HeaderTuple));
-            LOG_VAR(LogLevel::DEBUG, start + header.totalSize);
+            // LOG_VAR(LogLevel::DEBUG, bufferLen);
+            // LOG_VAR(LogLevel::DEBUG, start + sizeof(HeaderTuple));
+            // LOG_VAR(LogLevel::DEBUG, start + header.totalSize);
             switch (static_cast<BiliApiUtil::ZipOperation>(header.version))
             {
             case ZipOperation::NormalNone:
@@ -105,12 +104,12 @@ std::list<std::tuple<BiliApiUtil::HeaderTuple, std::string>> BiliApiUtil::Unpack
                 //                             static_cast<BiliApiUtil::ZipOperation>(header.version));
                 std::string body = std::string(buffer.begin() + start + sizeof(HeaderTuple),
                                                buffer.begin() + start + header.totalSize);
-                res.emplace_back(header, std::move(body));
+                res.emplace_back(std::move(body));
                 break;
             }
             case ZipOperation::NormalZlib:
             {
-                LOG_MESSAGE(LogLevel::DEBUG, "ZipOperation::NormalZlib");
+                // LOG_MESSAGE(LogLevel::DEBUG, "ZipOperation::NormalZlib");
                 std::stringstream compressedStream(
                     std::string(buffer.begin() + start + sizeof(HeaderTuple),
                                 buffer.begin() + start + header.totalSize));
@@ -120,18 +119,18 @@ std::list<std::tuple<BiliApiUtil::HeaderTuple, std::string>> BiliApiUtil::Unpack
                 in.push(boost::iostreams::zlib_decompressor());
                 in.push(compressedStream);
                 boost::iostreams::copy(in, decompressedStream);
-                std::string          decompressedStreamStr = decompressedStream.str();
-                std::vector<uint8_t> decompressedBuffer(decompressedStreamStr.begin(),
+                std::string            decompressedStreamStr = decompressedStream.str();
+                std::vector<uint8_t>   decompressedBuffer(decompressedStreamStr.begin(),
                                                         decompressedStreamStr.end());
-                std::list<std::tuple<BiliApiUtil::HeaderTuple, std::string>>
-                    decompressedBufferUnpack = BiliApiUtil::Unpack(decompressedBuffer);
+                std::list<std::string> decompressedBufferUnpack =
+                    BiliApiUtil::Unpack(decompressedBuffer);
                 res.insert(
                     res.end(), decompressedBufferUnpack.begin(), decompressedBufferUnpack.end());
                 break;
             }
             case ZipOperation::NormalBrotli:
             {
-                LOG_MESSAGE(LogLevel::DEBUG, "ZipOperation::NormalBrotli");
+                // LOG_MESSAGE(LogLevel::DEBUG, "ZipOperation::NormalBrotli");
                 // BrotliDecoderState*  s = BrotliDecoderCreateInstance(0, 0, 0);
                 // std::vector<uint8_t> decompressedData;
                 // std::vector<uint8_t> compressedData =
@@ -150,7 +149,8 @@ std::list<std::tuple<BiliApiUtil::HeaderTuple, std::string>> BiliApiUtil::Unpack
                 //         s, &availableInput, &input, &availableOutput, output, &totalOut);
                 //
                 //     decompressedData.insert(
-                //         decompressedData.end(), output, output + sizeof(output) - availableOutput);
+                //         decompressedData.end(), output, output + sizeof(output) -
+                //         availableOutput);
                 //
                 //     if (result == BROTLI_DECODER_RESULT_SUCCESS)
                 //     {

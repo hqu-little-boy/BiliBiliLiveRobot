@@ -21,6 +21,12 @@ add_executable(BiliBiliLiveRobot
         Entity/Url.cpp
         Entity/Config.h
         Entity/Config.cpp
+        Util/BiliLogin.h
+        Util/BiliLogin.cpp
+        Entity/BiliRequestHeader.h
+        Entity/BiliRequestHeader.cpp
+        Entity/BiliCookie.h
+        Entity/BiliCookie.cpp
 )
 
 # 加入Boost库

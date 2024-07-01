@@ -279,8 +279,8 @@ void BiliLiveSession::on_read(boost::beast::error_code ec, std::size_t bytes_tra
     auto pack = BiliApiUtil::Unpack(response);
     for (const auto& item : pack)
     {
-        LOG_VAR(LogLevel::INFO, std::get<0>(item).ToString());
-        LOG_VAR(LogLevel::INFO, std::get<1>(item));
+        // LOG_VAR(LogLevel::INFO, std::get<0>(item).ToString());
+        LOG_VAR(LogLevel::DEBUG, item);
     }
     this->ws.async_read(
         this->buffer,

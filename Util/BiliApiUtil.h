@@ -4,12 +4,13 @@
 
 #ifndef BILIAPIUTIL_H
 #define BILIAPIUTIL_H
+#include "../Base/noncopyable.h"
+
 #include <boost/asio/buffer.hpp>
 #include <boost/endian/buffers.hpp>
 #include <list>
 
-
-class BiliApiUtil
+class BiliApiUtil : public noncopyable
 {
 public:
     enum class Operation
@@ -56,7 +57,7 @@ public:
     static std::vector<uint8_t> MakePack(const std::string_view& body, Operation eOperation);
 
     /// @brief 解包，可能有多个包一起发，需要分包
-    static std::list<std::tuple<HeaderTuple, std::string>> Unpack(
+    static std::list<std::string> Unpack(
         const std::vector<uint8_t>& buffer);
 
 private:

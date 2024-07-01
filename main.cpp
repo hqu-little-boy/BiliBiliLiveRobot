@@ -14,8 +14,10 @@ int main()
             "/home/zeng/CLionProjects/BiliBiliLiveRobot/Config/configure.json"))
     {
         LOG_MESSAGE(LogLevel::ERROR, "Failed to load config file");
+        return EXIT_FAILURE;
     }
     Logger::GetInstance()->SetLogLevel(Config::GetInstance()->GetLogLevel());
+    Logger::GetInstance()->SetLogPath(Config::GetInstance()->GetLogPath());
     LOG_MESSAGE(LogLevel::DEBUG, std::format("Config: ({})", Config::GetInstance()->ToString()));
     boost::asio::io_context ioc;
     std::make_shared<BiliLiveSession>(ioc)->run();
