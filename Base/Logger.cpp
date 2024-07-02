@@ -31,8 +31,8 @@ Logger* Logger::GetInstance()
 //     log_level_ = level;
 // }
 
-bool Logger::Log(LogLevel level, std::string_view file, int line, std::string_view func,
-                 std::string_view strMessage)
+bool Logger::Log(LogLevel level, const std::string_view& file, int line,
+                 const std::string_view& func, const std::string_view& strMessage)
 {
     if (level > logLevel)
     {

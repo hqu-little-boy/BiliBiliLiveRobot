@@ -3,13 +3,21 @@
 //
 
 #include "Base/Logger.h"
-#include "Entity/BiliLiveSession.h"
 #include "Entity/Config.h"
+#include "Bili/BiliLiveSession.h"
+#include "Bili/BiliLogin.h"
 
 #include <boost/asio/io_context.hpp>
 #include <cstdlib>
 int main()
 {
+    BiliLogin login;
+    if (!login.GetLoginQRCode())
+    {
+        LOG_MESSAGE(LogLevel::ERROR, "Failed to get login QRCode");
+        return EXIT_FAILURE;
+    }
+    return 0;
     if (!Config::GetInstance()->LoadFromJson(
             "/home/zeng/CLionProjects/BiliBiliLiveRobot/Config/configure.json"))
     {

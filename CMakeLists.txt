@@ -7,26 +7,26 @@ set(CMAKE_CXX_STANDARD 23)
 
 add_executable(BiliBiliLiveRobot
         main.cpp
-        Entity/BiliLiveSession.h
-        Entity/BiliLiveSession.cpp
+        Bili/BiliLiveSession.h
+        Bili/BiliLiveSession.cpp
         Base/copyable.h
         Base/Logger.cpp
         Base/Logger.h
         Base/noncopyable.h
         Base/TimeStamp.cpp
         Base/TimeStamp.h
-        Util/BiliApiUtil.h
-        Util/BiliApiUtil.cpp
+        Bili/BiliApiUtil.h
+        Bili/BiliApiUtil.cpp
         Entity/Url.h
         Entity/Url.cpp
         Entity/Config.h
         Entity/Config.cpp
-        Util/BiliLogin.h
-        Util/BiliLogin.cpp
-        Entity/BiliRequestHeader.h
-        Entity/BiliRequestHeader.cpp
-        Entity/BiliCookie.h
-        Entity/BiliCookie.cpp
+        Bili/BiliLogin.h
+        Bili/BiliLogin.cpp
+        Bili/BiliRequestHeader.h
+        Bili/BiliRequestHeader.cpp
+        Bili/BiliCookie.h
+        Bili/BiliCookie.cpp
 )
 
 # 加入Boost库
@@ -38,7 +38,10 @@ add_subdirectory(ThirdParty/json)
 include_directories(ThirdParty/json/include)
 add_subdirectory(ThirdParty/brotli)
 include_directories(ThirdParty/brotli/c/include)
-#find_package(gperftools REQUIRED)
+#add_subdirectory(ThirdParty/QRCode-generator)
+#include_directories(ThirdParty/QRCode-generator/include)
+add_subdirectory(ThirdParty/libqrencode)
+include_directories(ThirdParty/libqrencode)
 target_link_libraries(BiliBiliLiveRobot PRIVATE
         OpenSSL::SSL
         OpenSSL::Crypto
@@ -48,6 +51,7 @@ target_link_libraries(BiliBiliLiveRobot PRIVATE
         Boost::thread
         Boost::iostreams
         nlohmann_json::nlohmann_json
-        brotlidec
-#        tcmalloc
+#        qrcodegen
+#        qrenc
+        qrencode
 )

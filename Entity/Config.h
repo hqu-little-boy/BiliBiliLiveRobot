@@ -15,12 +15,12 @@ public:
     static Config* GetInstance();
     static void    DestroyInstance();
 
-    bool                                  LoadFromJson(const std::string& jsonPath);
-    [[nodiscard]] unsigned                GetRoomId() const;
-    [[nodiscard]] const Url&              GetDanmuSeverConfUrl() const;
-    [[nodiscard]] LogLevel                GetLogLevel() const;
+    bool                             LoadFromJson(const std::string& jsonPath);
+    [[nodiscard]] unsigned           GetRoomId() const;
+    [[nodiscard]] const Url&         GetDanmuSeverConfUrl() const;
+    [[nodiscard]] LogLevel           GetLogLevel() const;
     [[nodiscard]] const std::string& GetLogPath() const;
-    [[nodiscard]] std::string             ToString() const;
+    [[nodiscard]] std::string        ToString() const;
 
 private:
     Config()                         = default;

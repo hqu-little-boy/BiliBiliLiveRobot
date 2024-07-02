@@ -5,15 +5,13 @@
 #include "BiliLiveSession.h"
 
 #include "../Base/Logger.h"
-#include "../Util/BiliApiUtil.h"
-#include "Config.h"
+#include "BiliApiUtil.h"
+#include "BiliRequestHeader.h"
+#include "../Entity/Config.h"
 
 #include <boost/beast/http.hpp>
 #include <nlohmann/json.hpp>
 #include <thread>
-constexpr std::string_view USER_AGENT =
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3";
 
 BiliLiveSession::BiliLiveSession(boost::asio::io_context& ioc)
     : ioc(ioc)
@@ -63,7 +61,8 @@ bool BiliLiveSession::InitRoomInfo()
         11};
     req.set(boost::beast::http::field::host,
             Config::GetInstance()->GetDanmuSeverConfUrl().GetHost());
-    req.set(boost::beast::http::field::user_agent, USER_AGENT);
+    req.set(boost::beast::http::field::user_agent,
+            BiliRequestHeader::GetInstance()->GetUserAgent());
 
     // 发送请求
     boost::beast::http::write(stream, req);
@@ -187,7 +186,8 @@ void BiliLiveSession::on_ssl_handshake(boost::beast::error_code ec)
     // Set a decorator to change the User-Agent of the handshake
     this->ws.set_option(boost::beast::websocket::stream_base::decorator(
         [](boost::beast::websocket::request_type& req) {
-            req.set(boost::beast::http::field::user_agent, USER_AGENT);
+            req.set(boost::beast::http::field::user_agent,
+                    BiliRequestHeader::GetInstance()->GetUserAgent());
         }));
 
     // Perform the websocket handshake

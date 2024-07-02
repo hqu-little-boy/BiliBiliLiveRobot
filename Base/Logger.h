@@ -30,8 +30,8 @@ public:
     // ///@brief 设置日志级别
     // void set_log_level(LogLevel level);
     ///@brief 打印日志，使用std::format
-    bool Log(LogLevel level, std::string_view file, int line, std::string_view func,
-             std::string_view strMessage);
+    bool Log(LogLevel level, const std::string_view& file, int line, const std::string_view& func,
+             const std::string_view& strMessage);
     ///@brief 设置日志级别
     void SetLogLevel(LogLevel level);
     ///@brief 获取日志级别

@@ -34,7 +34,7 @@ void BiliRequestHeader::SetUserAgent(const std::string& userAgent)
     this->userAgent = userAgent;
 }
 
-bool BiliRequestHeader::LoadBiliCookie(const std::string& jsonPath)
+bool BiliRequestHeader::LoadBiliCookie(const std::string_view&& jsonPath)
 {
     if (jsonPath.empty())
     {
@@ -48,7 +48,7 @@ bool BiliRequestHeader::LoadBiliCookie(const std::string& jsonPath)
         return false;
     }
 
-    std::ifstream ifs(jsonPath);
+    std::ifstream ifs(jsonPath.data());
     if (!ifs.is_open())
     {
         LOG_MESSAGE(LogLevel::ERROR, std::format("Failed to open file: {}", jsonPath));
@@ -59,4 +59,10 @@ bool BiliRequestHeader::LoadBiliCookie(const std::string& jsonPath)
     nlohmann::json configJson;
     ifs >> configJson;
     return this->biliCookie.LoadBiliCookie(configJson);
+}
+
+BiliRequestHeader::BiliRequestHeader()
+    : userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/91.0.4472.124 Safari/537.36")
+{
 }

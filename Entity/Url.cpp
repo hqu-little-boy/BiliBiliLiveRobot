@@ -53,6 +53,11 @@ const std::list<std::pair<std::string, std::string>>& Url::GetQuery() const
     return query;
 }
 
+void Url::SetQuery(const std::list<std::pair<std::string, std::string>>& query)
+{
+    this->query = query;
+}
+
 std::string Url::ToString() const
 {
     return std::format("{}:{}{}", host, port, this->GetTargetWithQuery());

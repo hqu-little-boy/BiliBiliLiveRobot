@@ -22,7 +22,8 @@ public:
     [[nodiscard]] const std::string  GetTargetWithQuery() const;
 
     [[nodiscard]] const std::list<std::pair<std::string, std::string>>& GetQuery() const;
-    [[nodiscard]] std::string                                           ToString() const;
+    void                      SetQuery(const std::list<std::pair<std::string, std::string>>& query);
+    [[nodiscard]] std::string ToString() const;
 
 private:
     std::string                                    host;

@@ -4,3 +4,6 @@
 [submodule "ThirdParty/brotli"]
 	path = ThirdParty/brotli
 	url = https://github.com/google/brotli.git
+[submodule "ThirdParty/libqrencode"]
+	path = ThirdParty/libqrencode
+	url = https://github.com/fukuchi/libqrencode.git

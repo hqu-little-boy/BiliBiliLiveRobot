@@ -19,10 +19,10 @@ public:
     void                             SetUserAgent(const std::string& userAgent);
 
     const BiliCookie& GetBiliCookie() const;
-    bool              LoadBiliCookie(const std::string& jsonPath);
+    bool              LoadBiliCookie(const std::string_view&& jsonPath);
 
 private:
-    BiliRequestHeader()                                           = default;
+    BiliRequestHeader();
     ~BiliRequestHeader()                                          = default;
     BiliRequestHeader(const BiliRequestHeader&)                   = delete;
     BiliRequestHeader&        operator=(const BiliRequestHeader&) = delete;

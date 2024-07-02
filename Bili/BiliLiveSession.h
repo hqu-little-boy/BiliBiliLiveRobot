@@ -5,7 +5,7 @@
 #ifndef BILILIVESESSION_H
 #define BILILIVESESSION_H
 #include "../Base/noncopyable.h"
-#include "Url.h"
+#include "../Entity/Url.h"
 
 #include <boost/asio/ssl.hpp>
 #include <boost/asio/strand.hpp>
