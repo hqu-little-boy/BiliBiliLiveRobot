@@ -13,6 +13,9 @@
 #include <brotli/decode.h>
 #include <iostream>
 
+// BrotliDecoderState* BiliApiUtil::brotliState =
+//     BrotliDecoderCreateInstance(nullptr, nullptr, nullptr);
+;
 std::string BiliApiUtil::HeaderTuple::ToString() const
 {
     return std::format(
@@ -130,40 +133,74 @@ std::list<std::string> BiliApiUtil::Unpack(const std::vector<uint8_t>& buffer)
             }
             case ZipOperation::NormalBrotli:
             {
-                // LOG_MESSAGE(LogLevel::DEBUG, "ZipOperation::NormalBrotli");
-                // BrotliDecoderState*  s = BrotliDecoderCreateInstance(0, 0, 0);
-                // std::vector<uint8_t> decompressedData;
-                // std::vector<uint8_t> compressedData =
-                //     std::vector<uint8_t>(buffer.begin() + start + sizeof(HeaderTuple),
-                //                          buffer.begin() + start + header.totalSize);
-                // const uint8_t* input          = compressedData.data();
-                // size_t         availableInput = compressedData.size();
-                // size_t         totalOut       = 0;
-                //
-                // while (true)
-                // {
-                //     uint8_t output[4096];
-                //     size_t  availableOutput = sizeof(output);
-                //
-                //     BrotliDecoderResult result = BrotliDecoderDecompressStream(
-                //         s, &availableInput, &input, &availableOutput, output, &totalOut);
-                //
-                //     decompressedData.insert(
-                //         decompressedData.end(), output, output + sizeof(output) -
-                //         availableOutput);
-                //
-                //     if (result == BROTLI_DECODER_RESULT_SUCCESS)
-                //     {
-                //         break;
-                //     }
-                //     else if (result == BROTLI_DECODER_RESULT_ERROR)
-                //     {
-                //         decompressedData.clear();
-                //         break;
-                //     }
-                // }
-                //
-                // BrotliDecoderDestroyInstance(s);
+                LOG_MESSAGE(LogLevel::DEBUG, "ZipOperation::NormalBrotli");
+                BrotliDecoderState* pBrotliState =
+                    BrotliDecoderCreateInstance(nullptr, nullptr, nullptr);
+
+                if (!pBrotliState)
+                {
+                    LOG_MESSAGE(LogLevel::ERROR, "Brotli解压缩失败");
+                    break;
+                }
+                std::vector<uint8_t> compressedData =
+                    std::vector<uint8_t>(buffer.begin() + start + sizeof(HeaderTuple),
+                                         buffer.begin() + start + header.totalSize);
+                std::vector<uint8_t> decompressedData;
+
+                size_t         availableInput = compressedData.size();
+                const uint8_t* nextInput      = compressedData.data();
+                size_t         availableOut;
+                uint8_t*       nextOutput;
+
+                // Define a maximum output buffer size
+                const size_t         outputBufferSize = 256;
+                std::vector<uint8_t> outputBuffer(outputBufferSize);
+                BrotliDecoderResult  result;
+
+                while (true)
+                {
+                    availableOut = outputBuffer.size();
+                    nextOutput   = outputBuffer.data();
+                    result       = BrotliDecoderDecompressStream(pBrotliState,
+                                                           &availableInput,
+                                                           &nextInput,
+                                                           &availableOut,
+                                                           &nextOutput,
+                                                           nullptr);
+                    // decompressedData.(reinterpret_cast<const char *>(buffer.data()), );
+                    if (outputBuffer.size() - availableOut > 0)
+                    {
+                        decompressedData.insert(
+                            decompressedData.end(),
+                            outputBuffer.begin(),
+                            outputBuffer.begin() + (outputBuffer.size() - availableOut));
+                    }
+                    if (result == BROTLI_DECODER_RESULT_ERROR ||
+                        result == BROTLI_DECODER_RESULT_NEEDS_MORE_INPUT ||
+                        availableInput == 0 && result == BROTLI_DECODER_RESULT_SUCCESS)
+                    {
+                        break;
+                    }
+                }
+                if (result != BROTLI_DECODER_RESULT_SUCCESS) {
+                    LOG_MESSAGE(LogLevel::ERROR, "Brotli解压缩失败");
+                }
+
+                std::list<std::string> decompressedBufferUnpack =
+                    BiliApiUtil::Unpack(decompressedData);
+                for (auto& str : decompressedBufferUnpack)
+                {
+                    LOG_MESSAGE(LogLevel::DEBUG, str);
+                    // if (str[15] == 'R' && str[16] == 'A' && str[17] == 'N' && str[18] == 'K' &&
+                    //     str[19] == '_' && str[20] == 'V' && str[21] == '2')
+                    // {
+                    //     continue;
+                    // }
+                    res.emplace_back(std::move(str));
+                }
+                // res.insert(
+                //     res.end(), decompressedBufferUnpack.begin(), decompressedBufferUnpack.end());
+                BrotliDecoderDestroyInstance(pBrotliState);
                 break;
             }
             }
@@ -188,36 +225,36 @@ BiliApiUtil::HeaderTuple BiliApiUtil::UnpackHeader(const std::vector<uint8_t>& b
     return header;
 }
 
-std::string BiliApiUtil::UnpackBody(const std::vector<uint8_t>& buffer, unsigned front,
-                                    unsigned end, ZipOperation zipOperation)
-{
-    switch (zipOperation)
-    {
-    case ZipOperation::NormalNone:
-    case ZipOperation::HeartBeatNone:
-    {
-        return std::string(buffer.begin() + front, buffer.begin() + end);
-    }
-    case ZipOperation::NormalZlib:
-    {
-        std::stringstream compressedStream(
-            std::string(buffer.begin() + front, buffer.begin() + end));
-        std::stringstream decompressedStream;
-
-        boost::iostreams::filtering_streambuf<boost::iostreams::input> in;
-        in.push(boost::iostreams::zlib_decompressor());
-        in.push(compressedStream);
-        boost::iostreams::copy(in, decompressedStream);
-        std::string decompressedStreamStr = decompressedStream.str();
-        return std::string(decompressedStreamStr.begin() + 16, decompressedStreamStr.end());
-    }
-    case ZipOperation::NormalBrotli:
-    {
-        return std::string(buffer.begin() + front, buffer.begin() + end);
-    }
-    default:
-    {
-        return std::string(buffer.begin() + front, buffer.begin() + end);
-    }
-    }
-}
+// std::string BiliApiUtil::UnpackBody(const std::vector<uint8_t>& buffer, unsigned front,
+//                                     unsigned end, ZipOperation zipOperation)
+// {
+//     switch (zipOperation)
+//     {
+//     case ZipOperation::NormalNone:
+//     case ZipOperation::HeartBeatNone:
+//     {
+//         return std::string(buffer.begin() + front, buffer.begin() + end);
+//     }
+//     case ZipOperation::NormalZlib:
+//     {
+//         std::stringstream compressedStream(
+//             std::string(buffer.begin() + front, buffer.begin() + end));
+//         std::stringstream decompressedStream;
+//
+//         boost::iostreams::filtering_streambuf<boost::iostreams::input> in;
+//         in.push(boost::iostreams::zlib_decompressor());
+//         in.push(compressedStream);
+//         boost::iostreams::copy(in, decompressedStream);
+//         std::string decompressedStreamStr = decompressedStream.str();
+//         return std::string(decompressedStreamStr.begin() + 16, decompressedStreamStr.end());
+//     }
+//     case ZipOperation::NormalBrotli:
+//     {
+//         return std::string(buffer.begin() + front, buffer.begin() + end);
+//     }
+//     default:
+//     {
+//         return std::string(buffer.begin() + front, buffer.begin() + end);
+//     }
+//     }
+// }

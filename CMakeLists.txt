@@ -54,4 +54,7 @@ target_link_libraries(BiliBiliLiveRobot PRIVATE
 #        qrcodegen
 #        qrenc
         qrencode
+        brotlienc
+        brotlidec
+        brotlicommon
 )

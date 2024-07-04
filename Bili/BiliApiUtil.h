@@ -8,6 +8,7 @@
 
 #include <boost/asio/buffer.hpp>
 #include <boost/endian/buffers.hpp>
+#include <brotli/decode.h>
 #include <list>
 
 class BiliApiUtil : public noncopyable
@@ -57,15 +58,15 @@ public:
     static std::vector<uint8_t> MakePack(const std::string_view& body, Operation eOperation);
 
     /// @brief 解包，可能有多个包一起发，需要分包
-    static std::list<std::string> Unpack(
-        const std::vector<uint8_t>& buffer);
+    static std::list<std::string> Unpack(const std::vector<uint8_t>& buffer);
 
 private:
     /// @brief 解包头部
     static HeaderTuple UnpackHeader(const std::vector<uint8_t>& buffer, unsigned front);
-    /// @brief 解析包体
-    static std::string UnpackBody(const std::vector<uint8_t>& buffer, unsigned front, unsigned end,
-                                  ZipOperation zipOperation);
+    // /// @brief 解析包体
+    // static std::string UnpackBody(const std::vector<uint8_t>& buffer, unsigned front, unsigned end,
+    //                               ZipOperation zipOperation);
+    // static BrotliDecoderState* brotliState;
 };
 
 
