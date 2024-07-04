@@ -34,7 +34,12 @@ void BiliRequestHeader::SetUserAgent(const std::string& userAgent)
     this->userAgent = userAgent;
 }
 
-bool BiliRequestHeader::LoadBiliCookie(const std::string_view&& jsonPath)
+const BiliCookie& BiliRequestHeader::GetBiliCookie() const
+{
+    return this->biliCookie;
+}
+
+bool BiliRequestHeader::LoadBiliCookieByPath(const std::string_view& jsonPath)
 {
     if (jsonPath.empty())
     {
@@ -58,7 +63,12 @@ bool BiliRequestHeader::LoadBiliCookie(const std::string_view&& jsonPath)
     // 从文件中读取json
     nlohmann::json configJson;
     ifs >> configJson;
-    return this->biliCookie.LoadBiliCookie(configJson);
+    return this->biliCookie.LoadBiliCookieByJson(configJson);
+}
+
+bool BiliRequestHeader::LoadBiliCookieByJson(const nlohmann::json& json)
+{
+    return this->biliCookie.LoadBiliCookieByJson(json);
 }
 
 BiliRequestHeader::BiliRequestHeader()

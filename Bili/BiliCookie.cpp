@@ -6,17 +6,18 @@
 
 #include "../Base/Logger.h"
 
-bool BiliCookie::LoadBiliCookie(const nlohmann::json& json)
+bool BiliCookie::LoadBiliCookieByJson(const nlohmann::json& json)
 {
     try
     {
-        this->buvid3               = json.at("buvid3").get<std::string>();
-        this->b_nut                = json.at("b_nut").get<std::string>();
-        this->strSESSDATA          = json.at("SESSDATA").get<std::string>();
-        this->bili_jct             = json.at("bili_jct").get<std::string>();
-        this->sid                  = json.at("sid").get<std::string>();
-        this->strDedeUserID        = json.at("DedeUserID").get<uint64_t>();
-        this->strDedeUserID__ckMd5 = json.at("DedeUserID__ckMd5").get<std::string>();
+        this->buvid3      = json["buvid3"].get<std::string>();
+        this->buvid4      = json["buvid4"].get<std::string>();
+        this->strSESSDATA = json["SESSDATA"].get<std::string>();
+        this->bili_jct    = json["bili_jct"].get<std::string>();
+        this->sid         = json["sid"].get<std::string>();
+        // 字符串转换为数字
+        this->strDedeUserID        = std::stoull(json["DedeUserID"].get<std::string>());
+        this->strDedeUserID__ckMd5 = json["DedeUserID__ckMd5"].get<std::string>();
         return true;
     }
     catch (const nlohmann::json::exception& e)
@@ -26,7 +27,7 @@ bool BiliCookie::LoadBiliCookie(const nlohmann::json& json)
     }
 }
 
-// bool BiliCookie::LoadBiliCookie(const std::string& jsonPath)
+// bool BiliCookie::LoadBiliCookieByPath(const std::string& jsonPath)
 // {
 //     if (jsonPath.empty())
 //     {
@@ -58,9 +59,9 @@ const std::string& BiliCookie::GetBuvid3() const
     return this->buvid3;
 }
 
-const std::string& BiliCookie::GetBNut() const
+const std::string& BiliCookie::GetBuvid4() const
 {
-    return this->b_nut;
+    return this->buvid4;
 }
 
 const std::string& BiliCookie::GetSESSDATA() const
@@ -86,4 +87,17 @@ uint64_t BiliCookie::GetDedeUserID() const
 const std::string& BiliCookie::GetDedeUserIDCkMd5() const
 {
     return this->strDedeUserID__ckMd5;
+}
+
+std::string BiliCookie::ToString() const
+{
+    return std::format("SESSDATA={}; buvid3={}; buvid4={}; bili_jct={}; sid={}; DedeUserID={}; "
+                       "DedeUserID__ckMd5={}",
+                       this->strSESSDATA,
+                       this->buvid3,
+                       this->buvid4,
+                       this->bili_jct,
+                       this->sid,
+                       this->strDedeUserID,
+                       this->strDedeUserID__ckMd5);
 }

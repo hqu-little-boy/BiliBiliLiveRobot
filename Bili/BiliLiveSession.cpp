@@ -5,9 +5,9 @@
 #include "BiliLiveSession.h"
 
 #include "../Base/Logger.h"
+#include "../Entity/Config.h"
 #include "BiliApiUtil.h"
 #include "BiliRequestHeader.h"
-#include "../Entity/Config.h"
 
 #include <boost/beast/http.hpp>
 #include <nlohmann/json.hpp>
@@ -63,7 +63,9 @@ bool BiliLiveSession::InitRoomInfo()
             Config::GetInstance()->GetDanmuSeverConfUrl().GetHost());
     req.set(boost::beast::http::field::user_agent,
             BiliRequestHeader::GetInstance()->GetUserAgent());
-
+    // 设置cookie
+    req.set(boost::beast::http::field::cookie,
+            BiliRequestHeader::GetInstance()->GetBiliCookie().ToString());
     // 发送请求
     boost::beast::http::write(stream, req);
 
@@ -190,6 +192,11 @@ void BiliLiveSession::on_ssl_handshake(boost::beast::error_code ec)
                     BiliRequestHeader::GetInstance()->GetUserAgent());
         }));
 
+    this->ws.set_option(boost::beast::websocket::stream_base::decorator(
+        [](boost::beast::websocket::request_type& req) {
+            req.set(boost::beast::http::field::cookie,
+                    BiliRequestHeader::GetInstance()->GetBiliCookie().ToString());
+        }));
     // Perform the websocket handshake
     this->ws.async_handshake(
         this->host,
@@ -207,17 +214,30 @@ void BiliLiveSession::on_handshake(boost::beast::error_code ec)
     nlohmann::json body;
     body = {
         {"roomid", Config::GetInstance()->GetRoomId()},
+        {"uid", BiliRequestHeader::GetInstance()->GetBiliCookie().GetDedeUserID()},
         // {"uid", 0},
-        // {"protover", 3},
-        // {"platform", "web"},
-        // {"type", 2},
-        // {"buvid", "157757CC-EB57-90E8-82DD-9410215ACC4E81774infoc"},
+        {"protover", 3},
+        {"platform", "web"},
+        {"type", 2},
+        {"buvid", BiliRequestHeader::GetInstance()->GetBiliCookie().GetBuvid3()},
         {"key", this->token},
     };
     LOG_VAR(LogLevel::DEBUG, body.dump(4));
     LOG_VAR(LogLevel::INFO, body.dump(-1));
     // std::string bodyStr = R"({"roomid": )" + std::to_string(Config::GetInstance()->GetRoomId()) +
     //                       R"(, "key": ")" + this->token + R"("})";
+    // std::string bodyStr =
+    //     "{" +
+    //     std::format(
+    //         R"("uid": {}, "roomid": {}, "protover": 3, "platform": "web", "type": 2, "key": "{}",
+    //         "buvid": {})",
+    //         // BiliRequestHeader::GetInstance()->GetBiliCookie().GetDedeUserID(),
+    //         0,
+    //         Config::GetInstance()->GetRoomId(),
+    //         this->token,
+    //         BiliRequestHeader::GetInstance()->GetBiliCookie().GetBuvid3()) +
+    //     "}";
+    // LOG_VAR(LogLevel::DEBUG, bodyStr);
     auto authMessage = BiliApiUtil::MakePack(body.dump(-1), BiliApiUtil::Operation::AUTH);
     // Send the message
     this->ws.async_write(

@@ -8,6 +8,8 @@
 #include "BiliRequestHeader.h"
 #include "qrencode.h"
 
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include <boost/asio/connect.hpp>
 #include <boost/asio/ssl/stream.hpp>
 #include <boost/beast/core/buffers_to_string.hpp>
@@ -172,8 +174,111 @@ bool BiliLogin::GetLoginInfo()
         return false;
     }
     // 打印cookie
-    for (const auto& header : res.base()) {
-        std::cout << header.name() << ": " << header.value() << "\n";
+    std::vector<std::string> cookies;
+
+    for (const auto& header : res.base())
+    {
+        std::vector<std::string> tokens;
+        auto                     name = header.name();
+        if (name == boost::beast::http::field::set_cookie)
+        {
+            boost::split(tokens, header.value(), boost::is_any_of("; "));
+            cookies.insert(cookies.end(), tokens.begin(), tokens.end());
+        }
     }
-    return true;
+    nlohmann::json cookieJson;
+    for (const auto& cookie : cookies)
+    {
+        if (cookies.empty() || !cookie.contains("="))
+        {
+            continue;
+        }
+        // std::cout << cookie << std::endl;
+        std::vector<std::string> tokens;
+        boost::split(tokens, cookie, boost::is_any_of("="));
+        if (!tokens.size() == 2)
+        {
+            continue;
+        }
+        cookieJson[tokens[0]] = tokens[1];
+    }
+    LOG_VAR(LogLevel::DEBUG, cookieJson.dump(4));
+    if (cookieJson.empty())
+    {
+        LOG_MESSAGE(LogLevel::ERROR, "Failed to get cookie");
+        return false;
+    }
+    // 保存cookie，判断cookie文件夹是否存在
+    if (!std::filesystem::exists("cookie"))
+    {
+        // 创建文件夹
+        if (!std::filesystem::create_directories("cookie"))
+        {
+            LOG_MESSAGE(LogLevel::ERROR, "Failed to create directory");
+            return false;
+        }
+    }
+    std::ofstream ofs("cookie/bili_cookie.json");
+    if (!ofs.is_open())
+    {
+        LOG_MESSAGE(LogLevel::ERROR, "Failed to open file");
+        return false;
+    }
+    // 连接https://api.bilibili.com/x/frontend/finger/spi获取buvid
+    // 解析域名和端口
+    const auto buvidResults = this->resolver.resolve("api.bilibili.com", "443");
+    boost::asio::ssl::stream<boost::asio::ip::tcp::socket> buvidStream(this->ioc, this->ctx);
+    boost::asio::connect(buvidStream.next_layer(), buvidResults.begin(), buvidResults.end());
+    buvidStream.handshake(boost::asio::ssl::stream_base::client);
+    // 构建Get请求
+    boost::beast::http::request<boost::beast::http::string_body> buvidReq{
+        boost::beast::http::verb::get, "/x/frontend/finger/spi", 11};
+    buvidReq.set(boost::beast::http::field::host, "api.bilibili.com");
+    buvidReq.set(boost::beast::http::field::user_agent,
+                 BiliRequestHeader::GetInstance()->GetUserAgent());
+    buvidReq.set(boost::beast::http::field::cookie,
+                 "SESSDATA=" + cookieJson["SESSDATA"].get<std::string>());
+    // 设置所有res.base()中的cookie
+    // for (const auto& header : res.base())
+    // {
+    //     if (header.name() == boost::beast::http::field::set_cookie)
+    //     {
+    //         buvidReq.set(boost::beast::http::field::set_cookie, header.value());
+    //     }
+    // }
+    // 发送请求
+    boost::beast::http::write(buvidStream, buvidReq);
+    // 接收响应
+    boost::beast::flat_buffer                                      buvidBuffer;
+    boost::beast::http::response<boost::beast::http::dynamic_body> buvidRes;
+    boost::beast::http::read(buvidStream, buvidBuffer, buvidRes);
+    if (buvidRes.result() != boost::beast::http::status::ok)
+    {
+        LOG_VAR(LogLevel::ERROR, buvidRes.result_int());
+        return false;
+    }
+    // 解析json
+    std::string    buvidResStr = boost::beast::buffers_to_string(buvidRes.body().data());
+    nlohmann::json buvidJson   = nlohmann::json::parse(buvidResStr);
+    LOG_VAR(LogLevel::DEBUG, buvidJson.dump(4));
+
+    try
+    {
+        if (buvidJson["code"].get<int>() != 0)
+        {
+            LOG_VAR(LogLevel::ERROR, buvidJson["message"].dump(4));
+            return false;
+        }
+        cookieJson["buvid3"] = buvidJson["data"]["b_3"].get<std::string>();
+        cookieJson["buvid4"] = buvidJson["data"]["b_4"].get<std::string>();
+    }
+    catch (const nlohmann::json::exception& e)
+    {
+        LOG_VAR(LogLevel::ERROR, e.what());
+        return false;
+    }
+
+    ofs << cookieJson.dump(4);
+    ofs.close();
+    return BiliRequestHeader::GetInstance()->LoadBiliCookieByJson(cookieJson);
 }

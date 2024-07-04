@@ -14,19 +14,20 @@ class BiliCookie
 public:
     BiliCookie()  = default;
     ~BiliCookie() = default;
-    bool LoadBiliCookie(const nlohmann::json& json);
-    // bool                             LoadBiliCookie(const std::string& jsonPath);
+    bool LoadBiliCookieByJson(const nlohmann::json& json);
+    // bool                             LoadBiliCookieByPath(const std::string& jsonPath);
     [[nodiscard]] const std::string& GetBuvid3() const;
-    [[nodiscard]] const std::string& GetBNut() const;
+    [[nodiscard]] const std::string& GetBuvid4() const;
     [[nodiscard]] const std::string& GetSESSDATA() const;
     [[nodiscard]] const std::string& GetBiliJct() const;
     [[nodiscard]] const std::string& GetSid() const;
     [[nodiscard]] uint64_t           GetDedeUserID() const;
     [[nodiscard]] const std::string& GetDedeUserIDCkMd5() const;
+    std::string                      ToString() const;
 
 private:
     std::string buvid3;
-    std::string b_nut;
+    std::string buvid4;
     std::string strSESSDATA;
     std::string bili_jct;
     std::string sid;

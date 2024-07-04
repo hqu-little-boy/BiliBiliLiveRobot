@@ -19,7 +19,8 @@ public:
     void                             SetUserAgent(const std::string& userAgent);
 
     const BiliCookie& GetBiliCookie() const;
-    bool              LoadBiliCookie(const std::string_view&& jsonPath);
+    bool              LoadBiliCookieByPath(const std::string_view& jsonPath);
+    bool              LoadBiliCookieByJson(const nlohmann::json& json);
 
 private:
     BiliRequestHeader();
