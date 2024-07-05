@@ -55,17 +55,24 @@ public:
     };
 
     /// @brief 构建包
-    static std::vector<uint8_t> MakePack(const std::string_view& body, Operation eOperation);
+    static bool MakePack(const std::string_view& body, Operation eOperation,
+                         std::vector<uint8_t>& res);
 
     /// @brief 解包，可能有多个包一起发，需要分包
-    static std::list<std::string> Unpack(const std::vector<uint8_t>& buffer);
+    static std::list<std::string> Unpack(const std::span<const uint8_t>& buffer);
 
 private:
     /// @brief 解包头部
-    static HeaderTuple UnpackHeader(const std::vector<uint8_t>& buffer, unsigned front);
-    // /// @brief 解析包体
-    // static std::string UnpackBody(const std::vector<uint8_t>& buffer, unsigned front, unsigned end,
-    //                               ZipOperation zipOperation);
+    static HeaderTuple UnpackHeader(const std::span<const uint8_t>& buffer, unsigned front);
+    // /// @brief 解析普通无压缩包体
+    static std::string UnpackBodyNoneCompress(const std::span<const uint8_t>& buffer,
+                                              unsigned front, unsigned end);
+    // /// @brief 解析普通无压缩包体
+    static std::list<std::string> UnpackBodyZlib(const std::span<const uint8_t>& buffer,
+                                                 unsigned front, unsigned end);
+    // /// @brief 解析普通无压缩包体
+    static std::list<std::string> UnpackBodyBrotli(const std::span<const uint8_t>& buffer,
+                                                   unsigned front, unsigned end);
     // static BrotliDecoderState* brotliState;
 };
 

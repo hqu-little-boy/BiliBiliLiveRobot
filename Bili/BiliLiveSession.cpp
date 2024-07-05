@@ -222,8 +222,8 @@ void BiliLiveSession::on_handshake(boost::beast::error_code ec)
         {"buvid", BiliRequestHeader::GetInstance()->GetBiliCookie().GetBuvid3()},
         {"key", this->token},
     };
-    LOG_VAR(LogLevel::DEBUG, body.dump(4));
-    LOG_VAR(LogLevel::INFO, body.dump(-1));
+    // LOG_VAR(LogLevel::DEBUG, body.dump(4));
+    LOG_VAR(LogLevel::DEBUG, body.dump(-1));
     // std::string bodyStr = R"({"roomid": )" + std::to_string(Config::GetInstance()->GetRoomId()) +
     //                       R"(, "key": ")" + this->token + R"("})";
     // std::string bodyStr =
@@ -238,7 +238,9 @@ void BiliLiveSession::on_handshake(boost::beast::error_code ec)
     //         BiliRequestHeader::GetInstance()->GetBiliCookie().GetBuvid3()) +
     //     "}";
     // LOG_VAR(LogLevel::DEBUG, bodyStr);
-    auto authMessage = BiliApiUtil::MakePack(body.dump(-1), BiliApiUtil::Operation::AUTH);
+    std::string          bodyStr = body.dump(-1);
+    std::vector<uint8_t> authMessage;
+    BiliApiUtil::MakePack(body.dump(-1), BiliApiUtil::Operation::AUTH, authMessage);
     // Send the message
     this->ws.async_write(
         boost::asio::buffer(authMessage),
@@ -301,6 +303,16 @@ void BiliLiveSession::on_read(boost::beast::error_code ec, std::size_t bytes_tra
     {
         // LOG_VAR(LogLevel::INFO, std::get<0>(item).ToString());
         LOG_VAR(LogLevel::DEBUG, item);
+        // nlohmann::json json = nlohmann::json::parse(item);
+        // try
+        // {
+        //     LOG_VAR(LogLevel::DEBUG, json["cmd"].get<std::string>());
+        // }
+        // catch (const nlohmann::json::exception& e)
+        // {
+        //     LOG_VAR(LogLevel::ERROR, e.what());
+        //     LOG_VAR(LogLevel::ERROR, json.dump(-1));
+        // }
     }
     this->ws.async_read(
         this->buffer,
@@ -325,7 +337,8 @@ void BiliLiveSession::do_ping()
 {
     for (;;)
     {
-        auto authMessage = BiliApiUtil::MakePack("{}", BiliApiUtil::Operation::HEARTBEAT);
+        std::vector<uint8_t> authMessage;
+        BiliApiUtil::MakePack("{}", BiliApiUtil::Operation::HEARTBEAT, authMessage);
         // Send the message
         this->ws.async_write(
             boost::asio::buffer(authMessage),
