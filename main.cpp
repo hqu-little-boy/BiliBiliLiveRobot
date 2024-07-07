@@ -2,11 +2,12 @@
 // Created by zeng on 24-6-24.
 //
 
-#include "Base/Logger.h"
-#include "Bili/BiliLiveSession.h"
-#include "Bili/BiliLogin.h"
-#include "Bili/BiliRequestHeader.h"
-#include "Entity/Config.h"
+#include "Entity/Global/Config.h"
+#include "Entity/Global/Logger.h"
+#include "ThreadPool/ProcessingMessageThreadPool.h"
+#include "Util/BiliUtil/BiliLiveSession.h"
+#include "Util/BiliUtil/BiliLogin.h"
+#include "Util/BiliUtil/BiliRequestHeader.h"
 
 #include <bits/fs_ops.h>
 #include <boost/asio/io_context.hpp>
@@ -40,6 +41,7 @@ int main()
     Logger::GetInstance()->SetLogLevel(Config::GetInstance()->GetLogLevel());
     Logger::GetInstance()->SetLogPath(Config::GetInstance()->GetLogPath());
     LOG_MESSAGE(LogLevel::DEBUG, std::format("Config: ({})", Config::GetInstance()->ToString()));
+    ProcessingMessageThreadPool::GetInstance()->Start();
     boost::asio::io_context ioc;
     std::make_shared<BiliLiveSession>(ioc)->run();
     ioc.run();

@@ -4,12 +4,13 @@
 
 #include "BiliRequestHeader.h"
 
-#include "../Base/Logger.h"
-BiliRequestHeader* BiliRequestHeader::pInstance{nullptr};
+#include "../../Entity/Global/Logger.h"
+BiliRequestHeader* BiliRequestHeader::pInstance{new BiliRequestHeader()};
 BiliRequestHeader* BiliRequestHeader::GetInstance()
 {
     if (pInstance == nullptr)
     {
+        assert(false);
         pInstance = new BiliRequestHeader();
     }
     return pInstance;
@@ -74,5 +75,6 @@ bool BiliRequestHeader::LoadBiliCookieByJson(const nlohmann::json& json)
 BiliRequestHeader::BiliRequestHeader()
     : userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
                 "Chrome/91.0.4472.124 Safari/537.36")
+    , biliCookie()
 {
 }

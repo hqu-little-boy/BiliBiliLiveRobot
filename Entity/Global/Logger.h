@@ -16,7 +16,7 @@ enum class LogLevel
     DEBUG = 4,
 };
 
-#include "noncopyable.h"
+#include "../../Base/noncopyable.h"
 
 #include <format>
 #include <string_view>

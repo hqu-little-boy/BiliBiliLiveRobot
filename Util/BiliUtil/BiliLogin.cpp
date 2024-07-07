@@ -4,7 +4,7 @@
 
 #include "BiliLogin.h"
 
-#include "../Base/Logger.h"
+#include "../../Entity/Global/Logger.h"
 #include "BiliRequestHeader.h"
 #include "qrencode.h"
 

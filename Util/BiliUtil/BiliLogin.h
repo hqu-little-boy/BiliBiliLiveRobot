@@ -4,8 +4,8 @@
 
 #ifndef BILILOGIN_H
 #define BILILOGIN_H
-#include "../Base/noncopyable.h"
-#include "../Entity/Url.h"
+#include "../../Base/noncopyable.h"
+#include "../../Entity/Global/Url.h"
 
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/ssl/context.hpp>

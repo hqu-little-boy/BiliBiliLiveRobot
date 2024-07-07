@@ -4,7 +4,7 @@
 
 #include "BiliApiUtil.h"
 
-#include "../Base/Logger.h"
+#include "../../Entity/Global/Logger.h"
 
 #include <boost/endian/conversion.hpp>
 #include <boost/iostreams/copy.hpp>
@@ -15,7 +15,18 @@
 
 // BrotliDecoderState* BiliApiUtil::brotliState =
 //     BrotliDecoderCreateInstance(nullptr, nullptr, nullptr);
-;
+
+const std::unordered_map<std::string, BiliApiUtil::LiveCommand> BiliApiUtil::liveCommandMap{
+    {"DANMU_MSG", BiliApiUtil::LiveCommand::DANMU_MSG},
+    // {"INTERACT_WORD", BiliApiUtil::LiveCommand::INTERACT_WORD},
+    // {"USER_TOAST_MSG", BiliApiUtil::LiveCommand::USER_TOAST_MSG},
+    // {"SUPER_CHAT_MESSAGE", BiliApiUtil::LiveCommand::SUPER_CHAT_MESSAGE},
+    // {"SEND_GIFT", BiliApiUtil::LiveCommand::SEND_GIFT},
+    // {"COMBO_SEND", BiliApiUtil::LiveCommand::COMBO_SEND},
+    // {"GUARD_BUY", BiliApiUtil::LiveCommand::GUARD_BUY},
+    // {"ENTRY_EFFECT", BiliApiUtil::LiveCommand::ENTRY_EFFECT},
+};
+
 std::string BiliApiUtil::HeaderTuple::ToString() const
 {
     return std::format(
@@ -49,20 +60,16 @@ bool BiliApiUtil::MakePack(const std::string_view& body,
     // std::vector<uint8_t> buffer;
     // buffer.insert(buffer.end(), headerBuffer.begin(), headerBuffer.end());
     headerBuffer.insert(headerBuffer.end(), bodyBuffer.begin(), bodyBuffer.end());
-    // // buffer转数组
-    // char* res(new char[buffer.size()]);
-    // std::copy(buffer.begin(), buffer.end(), res);
-    // auto boostBuffer = boost::asio::buffer(res, buffer.size());
-    // delete res;
     res = std::move(headerBuffer);
     return true;
 }
 
-std::list<std::string> BiliApiUtil::Unpack(const std::span<const uint8_t>& buffer)
+std::list<std::tuple<BiliApiUtil::LiveCommand, std::string>> BiliApiUtil::Unpack(
+    const std::span<const uint8_t>& buffer)
 {
-    uint32_t               start     = 0;
-    size_t                 bufferLen = buffer.size();
-    std::list<std::string> res;
+    uint32_t                                                     start     = 0;
+    size_t                                                       bufferLen = buffer.size();
+    std::list<std::tuple<BiliApiUtil::LiveCommand, std::string>> temp;
     while (start < bufferLen)
     {
         BiliApiUtil::HeaderTuple header{BiliApiUtil::UnpackHeader(buffer, start)};
@@ -86,34 +93,41 @@ std::list<std::string> BiliApiUtil::Unpack(const std::span<const uint8_t>& buffe
             case ZipOperation::NormalNone:
             case ZipOperation::HeartBeatNone:
             {
-                res.emplace_back(BiliApiUtil::UnpackBodyNoneCompress(
+                temp.emplace_back(BiliApiUtil::UnpackBodyNoneCompress(
                     buffer, start + sizeof(HeaderTuple), start + header.totalSize));
                 break;
             }
             case ZipOperation::NormalZlib:
             {
-                std::list<std::string> decompressedBufferUnpack = BiliApiUtil::UnpackBodyZlib(
-                    buffer, start + sizeof(HeaderTuple), start + header.totalSize);
                 // 将decompressedBufferUnpack使用std::move插入到res中
-                for (auto& str : decompressedBufferUnpack)
+                for (auto& command : BiliApiUtil::UnpackBodyZlib(
+                         buffer, start + sizeof(HeaderTuple), start + header.totalSize))
                 {
-                    res.emplace_back(std::move(str));
+                    temp.emplace_back(std::move(command));
                 }
                 break;
             }
             case ZipOperation::NormalBrotli:
             {
                 // LOG_MESSAGE(LogLevel::DEBUG, "ZipOperation::NormalBrotli");
-                std::list<std::string> decompressedBufferUnpack = BiliApiUtil::UnpackBodyBrotli(
-                    buffer, start + sizeof(HeaderTuple), start + header.totalSize);
-                for (auto& str : decompressedBufferUnpack)
+                for (auto& command : BiliApiUtil::UnpackBodyBrotli(
+                         buffer, start + sizeof(HeaderTuple), start + header.totalSize))
                 {
-                    res.emplace_back(std::move(str));
+                    temp.emplace_back(std::move(command));
                 }
                 break;
             }
             }
             start += header.totalSize;
+        }
+    }
+    std::list<std::tuple<BiliApiUtil::LiveCommand, std::string>> res;
+    for (auto& [command, content] : temp)
+    {
+        // LOG_VAR(LogLevel::DEBUG, str);
+        if (command != BiliApiUtil::LiveCommand::NONE && command != BiliApiUtil::LiveCommand::OTHER)
+        {
+            res.emplace_back(command, std::move(content));
         }
     }
     return res;
@@ -134,14 +148,17 @@ BiliApiUtil::HeaderTuple BiliApiUtil::UnpackHeader(const std::span<const uint8_t
     return header;
 }
 
-std::string BiliApiUtil::UnpackBodyNoneCompress(const std::span<const uint8_t>& buffer,
-                                                unsigned front, unsigned end)
+std::tuple<BiliApiUtil::LiveCommand, std::string> BiliApiUtil::UnpackBodyNoneCompress(
+    const std::span<const uint8_t>& buffer, unsigned front, unsigned end)
 {
-    return std::string(buffer.begin() + front, buffer.begin() + end);
+    std::string content{buffer.begin() + front, buffer.begin() + end};
+    auto        command{BiliApiUtil::GetLiveCommand(content)};
+
+    return {command, content};
 }
 
-std::list<std::string> BiliApiUtil::UnpackBodyZlib(const std::span<const uint8_t>& buffer,
-                                                   unsigned front, unsigned end)
+std::list<std::tuple<BiliApiUtil::LiveCommand, std::string>> BiliApiUtil::UnpackBodyZlib(
+    const std::span<const uint8_t>& buffer, unsigned front, unsigned end)
 {
     std::stringstream compressedStream(std::string(buffer.begin() + front, buffer.begin() + end));
     std::stringstream decompressedStream;
@@ -158,8 +175,8 @@ std::list<std::string> BiliApiUtil::UnpackBodyZlib(const std::span<const uint8_t
     return BiliApiUtil::Unpack(decompressedBuffer);
 }
 
-std::list<std::string> BiliApiUtil::UnpackBodyBrotli(const std::span<const uint8_t>& buffer,
-                                                     unsigned front, unsigned end)
+std::list<std::tuple<BiliApiUtil::LiveCommand, std::string>> BiliApiUtil::UnpackBodyBrotli(
+    const std::span<const uint8_t>& buffer, unsigned front, unsigned end)
 {
     BrotliDecoderState* pBrotliState = BrotliDecoderCreateInstance(nullptr, nullptr, nullptr);
 
@@ -209,6 +226,50 @@ std::list<std::string> BiliApiUtil::UnpackBodyBrotli(const std::span<const uint8
 
     BrotliDecoderDestroyInstance(pBrotliState);
     return BiliApiUtil::Unpack(decompressedData);
+}
+
+BiliApiUtil::LiveCommand BiliApiUtil::GetLiveCommand(const std::string_view& cmd)
+{
+    if (!cmd.contains(R"("cmd":")"))
+    {
+        return BiliApiUtil::LiveCommand::NONE;
+    }
+    auto pos = cmd.find(R"("cmd":")");
+    if (pos == std::string::npos)
+    {
+        return BiliApiUtil::LiveCommand::NONE;
+    }
+    auto endPos = cmd.find(R"(")", pos + 7);
+    if (endPos == std::string::npos)
+    {
+        return BiliApiUtil::LiveCommand::NONE;
+    }
+    std::string cmdStr = std::string(cmd.begin() + pos + 7, cmd.begin() + endPos);
+    // LOG_VAR(LogLevel::DEBUG, cmdStr);
+    if (BiliApiUtil::liveCommandMap.contains(cmdStr))
+    {
+        return BiliApiUtil::liveCommandMap.at(cmdStr);
+    }
+    return BiliApiUtil::LiveCommand::OTHER;
+}
+
+std::string BiliApiUtil::GetLiveCommandStr(const std::string_view& cmd)
+{
+    if (!cmd.contains(R"("cmd":")"))
+    {
+        return "NONE";
+    }
+    auto pos = cmd.find(R"("cmd":")");
+    if (pos == std::string::npos)
+    {
+        return "NONE";
+    }
+    auto endPos = cmd.find(R"(")", pos + 7);
+    if (endPos == std::string::npos)
+    {
+        return "NONE";
+    }
+    return std::string(cmd.begin() + pos + 7, cmd.begin() + endPos);
 }
 
 // std::string BiliApiUtil::UnpackBody(const std::vector<uint8_t>& buffer, unsigned front,

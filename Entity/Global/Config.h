@@ -4,7 +4,7 @@
 
 #ifndef CONFIG_H
 #define CONFIG_H
-#include "../Base/Logger.h"
+#include "Logger.h"
 #include "Url.h"
 
 

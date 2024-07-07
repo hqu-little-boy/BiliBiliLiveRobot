@@ -4,7 +4,7 @@
 
 #include "BiliCookie.h"
 
-#include "../Base/Logger.h"
+#include "../../Entity/Global/Logger.h"
 
 bool BiliCookie::LoadBiliCookieByJson(const nlohmann::json& json)
 {

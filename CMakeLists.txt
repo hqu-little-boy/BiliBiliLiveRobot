@@ -4,29 +4,16 @@ project(BiliBiliLiveRobot)
 set(CMAKE_CXX_STANDARD 23)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wall -Wextra")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Werror -fsanitize=address -fsanitize=undefined -fsanitize=leak") # 指定编译选项
-
+file(GLOB_RECURSE BASE_SOURCES "Base/*.h" "Base/*.cpp")
+file(GLOB_RECURSE ENTITY_SOURCES "Entity/*.h" "Entity/*.cpp")
+file(GLOB_RECURSE UTIL_SOURCES "Util/*.h" "Util/*.cpp")
+file(GLOB_RECURSE THREADPOOL_SOURCES "ThreadPool/*.h" "ThreadPool/*.cpp")
 add_executable(BiliBiliLiveRobot
         main.cpp
-        Bili/BiliLiveSession.h
-        Bili/BiliLiveSession.cpp
-        Base/copyable.h
-        Base/Logger.cpp
-        Base/Logger.h
-        Base/noncopyable.h
-        Base/TimeStamp.cpp
-        Base/TimeStamp.h
-        Bili/BiliApiUtil.h
-        Bili/BiliApiUtil.cpp
-        Entity/Url.h
-        Entity/Url.cpp
-        Entity/Config.h
-        Entity/Config.cpp
-        Bili/BiliLogin.h
-        Bili/BiliLogin.cpp
-        Bili/BiliRequestHeader.h
-        Bili/BiliRequestHeader.cpp
-        Bili/BiliCookie.h
-        Bili/BiliCookie.cpp
+        ${BASE_SOURCES}
+        ${ENTITY_SOURCES}
+        ${UTIL_SOURCES}
+        ${THREADPOOL_SOURCES}
 )
 
 # 加入Boost库
@@ -51,8 +38,8 @@ target_link_libraries(BiliBiliLiveRobot PRIVATE
         Boost::thread
         Boost::iostreams
         nlohmann_json::nlohmann_json
-#        qrcodegen
-#        qrenc
+        #        qrcodegen
+        #        qrenc
         qrencode
         brotlienc
         brotlidec

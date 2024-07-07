@@ -4,13 +4,15 @@
 
 #include "BiliLiveSession.h"
 
-#include "../Base/Logger.h"
-#include "../Entity/Config.h"
+#include "../../Entity/Global/Config.h"
+#include "../../Entity/Global/Logger.h"
+#include "../../ThreadPool/ProcessingMessageThreadPool.h"
 #include "BiliApiUtil.h"
 #include "BiliRequestHeader.h"
 
 #include <boost/beast/http.hpp>
 #include <nlohmann/json.hpp>
+#include <regex>
 #include <thread>
 
 BiliLiveSession::BiliLiveSession(boost::asio::io_context& ioc)
@@ -297,22 +299,27 @@ void BiliLiveSession::on_read(boost::beast::error_code ec, std::size_t bytes_tra
     std::vector<uint8_t> response;
     response.assign(boost::asio::buffer_cast<const uint8_t*>(buf),
                     boost::asio::buffer_cast<const uint8_t*>(buf) + boost::asio::buffer_size(buf));
-
+    this->buffer.consume(response.size());
     auto pack = BiliApiUtil::Unpack(response);
-    for (const auto& item : pack)
+    for (const auto& [command, content] : pack)
     {
         // LOG_VAR(LogLevel::INFO, std::get<0>(item).ToString());
-        LOG_VAR(LogLevel::DEBUG, item);
-        // nlohmann::json json = nlohmann::json::parse(item);
+        // LOG_VAR(LogLevel::DEBUG, item);
+        // std::regex r(R"(\\)");                                  // 正则表达式匹配'\'
+        // std::string result = std::regex_replace(item, r, "");   // 用空字符串替换所有匹配的'\'
         // try
         // {
-        //     LOG_VAR(LogLevel::DEBUG, json["cmd"].get<std::string>());
+        //     nlohmann::json json = nlohmann::json::parse(content);
+        //     LOG_VAR(LogLevel::DEBUG, json.dump(-1));
         // }
         // catch (const nlohmann::json::exception& e)
         // {
         //     LOG_VAR(LogLevel::ERROR, e.what());
-        //     LOG_VAR(LogLevel::ERROR, json.dump(-1));
+        //     LOG_VAR(LogLevel::ERROR, content);
+        //     // LOG_VAR(LogLevel::ERROR, result);
         // }
+        LOG_VAR(LogLevel::DEBUG, content);
+        ProcessingMessageThreadPool::GetInstance()->AddTask(content);
     }
     this->ws.async_read(
         this->buffer,

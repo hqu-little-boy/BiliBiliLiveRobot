@@ -4,7 +4,7 @@
 
 #include "Config.h"
 
-#include "../Base/Logger.h"
+#include "Logger.h"
 #include "nlohmann/json.hpp"
 
 #include <fstream>
@@ -13,6 +13,7 @@ Config* Config::GetInstance()
 {
     if (pInstance == nullptr)
     {
+        assert(false);
         pInstance = new Config();
     }
     return pInstance;

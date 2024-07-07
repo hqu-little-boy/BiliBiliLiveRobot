@@ -4,12 +4,13 @@
 
 #ifndef BILIAPIUTIL_H
 #define BILIAPIUTIL_H
-#include "../Base/noncopyable.h"
+#include "../../Base/noncopyable.h"
 
 #include <boost/asio/buffer.hpp>
 #include <boost/endian/buffers.hpp>
 #include <brotli/decode.h>
 #include <list>
+#include <unordered_map>
 
 class BiliApiUtil : public noncopyable
 {
@@ -43,6 +44,21 @@ public:
         NormalZlib    = 2,
         NormalBrotli  = 3,
     };
+
+    enum class LiveCommand
+    {
+        NONE,            // 无
+        OTHER,           // 其他
+        DANMU_MSG,       // 弹幕消息
+        INTERACT_WORD,   // 进入直播间或关注消息
+        GUARD_BUY,       // 用户购买舰长 / 提督 / 总督
+        USER_TOAST_MSG,   // 用户购买舰长 / 提督 / 总督后的庆祝消息，内容包含用户陪伴天数
+        SUPER_CHAT_MESSAGE,   // 用户发送醒目留言
+        SEND_GIFT,            // 投喂礼物等
+        COMBO_SEND,           // 礼物连击
+        ENTRY_EFFECT,         // 用户进入直播间
+    };
+    static const std::unordered_map<std::string, LiveCommand> liveCommandMap;
     // 自定义Header结构体，用于存储包头信息
     struct HeaderTuple
     {
@@ -59,20 +75,23 @@ public:
                          std::vector<uint8_t>& res);
 
     /// @brief 解包，可能有多个包一起发，需要分包
-    static std::list<std::string> Unpack(const std::span<const uint8_t>& buffer);
+    static std::list<std::tuple<LiveCommand, std::string>> Unpack(
+        const std::span<const uint8_t>& buffer);
 
+    static LiveCommand GetLiveCommand(const std::string_view& cmd);
+    static std::string GetLiveCommandStr(const std::string_view& cmd);
 private:
     /// @brief 解包头部
     static HeaderTuple UnpackHeader(const std::span<const uint8_t>& buffer, unsigned front);
     // /// @brief 解析普通无压缩包体
-    static std::string UnpackBodyNoneCompress(const std::span<const uint8_t>& buffer,
-                                              unsigned front, unsigned end);
-    // /// @brief 解析普通无压缩包体
-    static std::list<std::string> UnpackBodyZlib(const std::span<const uint8_t>& buffer,
-                                                 unsigned front, unsigned end);
-    // /// @brief 解析普通无压缩包体
-    static std::list<std::string> UnpackBodyBrotli(const std::span<const uint8_t>& buffer,
-                                                   unsigned front, unsigned end);
+    static std::tuple<BiliApiUtil::LiveCommand, std::string> UnpackBodyNoneCompress(
+        const std::span<const uint8_t>& buffer, unsigned front, unsigned end);
+    // /// @brief 解析Zlib
+    static std::list<std::tuple<LiveCommand, std::string>> UnpackBodyZlib(
+        const std::span<const uint8_t>& buffer, unsigned front, unsigned end);
+    // /// @brief 解析Brotli
+    static std::list<std::tuple<LiveCommand, std::string>> UnpackBodyBrotli(
+        const std::span<const uint8_t>& buffer, unsigned front, unsigned end);
     // static BrotliDecoderState* brotliState;
 };
 
