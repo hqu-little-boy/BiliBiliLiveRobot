@@ -18,12 +18,12 @@
 
 const std::unordered_map<std::string, BiliApiUtil::LiveCommand> BiliApiUtil::liveCommandMap{
     {"DANMU_MSG", BiliApiUtil::LiveCommand::DANMU_MSG},
-    // {"INTERACT_WORD", BiliApiUtil::LiveCommand::INTERACT_WORD},
-    // {"USER_TOAST_MSG", BiliApiUtil::LiveCommand::USER_TOAST_MSG},
-    // {"SUPER_CHAT_MESSAGE", BiliApiUtil::LiveCommand::SUPER_CHAT_MESSAGE},
-    // {"SEND_GIFT", BiliApiUtil::LiveCommand::SEND_GIFT},
-    // {"COMBO_SEND", BiliApiUtil::LiveCommand::COMBO_SEND},
-    // {"GUARD_BUY", BiliApiUtil::LiveCommand::GUARD_BUY},
+    {"INTERACT_WORD", BiliApiUtil::LiveCommand::INTERACT_WORD},
+    {"USER_TOAST_MSG", BiliApiUtil::LiveCommand::USER_TOAST_MSG},
+    {"SUPER_CHAT_MESSAGE", BiliApiUtil::LiveCommand::SUPER_CHAT_MESSAGE},
+    {"SEND_GIFT", BiliApiUtil::LiveCommand::SEND_GIFT},
+    {"COMBO_SEND", BiliApiUtil::LiveCommand::COMBO_SEND},
+    {"GUARD_BUY", BiliApiUtil::LiveCommand::GUARD_BUY},
     // {"ENTRY_EFFECT", BiliApiUtil::LiveCommand::ENTRY_EFFECT},
 };
 

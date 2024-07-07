@@ -5,7 +5,9 @@
 #ifndef LIVEBASECOMMAND_H
 #define LIVEBASECOMMAND_H
 #include "../../../Util/BiliUtil/BiliApiUtil.h"
+#include "../../Global/Logger.h"
 #include "../../Global/TimeStamp.h"
+#include "../User.h"
 
 #include <nlohmann/json.hpp>
 
@@ -20,8 +22,9 @@ public:
     virtual bool                      LoadMessage(const nlohmann::json& message) = 0;
     virtual void                      Run() const                                = 0;
     /// @brief 判断上次运行结束时间距离现在是否超过了5min
-    [[nodiscard]] bool IsTimeOut() const;
-    void               SetTimeStamp();
+    [[nodiscard]] bool                             IsTimeOut() const;
+    void                                           SetTimeStamp();
+    [[nodiscard]] virtual BiliApiUtil::LiveCommand GetCommandType() const = 0;
 
 private:
     TimeStamp                                 timestamp;

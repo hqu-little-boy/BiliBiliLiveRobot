@@ -13,16 +13,15 @@ public:
     explicit BiliLiveCommandDanmu(const nlohmann::json& message);
     ~BiliLiveCommandDanmu() override = default;
 
-    [[nodiscard]] std::string ToString() const override;
-    bool                      LoadMessage(const nlohmann::json& message) override;
-    virtual void              Run() const override;
+    [[nodiscard]] virtual std::string ToString() const override;
+    virtual bool                      LoadMessage(const nlohmann::json& message) override;
+    virtual void                      Run() const override;
+    [[nodiscard]] virtual BiliApiUtil::LiveCommand GetCommandType() const;
 
 private:
     User                                      user;
     std::string                               content;
     static constexpr BiliApiUtil::LiveCommand commandType = BiliApiUtil::LiveCommand::DANMU_MSG;
 };
-
-
 
 #endif   // LIVECOMMANDDANMU_H

@@ -4,6 +4,7 @@
 
 #include "BiliLiveCommandBase.h"
 
+
 BiliLiveCommandBase::BiliLiveCommandBase(const nlohmann::json& message)
     : timestamp(TimeStamp::Now())
 {

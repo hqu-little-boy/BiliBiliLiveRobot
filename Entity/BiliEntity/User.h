@@ -11,7 +11,8 @@
 class User
 {
 public:
-    User(uint64_t uid, const std::string& uname);
+    User(uint64_t uid, const std::string& uname, unsigned guardLevel);
+    User(uint64_t uid, const std::string& uname, unsigned fanCount, unsigned guardLevel);
     // User(const User& other);
     // User(User&& other);
     // User& operator=(const User& other);
@@ -24,8 +25,9 @@ public:
 private:
     uint64_t    uid;
     std::string uname;
-    unsigned    level;      // 荣耀等级
-    unsigned    fanCount;   // 粉丝数
+    unsigned    level;   // 荣耀等级
+    // unsigned    fanCount;     // 粉丝数
+    unsigned guardLevel;   // 舰长等级
 };
 
 

@@ -22,10 +22,11 @@ public:
     [[nodiscard]] std::string PopWaitedMessage();
     void                      ClearWaitedMessage();
 
-    void                           PushCommandPool(BiliApiUtil::LiveCommand           eCommand,
-                                                   std::unique_ptr<BiliLiveCommandBase>&& commandPtr);
+    void                               PushCommandPool(BiliApiUtil::LiveCommand               eCommand,
+                                                       std::unique_ptr<BiliLiveCommandBase>&& commandPtr);
     [[nodiscard]] BiliLiveCommandBase* PopCommandPool(BiliApiUtil::LiveCommand eCommand);
-    void                           ClearCommandPool();
+    void                               ClearCommandPool();
+    [[nodiscard]] bool                 IsCommandPoolEmpty(BiliApiUtil::LiveCommand eCommand);
 
 private:
     MessageDeque()  = default;

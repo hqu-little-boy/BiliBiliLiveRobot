@@ -3,7 +3,8 @@ project(BiliBiliLiveRobot)
 
 set(CMAKE_CXX_STANDARD 23)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wall -Wextra")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Werror -fsanitize=address -fsanitize=undefined -fsanitize=leak") # 指定编译选项
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Werror -fsanitize=address -fsanitize=undefined -fsanitize=leak") # 指定编译选项
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=thread -fsanitize=undefined") # 指定编译选项
 file(GLOB_RECURSE BASE_SOURCES "Base/*.h" "Base/*.cpp")
 file(GLOB_RECURSE ENTITY_SOURCES "Entity/*.h" "Entity/*.cpp")
 file(GLOB_RECURSE UTIL_SOURCES "Util/*.h" "Util/*.cpp")

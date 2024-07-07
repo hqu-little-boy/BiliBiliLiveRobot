@@ -15,7 +15,7 @@ class BiliCommandFactory
 {
 public:
     static BiliCommandFactory*           GetInstance();
-    std::unique_ptr<BiliLiveCommandBase> ProduceCommand(BiliApiUtil::LiveCommand eCommand,
+    std::unique_ptr<BiliLiveCommandBase> GetCommand(BiliApiUtil::LiveCommand eCommand,
                                                        const nlohmann::json&    message);
 
 private:

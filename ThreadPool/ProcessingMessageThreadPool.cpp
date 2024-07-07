@@ -5,6 +5,7 @@
 
 #include "../Entity/BiliEntity/BiliCommandFactory.h"
 #include "../Entity/Global/Logger.h"
+#include "../Entity/Global/MessageDeque.h"
 #include "../Util/BiliUtil/BiliApiUtil.h"
 ProcessingMessageThreadPool* ProcessingMessageThreadPool::pInstance{
     new ProcessingMessageThreadPool()};
@@ -37,18 +38,18 @@ void ProcessingMessageThreadPool::AddTask(const std::string& message)
     }
     catch (const nlohmann::json::parse_error& e)
     {
-        LOG_MESSAGE(LogLevel::ERROR, "Failed to parse message");
+        LOG_MESSAGE(LogLevel::ERROR, e.what());
         return;
     }
     auto uniqueCommand =
-        std::move(BiliCommandFactory::GetInstance()->ProduceCommand(command, jsonMessage));
+        std::move(BiliCommandFactory::GetInstance()->GetCommand(command, jsonMessage));
     if (uniqueCommand == nullptr)
     {
-        LOG_VAR(LogLevel::DEBUG, BiliApiUtil::GetLiveCommandStr(message));
-        LOG_MESSAGE(LogLevel::ERROR, "Failed to produce command");
+        LOG_MESSAGE(LogLevel::ERROR,
+                    BiliApiUtil::GetLiveCommandStr(message) + " Failed to produce command");
         return;
     }
-    LOG_VAR(LogLevel::DEBUG, uniqueCommand->ToString());
+    // LOG_VAR(LogLevel::DEBUG, uniqueCommand->ToString());
     this->taskQueue.push(std::move(uniqueCommand));
     this->processingMessageThreadPoolCondition.notify_one();
 }
@@ -57,8 +58,8 @@ void ProcessingMessageThreadPool::Start()
 {
     for (int i = 0; i < threadNum; ++i)
     {
-        this->processingMessageThreadPool.push_back(
-            std::jthread(&ProcessingMessageThreadPool::ThreadRun, this));
+        this->processingMessageThreadPool.emplace_back(&ProcessingMessageThreadPool::ThreadRun,
+                                                       this);
     }
 }
 
@@ -74,6 +75,8 @@ void ProcessingMessageThreadPool::ThreadRun()
         lock.unlock();
         this->processingMessageThreadPoolCondition.notify_one();
         task->Run();
+        task->SetTimeStamp();
+        MessageDeque::GetInstance()->PushCommandPool(task->GetCommandType(), std::move(task));
         lock.lock();
     }
 }

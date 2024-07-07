@@ -6,11 +6,19 @@
 
 #include <format>
 
-User::User(uint64_t uid, const std::string& uname)
+User::User(uint64_t uid, const std::string& uname, unsigned guardLevel)
     : uid(uid)
     , uname(uname)
     , level(0)
-    , fanCount(0)
+    , guardLevel(guardLevel)
+{
+}
+
+User::User(uint64_t uid, const std::string& uname, unsigned level, unsigned guardLevel)
+    : uid(uid)
+    , uname(uname)
+    , level(level)
+    , guardLevel(guardLevel)
 {
 }
 
@@ -68,5 +76,6 @@ const std::string& User::GetUname() const
 
 std::string User::ToString() const
 {
-    return std::format("uid: {}, uname: {}", this->uid, this->uname);
+    return std::format(
+        "uid: {}, uname: {}, guardLevel: {}", this->uid, this->uname, this->guardLevel);
 }

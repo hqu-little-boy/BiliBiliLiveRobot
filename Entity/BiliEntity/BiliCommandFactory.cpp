@@ -4,7 +4,12 @@
 
 #include "BiliCommandFactory.h"
 
+#include "../Global/MessageDeque.h"
 #include "Command/BiliLiveCommandDanmu.h"
+#include "Command/BiliLiveCommandEntryEffect.h"
+#include "Command/BiliLiveCommandInteractWord.h"
+#include "Command/BiliLiveCommandSendGift.h"
+
 template<typename T>
 std::unique_ptr<BiliLiveCommandBase> CreateCommand(const nlohmann::json& message)
 {
@@ -23,7 +28,7 @@ BiliCommandFactory* BiliCommandFactory::GetInstance()
     return pInstance;
 }
 
-std::unique_ptr<BiliLiveCommandBase> BiliCommandFactory::ProduceCommand(
+std::unique_ptr<BiliLiveCommandBase> BiliCommandFactory::GetCommand(
     BiliApiUtil::LiveCommand eCommand, const nlohmann::json& message)
 {
     if (eCommand == BiliApiUtil::LiveCommand::NONE || eCommand == BiliApiUtil::LiveCommand::OTHER)
@@ -32,6 +37,11 @@ std::unique_ptr<BiliLiveCommandBase> BiliCommandFactory::ProduceCommand(
     }
     if (this->commandMap.contains(eCommand))
     {
+        auto pCommand{MessageDeque::GetInstance()->PopCommandPool(eCommand)};
+        if (pCommand != nullptr && pCommand->LoadMessage(message))
+        {
+            return std::move(std::unique_ptr<BiliLiveCommandBase>(pCommand));
+        }
         return std::move(this->commandMap[eCommand](message));
     }
     return nullptr;
@@ -40,4 +50,9 @@ std::unique_ptr<BiliLiveCommandBase> BiliCommandFactory::ProduceCommand(
 BiliCommandFactory::BiliCommandFactory()
 {
     this->commandMap[BiliApiUtil::LiveCommand::DANMU_MSG] = CreateCommand<BiliLiveCommandDanmu>;
+    // this->commandMap[BiliApiUtil::LiveCommand::ENTRY_EFFECT] =
+    //     CreateCommand<BiliLiveCommandEntryEffect>;
+    this->commandMap[BiliApiUtil::LiveCommand::INTERACT_WORD] =
+        CreateCommand<BiliLiveCommandInteractWord>;
+    this->commandMap[BiliApiUtil::LiveCommand::SEND_GIFT] = CreateCommand<BiliLiveCommandSendGift>;
 }
