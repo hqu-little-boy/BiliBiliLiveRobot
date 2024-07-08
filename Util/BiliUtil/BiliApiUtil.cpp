@@ -221,7 +221,7 @@ std::list<std::tuple<BiliApiUtil::LiveCommand, std::string>> BiliApiUtil::Unpack
         }
         if (result == BROTLI_DECODER_RESULT_ERROR ||
             result == BROTLI_DECODER_RESULT_NEEDS_MORE_INPUT ||
-            availableInput == 0 && result == BROTLI_DECODER_RESULT_SUCCESS)
+            (availableInput == 0 && result == BROTLI_DECODER_RESULT_SUCCESS))
         {
             break;
         }

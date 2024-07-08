@@ -196,7 +196,7 @@ bool BiliLogin::GetLoginInfo()
         // std::cout << cookie << std::endl;
         std::vector<std::string> tokens;
         boost::split(tokens, cookie, boost::is_any_of("="));
-        if (!tokens.size() == 2)
+        if (tokens.size() != 2)
         {
             continue;
         }

@@ -16,7 +16,7 @@
 int main()
 {
     // 判断cookie/bili_cookie.json是否存在
-    std::string_view cookiePath = "cookie/bili_cookie.json";
+    std::string_view cookiePath = "./cookie/bili_cookie.json";
     if (!std::filesystem::exists(cookiePath))
     {
         BiliLogin login;
@@ -33,7 +33,7 @@ int main()
     }
 
     if (!Config::GetInstance()->LoadFromJson(
-            "/home/zeng/CLionProjects/BiliBiliLiveRobot/Config/configure.json"))
+            "./Config/configure.json"))
     {
         LOG_MESSAGE(LogLevel::ERROR, "Failed to load config file");
         return EXIT_FAILURE;

@@ -21,12 +21,12 @@ public:
     bool GetLoginInfo();
 
 private:
-    Url qrCodeUrl;
-    Url loginInfoUrl;
-
     boost::asio::io_context        ioc;        // IO上下文
     boost::asio::ssl::context      ctx;        // SSL上下文
     boost::asio::ip::tcp::resolver resolver;   // DNS解析器
+
+    Url qrCodeUrl;
+    Url loginInfoUrl;
 
     std::string qrCodeKey;
 };

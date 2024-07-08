@@ -48,9 +48,9 @@ std::unique_ptr<BiliLiveCommandBase> BiliCommandFactory::GetCommand(
         auto pCommand{MessageDeque::GetInstance()->PopCommandPool(eCommand)};
         if (pCommand != nullptr && pCommand->LoadMessage(message))
         {
-            return std::move(std::unique_ptr<BiliLiveCommandBase>(pCommand));
+            return std::unique_ptr<BiliLiveCommandBase>(pCommand);
         }
-        return std::move(this->commandMap[eCommand](message));
+        return this->commandMap[eCommand](message);
     }
     return nullptr;
 }
