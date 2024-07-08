@@ -19,11 +19,19 @@
 const std::unordered_map<std::string, BiliApiUtil::LiveCommand> BiliApiUtil::liveCommandMap{
     {"DANMU_MSG", BiliApiUtil::LiveCommand::DANMU_MSG},
     {"INTERACT_WORD", BiliApiUtil::LiveCommand::INTERACT_WORD},
-    {"USER_TOAST_MSG", BiliApiUtil::LiveCommand::USER_TOAST_MSG},
+    // {"USER_TOAST_MSG", BiliApiUtil::LiveCommand::USER_TOAST_MSG},
     {"SUPER_CHAT_MESSAGE", BiliApiUtil::LiveCommand::SUPER_CHAT_MESSAGE},
     {"SEND_GIFT", BiliApiUtil::LiveCommand::SEND_GIFT},
-    {"COMBO_SEND", BiliApiUtil::LiveCommand::COMBO_SEND},
+    // {"COMBO_SEND", BiliApiUtil::LiveCommand::COMBO_SEND},
     {"GUARD_BUY", BiliApiUtil::LiveCommand::GUARD_BUY},
+    {"SUPER_CHAT_MESSAGE", BiliApiUtil::LiveCommand::SUPER_CHAT_MESSAGE},
+    {"LIVE", BiliApiUtil::LiveCommand::LIVE},
+    {"PREPARING", BiliApiUtil::LiveCommand::PREPARING},
+    {"POPULARITY_RED_POCKET_NEW", BiliApiUtil::LiveCommand::POPULARITY_RED_POCKET_NEW},
+    {"POPULARITY_RED_POCKET_WINNER_LIST",
+     BiliApiUtil::LiveCommand::POPULARITY_RED_POCKET_WINNER_LIST},
+    {"ANCHOR_LOT_START", BiliApiUtil::LiveCommand::ANCHOR_LOT_START},
+    {"ANCHOR_LOT_END", BiliApiUtil::LiveCommand::ANCHOR_LOT_END},
     // {"ENTRY_EFFECT", BiliApiUtil::LiveCommand::ENTRY_EFFECT},
 };
 

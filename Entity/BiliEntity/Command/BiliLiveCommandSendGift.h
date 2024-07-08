@@ -18,7 +18,7 @@ public:
     [[nodiscard]] virtual std::string ToString() const override;
     virtual bool                      LoadMessage(const nlohmann::json& message) override;
     virtual void                      Run() const override;
-    [[nodiscard]] virtual BiliApiUtil::LiveCommand GetCommandType() const;
+    // [[nodiscard]] virtual BiliApiUtil::LiveCommand GetCommandType() const;
 
 private:
     User                                      user;

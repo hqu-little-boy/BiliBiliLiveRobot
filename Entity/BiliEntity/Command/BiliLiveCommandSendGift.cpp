@@ -51,7 +51,7 @@ void BiliLiveCommandSendGift::Run() const
     LOG_MESSAGE(LogLevel::INFO, this->ToString());
 }
 
-BiliApiUtil::LiveCommand BiliLiveCommandSendGift::GetCommandType() const
-{
-    return commandType;
-}
+// BiliApiUtil::LiveCommand BiliLiveCommandSendGift::GetCommandType() const
+// {
+//     return commandType;
+// }

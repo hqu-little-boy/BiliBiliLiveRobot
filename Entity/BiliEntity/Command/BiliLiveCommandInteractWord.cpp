@@ -74,7 +74,7 @@ void BiliLiveCommandInteractWord::Run() const
     LOG_MESSAGE(LogLevel::INFO, this->ToString());
 }
 
-BiliApiUtil::LiveCommand BiliLiveCommandInteractWord::GetCommandType() const
-{
-    return commandType;
-}
+// BiliApiUtil::LiveCommand BiliLiveCommandInteractWord::GetCommandType() const
+// {
+//     return commandType;
+// }

@@ -46,7 +46,7 @@ void BiliLiveCommandEntryEffect::Run() const
     LOG_MESSAGE(LogLevel::INFO, this->ToString());
 }
 
-BiliApiUtil::LiveCommand BiliLiveCommandEntryEffect::GetCommandType() const
-{
-    return commandType;
-}
+// BiliApiUtil::LiveCommand BiliLiveCommandEntryEffect::GetCommandType() const
+// {
+//     return commandType;
+// }

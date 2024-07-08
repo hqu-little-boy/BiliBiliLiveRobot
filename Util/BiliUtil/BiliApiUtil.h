@@ -52,11 +52,17 @@ public:
         DANMU_MSG,       // 弹幕消息
         INTERACT_WORD,   // 进入直播间或关注消息
         GUARD_BUY,       // 用户购买舰长 / 提督 / 总督
-        USER_TOAST_MSG,   // 用户购买舰长 / 提督 / 总督后的庆祝消息，内容包含用户陪伴天数
-        SUPER_CHAT_MESSAGE,   // 用户发送醒目留言
-        SEND_GIFT,            // 投喂礼物等
-        COMBO_SEND,           // 礼物连击
-        ENTRY_EFFECT,         // 用户进入直播间
+        // USER_TOAST_MSG,   // 用户购买舰长 / 提督 / 总督后的庆祝消息，内容包含用户陪伴天数
+        SUPER_CHAT_MESSAGE,                  // 用户发送醒目留言
+        SEND_GIFT,                           // 投喂礼物等
+        // COMBO_SEND,                          // 礼物连击
+        ENTRY_EFFECT,                        // 用户进入直播间
+        LIVE,                                // 开播
+        PREPARING,                           // 下播
+        POPULARITY_RED_POCKET_NEW,           // 红包
+        POPULARITY_RED_POCKET_WINNER_LIST,   // 红包中奖名单
+        ANCHOR_LOT_START,                    // 开始抽奖
+        ANCHOR_LOT_END,                      // 结束抽奖
     };
     static const std::unordered_map<std::string, LiveCommand> liveCommandMap;
     // 自定义Header结构体，用于存储包头信息
@@ -80,6 +86,7 @@ public:
 
     static LiveCommand GetLiveCommand(const std::string_view& cmd);
     static std::string GetLiveCommandStr(const std::string_view& cmd);
+
 private:
     /// @brief 解包头部
     static HeaderTuple UnpackHeader(const std::span<const uint8_t>& buffer, unsigned front);

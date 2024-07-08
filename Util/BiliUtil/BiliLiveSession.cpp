@@ -225,7 +225,7 @@ void BiliLiveSession::on_handshake(boost::beast::error_code ec)
         {"key", this->token},
     };
     // LOG_VAR(LogLevel::DEBUG, body.dump(4));
-    LOG_VAR(LogLevel::DEBUG, body.dump(-1));
+    // LOG_VAR(LogLevel::DEBUG, body.dump(-1));
     // std::string bodyStr = R"({"roomid": )" + std::to_string(Config::GetInstance()->GetRoomId()) +
     //                       R"(, "key": ")" + this->token + R"("})";
     // std::string bodyStr =

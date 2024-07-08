@@ -5,10 +5,18 @@
 #include "BiliCommandFactory.h"
 
 #include "../Global/MessageDeque.h"
+#include "Command/BiliLiveCommandAnchorLotEnd.h"
+#include "Command/BiliLiveCommandAnchorLotStart.h"
 #include "Command/BiliLiveCommandDanmu.h"
 #include "Command/BiliLiveCommandEntryEffect.h"
+#include "Command/BiliLiveCommandGuardBuy.h"
 #include "Command/BiliLiveCommandInteractWord.h"
+#include "Command/BiliLiveCommandLive.h"
+#include "Command/BiliLiveCommandPreparing.h"
+#include "Command/BiliLiveCommandRedPocketEnd.h"
+#include "Command/BiliLiveCommandRedPocketStart.h"
 #include "Command/BiliLiveCommandSendGift.h"
+#include "Command/BiliLiveCommandSuperChat.h"
 
 template<typename T>
 std::unique_ptr<BiliLiveCommandBase> CreateCommand(const nlohmann::json& message)
@@ -55,4 +63,17 @@ BiliCommandFactory::BiliCommandFactory()
     this->commandMap[BiliApiUtil::LiveCommand::INTERACT_WORD] =
         CreateCommand<BiliLiveCommandInteractWord>;
     this->commandMap[BiliApiUtil::LiveCommand::SEND_GIFT] = CreateCommand<BiliLiveCommandSendGift>;
+    this->commandMap[BiliApiUtil::LiveCommand::GUARD_BUY] = CreateCommand<BiliLiveCommandGuardBuy>;
+    this->commandMap[BiliApiUtil::LiveCommand::SUPER_CHAT_MESSAGE] =
+        CreateCommand<BiliLiveCommandSuperChat>;
+    this->commandMap[BiliApiUtil::LiveCommand::ANCHOR_LOT_START] =
+        CreateCommand<BiliLiveCommandAnchorLotStart>;
+    this->commandMap[BiliApiUtil::LiveCommand::ANCHOR_LOT_END] =
+        CreateCommand<BiliLiveCommandAnchorLotEnd>;
+    this->commandMap[BiliApiUtil::LiveCommand::LIVE]      = CreateCommand<BiliLiveCommandLive>;
+    this->commandMap[BiliApiUtil::LiveCommand::PREPARING] = CreateCommand<BiliLiveCommandPreparing>;
+    this->commandMap[BiliApiUtil::LiveCommand::POPULARITY_RED_POCKET_NEW] =
+        CreateCommand<BiliLiveCommandRedPocketStart>;
+    this->commandMap[BiliApiUtil::LiveCommand::POPULARITY_RED_POCKET_WINNER_LIST] =
+        CreateCommand<BiliLiveCommandRedPocketEnd>;
 }

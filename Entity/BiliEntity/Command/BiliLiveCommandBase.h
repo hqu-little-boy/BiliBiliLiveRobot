@@ -24,7 +24,7 @@ public:
     /// @brief 判断上次运行结束时间距离现在是否超过了5min
     [[nodiscard]] bool                             IsTimeOut() const;
     void                                           SetTimeStamp();
-    [[nodiscard]] virtual BiliApiUtil::LiveCommand GetCommandType() const = 0;
+    [[nodiscard]] virtual BiliApiUtil::LiveCommand GetCommandType() const;
 
 private:
     TimeStamp                                 timestamp;

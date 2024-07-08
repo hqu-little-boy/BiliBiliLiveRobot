@@ -19,3 +19,8 @@ void BiliLiveCommandBase::SetTimeStamp()
 {
     this->timestamp = TimeStamp::Now();
 }
+
+BiliApiUtil::LiveCommand BiliLiveCommandBase::GetCommandType() const
+{
+    return commandType;
+}

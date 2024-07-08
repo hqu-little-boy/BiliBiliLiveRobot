@@ -94,10 +94,12 @@ bool Logger::Log(LogLevel level, const std::string_view& file, int line,
     // 互斥锁，保证输出到标准输出的内容不会混乱
     std::lock_guard<std::mutex> guard(printMutex);
     // 输出到标准输出
-    std::println(std::cout, "{}", strLog);
+    // std::println(std::cout, "{}", strLog);
+    std::cout << strLog << std::endl;
     if (isLogInFile)
     {
-        std::println(this->logFile, "{}", strLog);
+        this->logFile << strLog << std::endl;
+        // std::println(this->logFile, "{}", strLog);
     }
     // Logger::sync_out << strLog << std::endl;
     return true;

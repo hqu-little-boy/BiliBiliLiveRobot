@@ -41,7 +41,7 @@ void BiliLiveCommandDanmu::Run() const
     LOG_VAR(LogLevel::INFO, this->ToString());
 }
 
-BiliApiUtil::LiveCommand BiliLiveCommandDanmu::GetCommandType() const
-{
-    return commandType;
-}
+// BiliApiUtil::LiveCommand BiliLiveCommandDanmu::GetCommandType() const
+// {
+//     return commandType;
+// }
