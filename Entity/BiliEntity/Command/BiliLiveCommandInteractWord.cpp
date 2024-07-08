@@ -26,6 +26,11 @@ std::string BiliLiveCommandInteractWord::ToString() const
         return std::format("{}关注了主播", user.GetUname());
         break;
     }
+    case 3:
+    {
+        return std::format("{}分享了直播间", user.GetUname());
+        break;
+    }
     default:
     {
         LOG_VAR(LogLevel::ERROR, megType);

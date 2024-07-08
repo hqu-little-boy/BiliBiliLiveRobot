@@ -38,7 +38,7 @@ bool BiliLiveCommandDanmu::LoadMessage(const nlohmann::json& message)
 
 void BiliLiveCommandDanmu::Run() const
 {
-    LOG_VAR(LogLevel::INFO, this->ToString());
+    LOG_MESSAGE(LogLevel::INFO, this->ToString());
 }
 
 // BiliApiUtil::LiveCommand BiliLiveCommandDanmu::GetCommandType() const
