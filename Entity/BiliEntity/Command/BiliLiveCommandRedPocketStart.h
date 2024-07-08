@@ -19,7 +19,7 @@ public:
 
 private:
     const static BiliApiUtil::LiveCommand commandType =
-        BiliApiUtil::LiveCommand::POPULARITY_RED_POCKET_NEW;
+        BiliApiUtil::LiveCommand::POPULARITY_RED_POCKET_START;
 };
 
 

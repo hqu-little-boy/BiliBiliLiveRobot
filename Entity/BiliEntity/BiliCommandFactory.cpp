@@ -72,7 +72,7 @@ BiliCommandFactory::BiliCommandFactory()
         CreateCommand<BiliLiveCommandAnchorLotEnd>;
     this->commandMap[BiliApiUtil::LiveCommand::LIVE]      = CreateCommand<BiliLiveCommandLive>;
     this->commandMap[BiliApiUtil::LiveCommand::PREPARING] = CreateCommand<BiliLiveCommandPreparing>;
-    this->commandMap[BiliApiUtil::LiveCommand::POPULARITY_RED_POCKET_NEW] =
+    this->commandMap[BiliApiUtil::LiveCommand::POPULARITY_RED_POCKET_START] =
         CreateCommand<BiliLiveCommandRedPocketStart>;
     this->commandMap[BiliApiUtil::LiveCommand::POPULARITY_RED_POCKET_WINNER_LIST] =
         CreateCommand<BiliLiveCommandRedPocketEnd>;

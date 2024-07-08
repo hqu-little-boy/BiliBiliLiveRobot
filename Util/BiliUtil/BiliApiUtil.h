@@ -59,7 +59,8 @@ public:
         ENTRY_EFFECT,                        // 用户进入直播间
         LIVE,                                // 开播
         PREPARING,                           // 下播
-        POPULARITY_RED_POCKET_NEW,           // 红包
+        // POPULARITY_RED_POCKET_NEW,           // 红包
+        POPULARITY_RED_POCKET_START,         // 红包开始
         POPULARITY_RED_POCKET_WINNER_LIST,   // 红包中奖名单
         ANCHOR_LOT_START,                    // 开始抽奖
         ANCHOR_LOT_END,                      // 结束抽奖
