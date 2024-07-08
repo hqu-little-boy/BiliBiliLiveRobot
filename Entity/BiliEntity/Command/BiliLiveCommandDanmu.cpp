@@ -16,7 +16,7 @@ BiliLiveCommandDanmu::BiliLiveCommandDanmu(const nlohmann::json& message)
 
 std::string BiliLiveCommandDanmu::ToString() const
 {
-    return std::format("User: {}, Content: {}", this->user.ToString(), this->content);
+    return std::format("{}: {}", this->user.GetUname(), this->content);
 }
 
 bool BiliLiveCommandDanmu::LoadMessage(const nlohmann::json& message)
