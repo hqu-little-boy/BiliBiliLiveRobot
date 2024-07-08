@@ -17,7 +17,7 @@ class ProcessingMessageThreadPool
 {
 public:
     static ProcessingMessageThreadPool* GetInstance();
-    void                                AddTask(const std::string& message);
+    void                                AddTask(std::string&& message);
     void                                Start();
 
 private:
@@ -26,13 +26,13 @@ private:
     ProcessingMessageThreadPool(const ProcessingMessageThreadPool&)            = delete;
     ProcessingMessageThreadPool& operator=(const ProcessingMessageThreadPool&) = delete;
 
-    void                                             ThreadRun();
-    static ProcessingMessageThreadPool*              pInstance;
-    std::queue<std::unique_ptr<BiliLiveCommandBase>> taskQueue;
-    std::list<std::jthread>                          processingMessageThreadPool;
-    std::mutex                                       processingMessageThreadPoolMutex;
-    std::condition_variable                          processingMessageThreadPoolCondition;
-    static const int                                 threadNum;
+    void                                ThreadRun();
+    static ProcessingMessageThreadPool* pInstance;
+    std::queue<std::string>             taskQueue;
+    std::list<std::jthread>             processingMessageThreadPool;
+    std::mutex                          processingMessageThreadPoolMutex;
+    std::condition_variable             processingMessageThreadPoolCondition;
+    static const int                    threadNum;
 };
 
 

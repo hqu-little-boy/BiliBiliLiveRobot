@@ -301,7 +301,7 @@ void BiliLiveSession::on_read(boost::beast::error_code ec, std::size_t bytes_tra
                     boost::asio::buffer_cast<const uint8_t*>(buf) + boost::asio::buffer_size(buf));
     this->buffer.consume(response.size());
     auto pack = BiliApiUtil::Unpack(response);
-    for (const auto& [command, content] : pack)
+    for (auto& [command, content] : pack)
     {
         // LOG_VAR(LogLevel::INFO, std::get<0>(item).ToString());
         // LOG_VAR(LogLevel::DEBUG, item);
@@ -319,7 +319,7 @@ void BiliLiveSession::on_read(boost::beast::error_code ec, std::size_t bytes_tra
         //     // LOG_VAR(LogLevel::ERROR, result);
         // }
         LOG_VAR(LogLevel::DEBUG, content);
-        ProcessingMessageThreadPool::GetInstance()->AddTask(content);
+        ProcessingMessageThreadPool::GetInstance()->AddTask(std::move(content));
     }
     this->ws.async_read(
         this->buffer,

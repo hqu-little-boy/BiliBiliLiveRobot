@@ -21,36 +21,10 @@ ProcessingMessageThreadPool* ProcessingMessageThreadPool::GetInstance()
     return pInstance;
 }
 
-void ProcessingMessageThreadPool::AddTask(const std::string& message)
+void ProcessingMessageThreadPool::AddTask(std::string&& message)
 {
     std::unique_lock<std::mutex> lock(this->processingMessageThreadPoolMutex);
-    auto                         command = BiliApiUtil::GetLiveCommand(message);
-    if (command == BiliApiUtil::LiveCommand::NONE || command == BiliApiUtil::LiveCommand::OTHER)
-    {
-        assert(false);
-        LOG_MESSAGE(LogLevel::ERROR, "Invalid command");
-        return;
-    }
-    nlohmann::json jsonMessage;
-    try
-    {
-        jsonMessage = nlohmann::json::parse(message);
-    }
-    catch (const nlohmann::json::parse_error& e)
-    {
-        LOG_MESSAGE(LogLevel::ERROR, e.what());
-        return;
-    }
-    auto uniqueCommand =
-        std::move(BiliCommandFactory::GetInstance()->GetCommand(command, jsonMessage));
-    if (uniqueCommand == nullptr)
-    {
-        LOG_MESSAGE(LogLevel::ERROR,
-                    BiliApiUtil::GetLiveCommandStr(message) + " Failed to produce command");
-        return;
-    }
-    // LOG_VAR(LogLevel::DEBUG, uniqueCommand->ToString());
-    this->taskQueue.push(std::move(uniqueCommand));
+    this->taskQueue.push(message);
     this->processingMessageThreadPoolCondition.notify_one();
 }
 
@@ -70,13 +44,37 @@ void ProcessingMessageThreadPool::ThreadRun()
     {
         this->processingMessageThreadPoolCondition.wait(
             lock, [this]() { return !this->taskQueue.empty(); });
-        std::unique_ptr<BiliLiveCommandBase> task = std::move(this->taskQueue.front());
+        std::string message = std::move(this->taskQueue.front());
         this->taskQueue.pop();
         lock.unlock();
-        this->processingMessageThreadPoolCondition.notify_one();
-        task->Run();
-        task->SetTimeStamp();
-        MessageDeque::GetInstance()->PushCommandPool(task->GetCommandType(), std::move(task));
+        auto command = BiliApiUtil::GetLiveCommand(message);
+        if (command == BiliApiUtil::LiveCommand::NONE || command == BiliApiUtil::LiveCommand::OTHER)
+        {
+            assert(false);
+            LOG_MESSAGE(LogLevel::ERROR, "Invalid command");
+            return;
+        }
+        nlohmann::json jsonMessage;
+        try
+        {
+            jsonMessage = nlohmann::json::parse(message);
+        }
+        catch (const nlohmann::json::parse_error& e)
+        {
+            LOG_MESSAGE(LogLevel::ERROR, e.what());
+            return;
+        }
+        auto uniqueCommand =
+            std::move(BiliCommandFactory::GetInstance()->GetCommand(command, jsonMessage));
+        if (uniqueCommand == nullptr)
+        {
+            LOG_MESSAGE(LogLevel::ERROR,
+                        BiliApiUtil::GetLiveCommandStr(message) + " Failed to produce command");
+            return;
+        }
+        uniqueCommand->Run();
+        uniqueCommand->SetTimeStamp();
+        MessageDeque::GetInstance()->PushCommandPool(uniqueCommand->GetCommandType(), std::move(uniqueCommand));
         lock.lock();
     }
 }
