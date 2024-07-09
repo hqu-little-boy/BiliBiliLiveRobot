@@ -36,14 +36,14 @@ bool BiliLiveCommandEntryEffect::LoadMessage(const nlohmann::json& message)
     }
     catch (const nlohmann::json::exception& e)
     {
-        LOG_MESSAGE(LogLevel::ERROR, e.what());
+        LOG_MESSAGE(LogLevel::Error, e.what());
         return false;
     }
 }
 
 void BiliLiveCommandEntryEffect::Run() const
 {
-    LOG_MESSAGE(LogLevel::INFO, this->ToString());
+    LOG_MESSAGE(LogLevel::Info, this->ToString());
 }
 
 // BiliApiUtil::LiveCommand BiliLiveCommandEntryEffect::GetCommandType() const

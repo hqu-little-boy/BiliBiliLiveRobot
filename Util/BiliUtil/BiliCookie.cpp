@@ -22,7 +22,7 @@ bool BiliCookie::LoadBiliCookieByJson(const nlohmann::json& json)
     }
     catch (const nlohmann::json::exception& e)
     {
-        LOG_MESSAGE(LogLevel::ERROR, std::format("Failed to load BiliCookie: {}", e.what()));
+        LOG_MESSAGE(LogLevel::Error, std::format("Failed to load BiliCookie: {}", e.what()));
         return false;
     }
 }
@@ -31,20 +31,20 @@ bool BiliCookie::LoadBiliCookieByJson(const nlohmann::json& json)
 // {
 //     if (jsonPath.empty())
 //     {
-//         LOG_MESSAGE(LogLevel::ERROR, "jsonPath is empty");
+//         LOG_MESSAGE(LogLevel::Error, "jsonPath is empty");
 //         return false;
 //     }
 //
 //     if (!std::filesystem::exists(jsonPath))
 //     {
-//         LOG_MESSAGE(LogLevel::ERROR, std::format("File not exists: {}", jsonPath));
+//         LOG_MESSAGE(LogLevel::Error, std::format("File not exists: {}", jsonPath));
 //         return false;
 //     }
 //
 //     std::ifstream ifs(jsonPath);
 //     if (!ifs.is_open())
 //     {
-//         LOG_MESSAGE(LogLevel::ERROR, std::format("Failed to open file: {}", jsonPath));
+//         LOG_MESSAGE(LogLevel::Error, std::format("Failed to open file: {}", jsonPath));
 //         return false;
 //     }
 //

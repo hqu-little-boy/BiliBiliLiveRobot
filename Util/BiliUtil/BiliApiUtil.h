@@ -10,6 +10,7 @@
 #include <boost/endian/buffers.hpp>
 #include <brotli/decode.h>
 #include <list>
+#include <span>
 #include <unordered_map>
 
 class BiliApiUtil : public noncopyable
@@ -53,12 +54,12 @@ public:
         INTERACT_WORD,   // 进入直播间或关注消息
         GUARD_BUY,       // 用户购买舰长 / 提督 / 总督
         // USER_TOAST_MSG,   // 用户购买舰长 / 提督 / 总督后的庆祝消息，内容包含用户陪伴天数
-        SUPER_CHAT_MESSAGE,                  // 用户发送醒目留言
-        SEND_GIFT,                           // 投喂礼物等
+        SUPER_CHAT_MESSAGE,   // 用户发送醒目留言
+        SEND_GIFT,            // 投喂礼物等
         // COMBO_SEND,                          // 礼物连击
-        ENTRY_EFFECT,                        // 用户进入直播间
-        LIVE,                                // 开播
-        PREPARING,                           // 下播
+        ENTRY_EFFECT,   // 用户进入直播间
+        LIVE,           // 开播
+        PREPARING,      // 下播
         // POPULARITY_RED_POCKET_NEW,           // 红包
         POPULARITY_RED_POCKET_START,         // 红包开始
         POPULARITY_RED_POCKET_WINNER_LIST,   // 红包中奖名单

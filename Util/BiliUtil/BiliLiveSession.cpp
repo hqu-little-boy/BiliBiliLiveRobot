@@ -30,7 +30,7 @@ bool BiliLiveSession::InitSSLCert()
     // 判断证书是否存在
     if (!std::filesystem::exists("/etc/ssl/certs/ca-certificates.crt"))
     {
-        LOG_MESSAGE(LogLevel::ERROR, "Failed to find ssl cert");
+        LOG_MESSAGE(LogLevel::Error, "Failed to find ssl cert");
         return false;
     }
     // 加载证书
@@ -42,10 +42,10 @@ bool BiliLiveSession::InitSSLCert()
 
 bool BiliLiveSession::InitRoomInfo()
 {
-    LOG_VAR(LogLevel::DEBUG, Config::GetInstance()->GetDanmuSeverConfUrl().GetHost());
-    LOG_VAR(LogLevel::DEBUG, Config::GetInstance()->GetDanmuSeverConfUrl().GetPort());
-    LOG_VAR(LogLevel::DEBUG, Config::GetInstance()->GetDanmuSeverConfUrl().GetTarget());
-    LOG_VAR(LogLevel::DEBUG, Config::GetInstance()->GetDanmuSeverConfUrl().GetTargetWithQuery());
+    LOG_VAR(LogLevel::Debug, Config::GetInstance()->GetDanmuSeverConfUrl().GetHost());
+    LOG_VAR(LogLevel::Debug, Config::GetInstance()->GetDanmuSeverConfUrl().GetPort());
+    LOG_VAR(LogLevel::Debug, Config::GetInstance()->GetDanmuSeverConfUrl().GetTarget());
+    LOG_VAR(LogLevel::Debug, Config::GetInstance()->GetDanmuSeverConfUrl().GetTargetWithQuery());
     // 解析域名和端口
     const auto results = this->resolver.resolve(
         Config::GetInstance()->GetDanmuSeverConfUrl().GetHost(),
@@ -77,16 +77,16 @@ bool BiliLiveSession::InitRoomInfo()
     boost::beast::http::read(stream, buffer, res);
     if (res.result() != boost::beast::http::status::ok)
     {
-        LOG_VAR(LogLevel::ERROR, res.result_int());
+        LOG_VAR(LogLevel::Error, res.result_int());
         return false;
     }
     // 解析json
     std::string    resStr        = boost::beast::buffers_to_string(res.body().data());
     nlohmann::json danmuInfoJson = nlohmann::json::parse(resStr);
-    LOG_VAR(LogLevel::DEBUG, danmuInfoJson.dump(4));
+    LOG_VAR(LogLevel::Debug, danmuInfoJson.dump(4));
     if (danmuInfoJson["code"] != 0)
     {
-        LOG_VAR(LogLevel::ERROR, danmuInfoJson["message"].dump(4));
+        LOG_VAR(LogLevel::Error, danmuInfoJson["message"].dump(4));
         return false;
     }
     for (const auto& item : danmuInfoJson["data"]["host_list"])
@@ -104,12 +104,12 @@ void BiliLiveSession::run()
 {
     if (!this->InitSSLCert())
     {
-        LOG_MESSAGE(LogLevel::ERROR, "Failed to init ssl cert");
+        LOG_MESSAGE(LogLevel::Error, "Failed to init ssl cert");
         return;
     }
     if (!this->InitRoomInfo())
     {
-        LOG_MESSAGE(LogLevel::ERROR, "Failed to init room info");
+        LOG_MESSAGE(LogLevel::Error, "Failed to init room info");
         return;
     }
     // 异步解析域名
@@ -128,7 +128,7 @@ void BiliLiveSession::on_resolve(boost::beast::error_code                       
     // 如果有错误则返回错误信息
     if (ec)
     {
-        LOG_VAR(LogLevel::ERROR, ec.message());
+        LOG_VAR(LogLevel::Error, ec.message());
         return;
     }
     // 设置超时时间
@@ -145,7 +145,7 @@ void BiliLiveSession::on_connect(boost::beast::error_code                       
 {
     if (ec)
     {
-        LOG_VAR(LogLevel::ERROR, ec.message());
+        LOG_VAR(LogLevel::Error, ec.message());
         return;
     }
     // Set a timeout on the operation
@@ -157,7 +157,7 @@ void BiliLiveSession::on_connect(boost::beast::error_code                       
     {
         ec = boost::beast::error_code(static_cast<int>(::ERR_get_error()),
                                       boost::asio::error::get_ssl_category());
-        LOG_VAR(LogLevel::ERROR, ec.message());
+        LOG_VAR(LogLevel::Error, ec.message());
         return;
     }
 
@@ -176,7 +176,7 @@ void BiliLiveSession::on_ssl_handshake(boost::beast::error_code ec)
 {
     if (ec)
     {
-        LOG_VAR(LogLevel::ERROR, ec.message());
+        LOG_VAR(LogLevel::Error, ec.message());
         return;
     }
     // Turn off the timeout on the tcp_stream, because
@@ -210,7 +210,7 @@ void BiliLiveSession::on_handshake(boost::beast::error_code ec)
 {
     if (ec)
     {
-        LOG_VAR(LogLevel::ERROR, ec.message());
+        LOG_VAR(LogLevel::Error, ec.message());
         return;
     }
     nlohmann::json body;
@@ -224,8 +224,8 @@ void BiliLiveSession::on_handshake(boost::beast::error_code ec)
         {"buvid", BiliRequestHeader::GetInstance()->GetBiliCookie().GetBuvid3()},
         {"key", this->token},
     };
-    // LOG_VAR(LogLevel::DEBUG, body.dump(4));
-    // LOG_VAR(LogLevel::DEBUG, body.dump(-1));
+    // LOG_VAR(LogLevel::Debug, body.dump(4));
+    // LOG_VAR(LogLevel::Debug, body.dump(-1));
     // std::string bodyStr = R"({"roomid": )" + std::to_string(Config::GetInstance()->GetRoomId()) +
     //                       R"(, "key": ")" + this->token + R"("})";
     // std::string bodyStr =
@@ -239,7 +239,7 @@ void BiliLiveSession::on_handshake(boost::beast::error_code ec)
     //         this->token,
     //         BiliRequestHeader::GetInstance()->GetBiliCookie().GetBuvid3()) +
     //     "}";
-    // LOG_VAR(LogLevel::DEBUG, bodyStr);
+    // LOG_VAR(LogLevel::Debug, bodyStr);
     std::string          bodyStr = body.dump(-1);
     std::vector<uint8_t> authMessage;
     BiliApiUtil::MakePack(body.dump(-1), BiliApiUtil::Operation::AUTH, authMessage);
@@ -255,7 +255,7 @@ void BiliLiveSession::on_write(boost::beast::error_code ec, std::size_t bytes_tr
 
     if (ec)
     {
-        LOG_VAR(LogLevel::ERROR, ec.message());
+        LOG_VAR(LogLevel::Error, ec.message());
         return;
     }
     // // std::this_thread::sleep_for(std::chrono::seconds(5));
@@ -289,11 +289,11 @@ void BiliLiveSession::on_read(boost::beast::error_code ec, std::size_t bytes_tra
         // this->ws.async_write(
         //     authMessage,
         //     boost::beast::bind_front_handler(&BiliLiveSession::on_write, shared_from_this()));
-        LOG_VAR(LogLevel::ERROR, ec.message());
+        LOG_VAR(LogLevel::Error, ec.message());
         return;
     }
     // std::cout << boost::beast::make_printable(this->buffer.data()) << std::endl;
-    // LOG_VAR(LogLevel::DEBUG, std::string(boost::beast::buffers_to_string(this->buffer.data())));
+    // LOG_VAR(LogLevel::Debug, std::string(boost::beast::buffers_to_string(this->buffer.data())));
     // 将this->buffer.data()转为std::vector<uint8_t>
     auto                 buf = this->buffer.data();
     std::vector<uint8_t> response;
@@ -303,22 +303,22 @@ void BiliLiveSession::on_read(boost::beast::error_code ec, std::size_t bytes_tra
     auto pack = BiliApiUtil::Unpack(response);
     for (auto& [command, content] : pack)
     {
-        // LOG_VAR(LogLevel::INFO, std::get<0>(item).ToString());
-        // LOG_VAR(LogLevel::DEBUG, item);
+        // LOG_VAR(LogLevel::Info, std::get<0>(item).ToString());
+        // LOG_VAR(LogLevel::Debug, item);
         // std::regex r(R"(\\)");                                  // 正则表达式匹配'\'
         // std::string result = std::regex_replace(item, r, "");   // 用空字符串替换所有匹配的'\'
         // try
         // {
         //     nlohmann::json json = nlohmann::json::parse(content);
-        //     LOG_VAR(LogLevel::DEBUG, json.dump(-1));
+        //     LOG_VAR(LogLevel::Debug, json.dump(-1));
         // }
         // catch (const nlohmann::json::exception& e)
         // {
-        //     LOG_VAR(LogLevel::ERROR, e.what());
-        //     LOG_VAR(LogLevel::ERROR, content);
-        //     // LOG_VAR(LogLevel::ERROR, result);
+        //     LOG_VAR(LogLevel::Error, e.what());
+        //     LOG_VAR(LogLevel::Error, content);
+        //     // LOG_VAR(LogLevel::Error, result);
         // }
-        LOG_VAR(LogLevel::DEBUG, content);
+        LOG_VAR(LogLevel::Debug, content);
         ProcessingMessageThreadPool::GetInstance()->AddTask(std::move(content));
     }
     this->ws.async_read(
@@ -330,7 +330,7 @@ void BiliLiveSession::on_close(boost::beast::error_code ec)
 {
     if (ec)
     {
-        LOG_VAR(LogLevel::ERROR, ec.message());
+        LOG_VAR(LogLevel::Error, ec.message());
         return;
     }
     // If we get here then the connection is closed gracefully

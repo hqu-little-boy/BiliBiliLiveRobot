@@ -57,16 +57,16 @@ bool BiliLogin::GetLoginQRCode()
     boost::beast::http::read(stream, buffer, res);
     if (res.result() != boost::beast::http::status::ok)
     {
-        LOG_VAR(LogLevel::ERROR, res.result_int());
+        LOG_VAR(LogLevel::Error, res.result_int());
         return false;
     }
     // 解析json
     std::string    resStr        = boost::beast::buffers_to_string(res.body().data());
     nlohmann::json danmuInfoJson = nlohmann::json::parse(resStr);
-    LOG_VAR(LogLevel::DEBUG, danmuInfoJson.dump(4));
+    LOG_VAR(LogLevel::Debug, danmuInfoJson.dump(4));
     if (danmuInfoJson["code"] != 0)
     {
-        LOG_VAR(LogLevel::ERROR, danmuInfoJson["message"].dump(4));
+        LOG_VAR(LogLevel::Error, danmuInfoJson["message"].dump(4));
         return false;
     }
     std::string url;
@@ -77,14 +77,14 @@ bool BiliLogin::GetLoginQRCode()
     }
     catch (const nlohmann::json::exception& e)
     {
-        LOG_VAR(LogLevel::ERROR, e.what());
+        LOG_VAR(LogLevel::Error, e.what());
         return false;
     }
     this->loginInfoUrl.SetQuery({{"qrcode_key", this->qrCodeKey}});
     QRcode* qrcode = QRcode_encodeString(url.data(), 2, QR_ECLEVEL_L, QR_MODE_8, 1);
     if (qrcode == nullptr)
     {
-        LOG_MESSAGE(LogLevel::ERROR, "Failed to encode QRCode");
+        LOG_MESSAGE(LogLevel::Error, "Failed to encode QRCode");
         return false;
     }
     // 控制台打印二维码
@@ -139,38 +139,38 @@ bool BiliLogin::GetLoginInfo()
     boost::beast::http::read(stream, buffer, res);
     if (res.result() != boost::beast::http::status::ok)
     {
-        LOG_VAR(LogLevel::ERROR, res.result_int());
+        LOG_VAR(LogLevel::Error, res.result_int());
         return false;
     }
     // 解析json
     std::string    resStr        = boost::beast::buffers_to_string(res.body().data());
     nlohmann::json danmuInfoJson = nlohmann::json::parse(resStr);
-    // LOG_VAR(LogLevel::DEBUG, danmuInfoJson.dump(4));
+    // LOG_VAR(LogLevel::Debug, danmuInfoJson.dump(4));
     if (danmuInfoJson["code"].get<int>() != 0)
     {
-        LOG_VAR(LogLevel::ERROR, danmuInfoJson["message"].dump(4));
+        LOG_VAR(LogLevel::Error, danmuInfoJson["message"].dump(4));
         return false;
     }
     // 判断是否扫描登录
     int registerCode = danmuInfoJson["data"]["code"].get<int>();
     // if (registerCode == 86038)   // 二维码已失效
     // {
-    //     LOG_MESSAGE(LogLevel::ERROR, "二维码已失效");
+    //     LOG_MESSAGE(LogLevel::Error, "二维码已失效");
     //     return false;
     // }
     // else if (registerCode == 86090)   // 已扫描但未确认
     // {
-    //     LOG_MESSAGE(LogLevel::ERROR, "等待确认");
+    //     LOG_MESSAGE(LogLevel::Error, "等待确认");
     //     return false;
     // }
     // else if (registerCode == 86101)   // 未扫描
     // {
-    //     LOG_MESSAGE(LogLevel::ERROR, "等待扫描");
+    //     LOG_MESSAGE(LogLevel::Error, "等待扫描");
     //     return false;
     // }
     if (registerCode != 0)
     {
-        // LOG_MESSAGE(LogLevel::ERROR, "未登录");
+        // LOG_MESSAGE(LogLevel::Error, "未登录");
         return false;
     }
     // 打印cookie
@@ -202,10 +202,10 @@ bool BiliLogin::GetLoginInfo()
         }
         cookieJson[tokens[0]] = tokens[1];
     }
-    LOG_VAR(LogLevel::DEBUG, cookieJson.dump(4));
+    LOG_VAR(LogLevel::Debug, cookieJson.dump(4));
     if (cookieJson.empty())
     {
-        LOG_MESSAGE(LogLevel::ERROR, "Failed to get cookie");
+        LOG_MESSAGE(LogLevel::Error, "Failed to get cookie");
         return false;
     }
     // 保存cookie，判断cookie文件夹是否存在
@@ -214,14 +214,14 @@ bool BiliLogin::GetLoginInfo()
         // 创建文件夹
         if (!std::filesystem::create_directories("cookie"))
         {
-            LOG_MESSAGE(LogLevel::ERROR, "Failed to create directory");
+            LOG_MESSAGE(LogLevel::Error, "Failed to create directory");
             return false;
         }
     }
     std::ofstream ofs("cookie/bili_cookie.json");
     if (!ofs.is_open())
     {
-        LOG_MESSAGE(LogLevel::ERROR, "Failed to open file");
+        LOG_MESSAGE(LogLevel::Error, "Failed to open file");
         return false;
     }
     // 连接https://api.bilibili.com/x/frontend/finger/spi获取buvid
@@ -254,19 +254,19 @@ bool BiliLogin::GetLoginInfo()
     boost::beast::http::read(buvidStream, buvidBuffer, buvidRes);
     if (buvidRes.result() != boost::beast::http::status::ok)
     {
-        LOG_VAR(LogLevel::ERROR, buvidRes.result_int());
+        LOG_VAR(LogLevel::Error, buvidRes.result_int());
         return false;
     }
     // 解析json
     std::string    buvidResStr = boost::beast::buffers_to_string(buvidRes.body().data());
     nlohmann::json buvidJson   = nlohmann::json::parse(buvidResStr);
-    LOG_VAR(LogLevel::DEBUG, buvidJson.dump(4));
+    LOG_VAR(LogLevel::Debug, buvidJson.dump(4));
 
     try
     {
         if (buvidJson["code"].get<int>() != 0)
         {
-            LOG_VAR(LogLevel::ERROR, buvidJson["message"].dump(4));
+            LOG_VAR(LogLevel::Error, buvidJson["message"].dump(4));
             return false;
         }
         cookieJson["buvid3"] = buvidJson["data"]["b_3"].get<std::string>();
@@ -274,7 +274,7 @@ bool BiliLogin::GetLoginInfo()
     }
     catch (const nlohmann::json::exception& e)
     {
-        LOG_VAR(LogLevel::ERROR, e.what());
+        LOG_VAR(LogLevel::Error, e.what());
         return false;
     }
 

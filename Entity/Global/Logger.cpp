@@ -10,7 +10,15 @@
 #include <chrono>
 #include <iostream>
 #include <thread>
-#include <unistd.h>
+#ifdef WIN32
+#    include <windows.h>
+// 进程ID
+DWORD Logger::pid = GetCurrentProcessId();
+#elif defined(__linux__)
+#    include <unistd.h>
+// 进程ID
+pid_t Logger::pid = getpid();
+#endif
 
 Logger* Logger::pInstance = new Logger();
 // std::osyncstream Logger::sync_out  = std::osyncstream{std::cout};
@@ -41,27 +49,27 @@ bool Logger::Log(LogLevel level, const std::string_view& file, int line,
     std::string strLevel;
     switch (level)
     {
-    case LogLevel::INFO:
+    case LogLevel::Info:
     {
         strLevel = "\033[32mINFO\033[0m";
         break;
     }
-    case LogLevel::WARN:
+    case LogLevel::Warn:
     {
         strLevel = "\033[33mWARN\033[0m";
         break;
     }
-    case LogLevel::ERROR:
+    case LogLevel::Error:
     {
         strLevel = "\033[31mERROR\033[0m";
         break;
     }
-    case LogLevel::FATAL:
+    case LogLevel::Fatal:
     {
         strLevel = "\033[31mFATAL\033[0m";
         break;
     }
-    case LogLevel::DEBUG:
+    case LogLevel::Debug:
     {
         strLevel = "\033[37mDEBUG\033[0m";
         break;
@@ -73,8 +81,6 @@ bool Logger::Log(LogLevel level, const std::string_view& file, int line,
     }
 
     std::string strTime = TimeStamp::Now().ToString();
-    // 进程ID
-    pid_t pid = getpid();
     // 线程ID
     std::thread::id tid = std::this_thread::get_id();
 
@@ -131,7 +137,7 @@ void Logger::SetLogPath(const std::string& path)
 }
 
 Logger::Logger()
-    : logLevel(LogLevel::DEBUG)
+    : logLevel(LogLevel::Debug)
     , isLogInFile(false)
 {
 }

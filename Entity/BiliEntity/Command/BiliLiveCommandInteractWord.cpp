@@ -33,7 +33,7 @@ std::string BiliLiveCommandInteractWord::ToString() const
     }
     default:
     {
-        LOG_VAR(LogLevel::ERROR, megType);
+        LOG_VAR(LogLevel::Error, megType);
         break;
     }
     }
@@ -47,36 +47,36 @@ bool BiliLiveCommandInteractWord::LoadMessage(const nlohmann::json& message)
         const auto& data{message["data"]};
         const auto& uinfo{message["data"]["uinfo"]};
         this->megType = data["msg_type"].get<unsigned>();
-        // LOG_VAR(LogLevel::DEBUG, megType);
+        // LOG_VAR(LogLevel::Debug, megType);
         auto uid{data["uid"].get<uint64_t>()};
-        // LOG_VAR(LogLevel::DEBUG, uid);
+        // LOG_VAR(LogLevel::Debug, uid);
         auto uname{uinfo["base"]["name"].get<std::string>()};
-        // LOG_VAR(LogLevel::DEBUG, uname);
+        // LOG_VAR(LogLevel::Debug, uname);
         auto guardLevel{0u};
         if (uinfo.contains("medal") && uinfo["medal"].contains("guard_level"))
         {
             guardLevel = uinfo["medal"]["guard_level"].get<unsigned>();
         }
-        // LOG_VAR(LogLevel::DEBUG, guardLevel);
+        // LOG_VAR(LogLevel::Debug, guardLevel);
         auto wealthLevel{0u};
         if (uinfo.contains("wealth") && uinfo["wealth"].contains("level"))
         {
             wealthLevel = uinfo["wealth"]["level"].get<unsigned>();
         }
-        // LOG_VAR(LogLevel::DEBUG, wealthLevel);
+        // LOG_VAR(LogLevel::Debug, wealthLevel);
         this->user = User(uid, uname, guardLevel, wealthLevel);
         return true;
     }
     catch (const nlohmann::json::exception& e)
     {
-        LOG_MESSAGE(LogLevel::ERROR, e.what());
+        LOG_MESSAGE(LogLevel::Error, e.what());
         return false;
     }
 }
 
 void BiliLiveCommandInteractWord::Run() const
 {
-    LOG_MESSAGE(LogLevel::INFO, this->ToString());
+    LOG_MESSAGE(LogLevel::Info, this->ToString());
 }
 
 // BiliApiUtil::LiveCommand BiliLiveCommandInteractWord::GetCommandType() const

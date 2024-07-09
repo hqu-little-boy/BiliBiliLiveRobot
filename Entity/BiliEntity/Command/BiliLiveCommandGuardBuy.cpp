@@ -25,7 +25,7 @@ std::string BiliLiveCommandGuardBuy::ToString() const
 
 void BiliLiveCommandGuardBuy::Run() const
 {
-    LOG_MESSAGE(LogLevel::INFO, this->ToString());
+    LOG_MESSAGE(LogLevel::Info, this->ToString());
 }
 
 bool BiliLiveCommandGuardBuy::LoadMessage(const nlohmann::json& message)
@@ -43,7 +43,7 @@ bool BiliLiveCommandGuardBuy::LoadMessage(const nlohmann::json& message)
     }
     catch (const nlohmann::json::exception& e)
     {
-        LOG_MESSAGE(LogLevel::ERROR, e.what());
+        LOG_MESSAGE(LogLevel::Error, e.what());
         return false;
     }
     return true;

@@ -21,5 +21,5 @@ bool BiliLiveCommandPreparing::LoadMessage(const nlohmann::json& message)
 
 void BiliLiveCommandPreparing::Run() const
 {
-    LOG_MESSAGE(LogLevel::INFO, "下播啦");
+    LOG_MESSAGE(LogLevel::Info, "下播啦");
 }

@@ -9,11 +9,11 @@
 // 定义日志级别
 enum class LogLevel
 {
-    FATAL = 0,
-    ERROR = 1,
-    WARN  = 2,
-    INFO  = 3,
-    DEBUG = 4,
+    Fatal = 0,
+    Error = 1,
+    Warn  = 2,
+    Info  = 3,
+    Debug = 4,
 };
 
 #include "../../Base/noncopyable.h"
@@ -49,6 +49,11 @@ private:
     std::mutex     printMutex;
     std::ofstream  logFile;
     bool           isLogInFile;
+#ifdef WIN32
+    static DWORD pid;
+#elif defined(__linux__)
+    static pid_t   pid;
+#endif
     // static std::osyncstream sync_out;   // std::cout 的同步包装
 };
 

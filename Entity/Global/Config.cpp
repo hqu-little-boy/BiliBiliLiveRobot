@@ -32,14 +32,14 @@ bool Config::LoadFromJson(const std::string& jsonPath)
 {
     if (jsonPath.empty())
     {
-        LOG_MESSAGE(LogLevel::ERROR, "jsonPath is empty");
+        LOG_MESSAGE(LogLevel::Error, "jsonPath is empty");
         throw std::runtime_error("jsonPath is empty");
         return false;
     }
 
     if (!std::filesystem::exists(jsonPath))
     {
-        LOG_MESSAGE(LogLevel::ERROR, std::format("File not exists: {}", jsonPath));
+        LOG_MESSAGE(LogLevel::Error, std::format("File not exists: {}", jsonPath));
         throw std::runtime_error("File not exists: " + jsonPath);
         return false;
     }
@@ -47,7 +47,7 @@ bool Config::LoadFromJson(const std::string& jsonPath)
     std::ifstream ifs(jsonPath);
     if (!ifs.is_open())
     {
-        LOG_MESSAGE(LogLevel::ERROR, std::format("Failed to open file: {}", jsonPath));
+        LOG_MESSAGE(LogLevel::Error, std::format("Failed to open file: {}", jsonPath));
         throw std::runtime_error("Failed to open file: " + jsonPath);
         return false;
     }
@@ -75,7 +75,7 @@ bool Config::LoadFromJson(const std::string& jsonPath)
     }
     catch (const nlohmann::json::exception& e)
     {
-        LOG_MESSAGE(LogLevel::ERROR, std::format("Failed to parse json: {}", e.what()));
+        LOG_MESSAGE(LogLevel::Error, std::format("Failed to parse json: {}", e.what()));
         // throw std::runtime_error("Failed to parse json: " + std::string(e.what()));
         return false;
     }

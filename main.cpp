@@ -9,7 +9,6 @@
 #include "Util/BiliUtil/BiliLogin.h"
 #include "Util/BiliUtil/BiliRequestHeader.h"
 
-#include <bits/fs_ops.h>
 #include <boost/asio/io_context.hpp>
 #include <cstdlib>
 
@@ -22,25 +21,25 @@ int main()
         BiliLogin login;
         if (!login.GetLoginQRCode())
         {
-            LOG_MESSAGE(LogLevel::ERROR, "Failed to get login QRCode");
+            LOG_MESSAGE(LogLevel::Error, "Failed to get login QRCode");
             return EXIT_FAILURE;
         }
     }
     else if (!BiliRequestHeader::GetInstance()->LoadBiliCookieByPath(cookiePath))
     {
-        LOG_MESSAGE(LogLevel::ERROR, "Failed to load cookie");
+        LOG_MESSAGE(LogLevel::Error, "Failed to load cookie");
         return EXIT_FAILURE;
     }
 
     if (!Config::GetInstance()->LoadFromJson(
             "./Config/configure.json"))
     {
-        LOG_MESSAGE(LogLevel::ERROR, "Failed to load config file");
+        LOG_MESSAGE(LogLevel::Error, "Failed to load config file");
         return EXIT_FAILURE;
     }
     Logger::GetInstance()->SetLogLevel(Config::GetInstance()->GetLogLevel());
     Logger::GetInstance()->SetLogPath(Config::GetInstance()->GetLogPath());
-    LOG_MESSAGE(LogLevel::DEBUG, std::format("Config: ({})", Config::GetInstance()->ToString()));
+    LOG_MESSAGE(LogLevel::Debug, std::format("Config: ({})", Config::GetInstance()->ToString()));
     ProcessingMessageThreadPool::GetInstance()->Start();
     boost::asio::io_context ioc;
     std::make_shared<BiliLiveSession>(ioc)->run();

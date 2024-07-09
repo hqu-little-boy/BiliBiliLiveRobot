@@ -12,7 +12,7 @@
 #include <boost/iostreams/filtering_streambuf.hpp>
 #include <brotli/decode.h>
 #include <iostream>
-
+#include <sstream>
 // BrotliDecoderState* BiliApiUtil::brotliState =
 //     BrotliDecoderCreateInstance(nullptr, nullptr, nullptr);
 
@@ -51,7 +51,7 @@ bool BiliApiUtil::MakePack(const std::string_view& body,
                            Operation               eOperation,
                            std::vector<uint8_t>&   res)
 {
-    // LOG_VAR(LogLevel::DEBUG, body.size());
+    // LOG_VAR(LogLevel::Debug, body.size());
     // 构建包头
     HeaderTuple header{
         .totalSize  = boost::endian::native_to_big(static_cast<uint32_t>(body.size() + 16)),
@@ -118,7 +118,7 @@ std::list<std::tuple<BiliApiUtil::LiveCommand, std::string>> BiliApiUtil::Unpack
             }
             case ZipOperation::NormalBrotli:
             {
-                // LOG_MESSAGE(LogLevel::DEBUG, "ZipOperation::NormalBrotli");
+                // LOG_MESSAGE(LogLevel::Debug, "ZipOperation::NormalBrotli");
                 for (auto& command : BiliApiUtil::UnpackBodyBrotli(
                          buffer, start + sizeof(HeaderTuple), start + header.totalSize))
                 {
@@ -133,7 +133,7 @@ std::list<std::tuple<BiliApiUtil::LiveCommand, std::string>> BiliApiUtil::Unpack
     std::list<std::tuple<BiliApiUtil::LiveCommand, std::string>> res;
     for (auto& [command, content] : temp)
     {
-        // LOG_VAR(LogLevel::DEBUG, str);
+        // LOG_VAR(LogLevel::Debug, str);
         if (command != BiliApiUtil::LiveCommand::NONE && command != BiliApiUtil::LiveCommand::OTHER)
         {
             res.emplace_back(command, std::move(content));
@@ -191,7 +191,7 @@ std::list<std::tuple<BiliApiUtil::LiveCommand, std::string>> BiliApiUtil::Unpack
 
     if (!pBrotliState)
     {
-        LOG_MESSAGE(LogLevel::ERROR, "Brotli解压缩失败");
+        LOG_MESSAGE(LogLevel::Error, "Brotli解压缩失败");
         return {};
     }
     std::span<const uint8_t> compressedData(buffer.begin() + front, buffer.begin() + end);
@@ -229,7 +229,7 @@ std::list<std::tuple<BiliApiUtil::LiveCommand, std::string>> BiliApiUtil::Unpack
     }
     if (result != BROTLI_DECODER_RESULT_SUCCESS)
     {
-        LOG_MESSAGE(LogLevel::ERROR, "Brotli解压缩失败");
+        LOG_MESSAGE(LogLevel::Error, "Brotli解压缩失败");
         return {};
     }
 
@@ -254,7 +254,7 @@ BiliApiUtil::LiveCommand BiliApiUtil::GetLiveCommand(const std::string_view& cmd
         return BiliApiUtil::LiveCommand::NONE;
     }
     std::string cmdStr = std::string(cmd.begin() + pos + 7, cmd.begin() + endPos);
-    // LOG_VAR(LogLevel::DEBUG, cmdStr);
+    // LOG_VAR(LogLevel::Debug, cmdStr);
     if (BiliApiUtil::liveCommandMap.contains(cmdStr))
     {
         return BiliApiUtil::liveCommandMap.at(cmdStr);

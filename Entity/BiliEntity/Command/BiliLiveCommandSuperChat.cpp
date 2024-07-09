@@ -34,7 +34,7 @@ bool BiliLiveCommandSuperChat::LoadMessage(const nlohmann::json& message)
     }
     catch (const nlohmann::json::exception& e)
     {
-        LOG_MESSAGE(LogLevel::ERROR, e.what());
+        LOG_MESSAGE(LogLevel::Error, e.what());
         return false;
     }
     return true;
@@ -42,5 +42,5 @@ bool BiliLiveCommandSuperChat::LoadMessage(const nlohmann::json& message)
 
 void BiliLiveCommandSuperChat::Run() const
 {
-    LOG_MESSAGE(LogLevel::INFO, this->ToString());
+    LOG_MESSAGE(LogLevel::Info, this->ToString());
 }

@@ -31,14 +31,14 @@ bool BiliLiveCommandDanmu::LoadMessage(const nlohmann::json& message)
     }
     catch (const nlohmann::json::exception& e)
     {
-        LOG_MESSAGE(LogLevel::ERROR, e.what());
+        LOG_MESSAGE(LogLevel::Error, e.what());
     }
     return true;
 }
 
 void BiliLiveCommandDanmu::Run() const
 {
-    LOG_MESSAGE(LogLevel::INFO, this->ToString());
+    LOG_MESSAGE(LogLevel::Info, this->ToString());
 }
 
 // BiliApiUtil::LiveCommand BiliLiveCommandDanmu::GetCommandType() const

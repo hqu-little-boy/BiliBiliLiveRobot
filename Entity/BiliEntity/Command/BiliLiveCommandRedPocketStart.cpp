@@ -21,5 +21,5 @@ bool BiliLiveCommandRedPocketStart::LoadMessage(const nlohmann::json& message)
 
 void BiliLiveCommandRedPocketStart::Run() const
 {
-    LOG_MESSAGE(LogLevel::INFO, this->ToString());
+    LOG_MESSAGE(LogLevel::Info, this->ToString());
 }

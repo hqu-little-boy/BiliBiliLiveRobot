@@ -40,7 +40,7 @@ bool BiliLiveCommandSendGift::LoadMessage(const nlohmann::json& message)
     }
     catch (const nlohmann::json::exception& e)
     {
-        LOG_MESSAGE(LogLevel::ERROR, e.what());
+        LOG_MESSAGE(LogLevel::Error, e.what());
         return false;
     }
     return true;
@@ -48,7 +48,7 @@ bool BiliLiveCommandSendGift::LoadMessage(const nlohmann::json& message)
 
 void BiliLiveCommandSendGift::Run() const
 {
-    LOG_MESSAGE(LogLevel::INFO, this->ToString());
+    LOG_MESSAGE(LogLevel::Info, this->ToString());
 }
 
 // BiliApiUtil::LiveCommand BiliLiveCommandSendGift::GetCommandType() const

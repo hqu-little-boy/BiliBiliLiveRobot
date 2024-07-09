@@ -21,5 +21,5 @@ bool BiliLiveCommandAnchorLotEnd::LoadMessage(const nlohmann::json& message)
 
 void BiliLiveCommandAnchorLotEnd::Run() const
 {
-    LOG_MESSAGE(LogLevel::INFO, this->ToString());
+    LOG_MESSAGE(LogLevel::Info, this->ToString());
 }
