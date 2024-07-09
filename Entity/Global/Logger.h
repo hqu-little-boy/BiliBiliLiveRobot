@@ -40,6 +40,8 @@ public:
     void SetLogPath(const std::string& path);
 
 private:
+    constexpr inline std::string GetSign(LogLevel level);
+    constexpr inline std::string GetSignWithColor(LogLevel level);
     Logger();
     ~Logger() = default;
     // 日志级别
@@ -52,7 +54,7 @@ private:
 #ifdef WIN32
     static DWORD pid;
 #elif defined(__linux__)
-    static pid_t   pid;
+    static pid_t pid;
 #endif
     // static std::osyncstream sync_out;   // std::cout 的同步包装
 };

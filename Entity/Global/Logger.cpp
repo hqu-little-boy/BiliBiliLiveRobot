@@ -42,44 +42,6 @@ Logger* Logger::GetInstance()
 bool Logger::Log(LogLevel level, const std::string_view& file, int line,
                  const std::string_view& func, const std::string_view& strMessage)
 {
-    if (level > logLevel)
-    {
-        return false;
-    }
-    std::string strLevel;
-    switch (level)
-    {
-    case LogLevel::Info:
-    {
-        strLevel = "\033[32mINFO\033[0m";
-        break;
-    }
-    case LogLevel::Warn:
-    {
-        strLevel = "\033[33mWARN\033[0m";
-        break;
-    }
-    case LogLevel::Error:
-    {
-        strLevel = "\033[31mERROR\033[0m";
-        break;
-    }
-    case LogLevel::Fatal:
-    {
-        strLevel = "\033[31mFATAL\033[0m";
-        break;
-    }
-    case LogLevel::Debug:
-    {
-        strLevel = "\033[37mDEBUG\033[0m";
-        break;
-    }
-    default:
-    {
-        break;
-    }
-    }
-
     std::string strTime = TimeStamp::Now().ToString();
     // 线程ID
     std::thread::id tid = std::this_thread::get_id();
@@ -88,23 +50,16 @@ bool Logger::Log(LogLevel level, const std::string_view& file, int line,
     // std::string strLog = std::format("{} {} {} {} {} {} {} {}\n", strTime, pid, tid, file,
     // line, func, strLevel,
     //                                  strMessage);
-    std::string strLog = std::format("[{:<7}] {:<19} {:<5} {:<5} {:<5} {:<5} {:<5} {}",
-                                     strLevel,
-                                     strTime,
-                                     pid,
-                                     tid,
-                                     file,
-                                     func,
-                                     line,
-                                     strMessage);
+    std::string strLog = std::format(
+        "{:<19} {:<5} {:<5} {:<5} {:<5} {:<5} {}", strTime, pid, tid, file, func, line, strMessage);
     // 互斥锁，保证输出到标准输出的内容不会混乱
     std::lock_guard<std::mutex> guard(printMutex);
     // 输出到标准输出
     // std::println(std::cout, "{}", strLog);
-    std::cout << strLog << std::endl;
+    std::cout << std::format("[{:<7}] {}", this->GetSignWithColor(level), strLog) << std::endl;
     if (isLogInFile)
     {
-        this->logFile << strLog << std::endl;
+        this->logFile << std::format("[{:<7}] {}", this->GetSign(level), strLog) << std::endl;
         // std::println(this->logFile, "{}", strLog);
     }
     // Logger::sync_out << strLog << std::endl;
@@ -134,6 +89,82 @@ void Logger::SetLogPath(const std::string& path)
     {
         std::cerr << "Open log file failed!" << std::endl;
     }
+}
+
+constexpr std::string Logger::GetSign(LogLevel level)
+{
+    switch (level)
+    {
+    case LogLevel::Info:
+    {
+        return "INFO";
+        break;
+    }
+    case LogLevel::Warn:
+    {
+        return "WARN";
+        break;
+    }
+    case LogLevel::Error:
+    {
+        return "ERROR";
+        break;
+    }
+    case LogLevel::Fatal:
+    {
+        return "FATAL";
+        break;
+    }
+    case LogLevel::Debug:
+    {
+        return "DEBUG";
+        break;
+    }
+    default:
+    {
+        break;
+    }
+    }
+    LOG_MESSAGE(LogLevel::Error, "Invalid log level");
+    return "";
+}
+
+constexpr std::string Logger::GetSignWithColor(LogLevel level)
+{
+    switch (level)
+    {
+    case LogLevel::Info:
+    {
+        return "\033[32mINFO\033[0m";
+        break;
+    }
+    case LogLevel::Warn:
+    {
+        return "\033[33mWARN\033[0m";
+        break;
+    }
+    case LogLevel::Error:
+    {
+        return "\033[31mERROR\033[0m";
+        break;
+    }
+    case LogLevel::Fatal:
+    {
+        return "\033[31mFATAL\033[0m";
+        break;
+    }
+    case LogLevel::Debug:
+    {
+        return "\033[37mDEBUG\033[0m";
+        break;
+    }
+    default:
+    {
+        break;
+    }
+    }
+    LOG_MESSAGE(LogLevel::Error, "Invalid log level");
+    return "";
 }
 
 Logger::Logger()
