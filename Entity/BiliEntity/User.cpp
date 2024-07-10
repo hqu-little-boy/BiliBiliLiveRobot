@@ -6,19 +6,22 @@
 
 #include <format>
 
-User::User(uint64_t uid, const std::string& uname, unsigned guardLevel)
+// User::User(uint64_t uid, const std::string& uname, unsigned guardLevel)
+//     : uid(uid)
+//     , uname(uname)
+//     , level(0)
+//     , guardLevel(guardLevel)
+// {
+// }
+//
+User::User(uint64_t uid, const std::string& uname, unsigned guardLevel, unsigned level,
+           unsigned fanCount, unsigned guardCount)
     : uid(uid)
     , uname(uname)
-    , level(0)
     , guardLevel(guardLevel)
-{
-}
-
-User::User(uint64_t uid, const std::string& uname, unsigned level, unsigned guardLevel)
-    : uid(uid)
-    , uname(uname)
     , level(level)
-    , guardLevel(guardLevel)
+    , fanCount(fanCount)
+    , guardCount(guardCount)
 {
 }
 
@@ -78,4 +81,34 @@ std::string User::ToString() const
 {
     return std::format(
         "uid: {}, uname: {}, guardLevel: {}", this->uid, this->uname, this->guardLevel);
+}
+
+void User::SetUid(uint64_t uid)
+{
+    this->uid = uid;
+}
+
+void User::SetUname(const std::string& uname)
+{
+    this->uname = uname;
+}
+
+unsigned User::GetFanCount() const
+{
+    return this->fanCount;
+}
+
+void User::SetFanCount(unsigned fanCount)
+{
+    this->fanCount = fanCount;
+}
+
+unsigned User::GetGuardCount() const
+{
+    return this->guardCount;
+}
+
+void User::SetGuardCount(unsigned guardCount)
+{
+    this->guardCount = guardCount;
 }

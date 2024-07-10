@@ -1,5 +1,5 @@
 {
-  "roomId": 31148004,
+  "roomId": 32468501,
   "logLevel": 4,
   "danmuSeverConfUrl": {
     "protocol": "https:",
@@ -10,5 +10,5 @@
       "type": "0"
     }
   },
-  "logPath": ""
+  "logPath": "./log.txt"
 }

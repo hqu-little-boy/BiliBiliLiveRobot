@@ -16,7 +16,7 @@ public:
     static void    DestroyInstance();
 
     bool                             LoadFromJson(const std::string& jsonPath);
-    [[nodiscard]] unsigned           GetRoomId() const;
+    [[nodiscard]] uint64_t           GetRoomId() const;
     [[nodiscard]] const Url&         GetDanmuSeverConfUrl() const;
     [[nodiscard]] LogLevel           GetLogLevel() const;
     [[nodiscard]] const std::string& GetLogPath() const;
@@ -33,7 +33,7 @@ private:
 private:
     static Config* pInstance;
 
-    unsigned    roomId;
+    uint64_t    roomId;
     Url         danmuSeverConfUrl;
     LogLevel    logLevel;
     std::string logPath;

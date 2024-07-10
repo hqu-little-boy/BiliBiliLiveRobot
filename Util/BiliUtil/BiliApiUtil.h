@@ -65,6 +65,8 @@ public:
         POPULARITY_RED_POCKET_WINNER_LIST,   // 红包中奖名单
         ANCHOR_LOT_START,                    // 开始抽奖
         ANCHOR_LOT_END,                      // 结束抽奖
+        PK_BATTLE_START,                     // PK开始
+        PK_BATTLE_START_NEW,                 // PK开始
     };
     static const std::unordered_map<std::string, LiveCommand> liveCommandMap;
     // 自定义Header结构体，用于存储包头信息

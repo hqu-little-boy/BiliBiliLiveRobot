@@ -57,7 +57,7 @@ bool Config::LoadFromJson(const std::string& jsonPath)
         // 从文件中读取json
         nlohmann::json configJson;
         ifs >> configJson;
-        this->roomId       = configJson["roomId"].get<unsigned>();
+        this->roomId       = configJson["roomId"].get<uint64_t>();
         int logLevelInt    = configJson["logLevel"].get<unsigned>();
         this->logLevel     = static_cast<LogLevel>(logLevelInt);
         std::string host   = configJson["danmuSeverConfUrl"]["host"].get<std::string>();
@@ -82,7 +82,7 @@ bool Config::LoadFromJson(const std::string& jsonPath)
     return true;
 }
 
-unsigned Config::GetRoomId() const
+uint64_t Config::GetRoomId() const
 {
     return roomId;
 }

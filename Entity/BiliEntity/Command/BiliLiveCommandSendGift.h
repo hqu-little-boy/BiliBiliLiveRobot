@@ -25,7 +25,8 @@ private:
     unsigned                                  giftCount;
     unsigned                                  giftPrice;
     std::string                               giftName;
-    std::string                               OriginalGiftName;
+    unsigned                                  originalGiftPrice;
+    std::string                               originalGiftName;
     static constexpr BiliApiUtil::LiveCommand commandType = BiliApiUtil::LiveCommand::SEND_GIFT;
 };
 

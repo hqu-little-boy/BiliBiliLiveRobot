@@ -27,16 +27,16 @@ BiliLiveSession::BiliLiveSession(boost::asio::io_context& ioc)
 
 bool BiliLiveSession::InitSSLCert()
 {
-    // 判断证书是否存在
-    if (!std::filesystem::exists("/etc/ssl/certs/ca-certificates.crt"))
-    {
-        LOG_MESSAGE(LogLevel::Error, "Failed to find ssl cert");
-        return false;
-    }
-    // 加载证书
-    this->ctx.load_verify_file("/etc/ssl/certs/ca-certificates.crt");
-    // 设置证书验证模式
-    this->ctx.set_verify_mode(boost::asio::ssl::verify_peer);
+    // // 判断证书是否存在
+    // if (!std::filesystem::exists("/etc/ssl/certs/ca-certificates.crt"))
+    // {
+    //     LOG_MESSAGE(LogLevel::Error, "Failed to find ssl cert");
+    //     return false;
+    // }
+    // // 加载证书
+    // this->ctx.load_verify_file("/etc/ssl/certs/ca-certificates.crt");
+    // // 设置证书验证模式
+    // this->ctx.set_verify_mode(boost::asio::ssl::verify_peer);
     return true;
 }
 

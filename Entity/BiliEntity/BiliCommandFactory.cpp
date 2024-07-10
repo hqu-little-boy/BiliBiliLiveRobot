@@ -12,6 +12,7 @@
 #include "Command/BiliLiveCommandGuardBuy.h"
 #include "Command/BiliLiveCommandInteractWord.h"
 #include "Command/BiliLiveCommandLive.h"
+#include "Command/BiliLiveCommandPKStart.h"
 #include "Command/BiliLiveCommandPreparing.h"
 #include "Command/BiliLiveCommandRedPocketEnd.h"
 #include "Command/BiliLiveCommandRedPocketStart.h"
@@ -76,4 +77,8 @@ BiliCommandFactory::BiliCommandFactory()
         CreateCommand<BiliLiveCommandRedPocketStart>;
     this->commandMap[BiliApiUtil::LiveCommand::POPULARITY_RED_POCKET_WINNER_LIST] =
         CreateCommand<BiliLiveCommandRedPocketEnd>;
+    this->commandMap[BiliApiUtil::LiveCommand::PK_BATTLE_START] =
+        CreateCommand<BiliLiveCommandPKStart>;
+    this->commandMap[BiliApiUtil::LiveCommand::PK_BATTLE_START_NEW] =
+        CreateCommand<BiliLiveCommandPKStart>;
 }
