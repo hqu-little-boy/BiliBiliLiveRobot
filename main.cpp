@@ -31,8 +31,7 @@ int main()
         return EXIT_FAILURE;
     }
 
-    if (!Config::GetInstance()->LoadFromJson(
-            "./Config/configure.json"))
+    if (!Config::GetInstance()->LoadFromJson("./Config/configure.json"))
     {
         LOG_MESSAGE(LogLevel::Error, "Failed to load config file");
         return EXIT_FAILURE;

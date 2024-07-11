@@ -22,6 +22,7 @@ BiliLiveSession::BiliLiveSession(boost::asio::io_context& ioc)
     , ws{boost::asio::make_strand(ioc), ctx}
     , host("")
     , target("/sub")
+    , runtime{}
 {
 }
 
@@ -271,8 +272,14 @@ void BiliLiveSession::on_auth(boost::beast::error_code ec, std::size_t bytes_tra
         this->buffer,
         boost::beast::bind_front_handler(&BiliLiveSession::on_read, shared_from_this()));
     // 定时发送心跳包
-    this->pingThread = std::move(std::jthread(&BiliLiveSession::do_ping, this));
-    this->pingThread.detach();
+    this->pingtimer =
+        std::move(this->runtime.timer_queue()->make_timer(std::chrono::seconds(0),
+                                                          std::chrono::seconds(28),
+                                                          this->runtime.thread_pool_executor(),
+                                                          [this] { this->do_ping(); }));
+
+    // this->pingThread = std::move(std::jthread(&BiliLiveSession::do_ping, this));
+    // this->pingThread.detach();
 }
 
 void BiliLiveSession::on_read(boost::beast::error_code ec, std::size_t bytes_transferred)
@@ -337,20 +344,29 @@ void BiliLiveSession::on_close(boost::beast::error_code ec)
 
     // The make_printable() function helps print a ConstBufferSequence
     // std::cout << boost::beast::make_printable(this->buffer.data()) << std::endl;
-    this->pingThread.request_stop();   // 停止心跳线程
+    // this->pingThread.request_stop();   // 停止心跳线程
+    // this->runtime.shutdown();
 }
 
 void BiliLiveSession::do_ping()
 {
-    for (;;)
-    {
-        std::vector<uint8_t> authMessage;
-        BiliApiUtil::MakePack("{}", BiliApiUtil::Operation::HEARTBEAT, authMessage);
-        // Send the message
-        this->ws.async_write(
-            boost::asio::buffer(authMessage),
-            boost::beast::bind_front_handler(&BiliLiveSession::on_write, shared_from_this()));
-        // this->ws.write(boost::asio::buffer(authMessage));
-        std::this_thread::sleep_for(std::chrono::seconds(29));
-    }
+    // for (;;)
+    // {
+    //     std::vector<uint8_t> authMessage;
+    //     BiliApiUtil::MakePack("{}", BiliApiUtil::Operation::HEARTBEAT, authMessage);
+    //     // Send the message
+    //     this->ws.async_write(
+    //         boost::asio::buffer(authMessage),
+    //         boost::beast::bind_front_handler(&BiliLiveSession::on_write, shared_from_this()));
+    //     // this->ws.write(boost::asio::buffer(authMessage));
+    //     std::this_thread::sleep_for(std::chrono::seconds(29));
+    // }
+
+    std::vector<uint8_t> authMessage;
+    BiliApiUtil::MakePack("{}", BiliApiUtil::Operation::HEARTBEAT, authMessage);
+    // Send the message
+    LOG_MESSAGE(LogLevel::Debug, "do_ping");
+    this->ws.async_write(
+        boost::asio::buffer(authMessage),
+        boost::beast::bind_front_handler(&BiliLiveSession::on_write, shared_from_this()));
 }

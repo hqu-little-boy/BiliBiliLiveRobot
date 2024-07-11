@@ -46,6 +46,8 @@ include_directories(ThirdParty/brotli/c/include)
 #include_directories(ThirdParty/QRCode-generator/include)
 add_subdirectory(ThirdParty/libqrencode)
 include_directories(ThirdParty/libqrencode)
+add_subdirectory(ThirdParty/concurrencpp)
+include_directories(ThirdParty/concurrencpp/include)
 target_link_libraries(BiliBiliLiveRobot PRIVATE
         OpenSSL::SSL
         OpenSSL::Crypto
@@ -61,4 +63,5 @@ target_link_libraries(BiliBiliLiveRobot PRIVATE
 #        brotlienc
         brotlidec
 #        brotlicommon
+        concurrencpp
 )

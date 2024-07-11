@@ -18,7 +18,7 @@ std::string BiliLiveCommandInteractWord::ToString() const
     {
     case 1:
     {
-        return std::format("{}进入直播间", user.GetUname());
+        return std::format("{}进入直播间", user.ToString());
         break;
     }
     case 2:

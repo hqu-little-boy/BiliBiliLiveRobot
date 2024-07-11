@@ -6,6 +6,7 @@
 #define BILILIVESESSION_H
 #include "../../Base/noncopyable.h"
 #include "../../Entity/Global/Url.h"
+#include "concurrencpp/concurrencpp.h"
 
 #include <boost/asio/ssl.hpp>
 #include <boost/asio/strand.hpp>
@@ -101,7 +102,9 @@ private:
     std::string               host;     // 主机名
     std::string               target;   // 目标
 
-    std::jthread pingThread;   // 心跳线程
+    // std::jthread pingThread;   // 心跳线程
+    concurrencpp::runtime runtime;
+    concurrencpp::timer   pingtimer;   // 心跳定时器
 };
 
 
