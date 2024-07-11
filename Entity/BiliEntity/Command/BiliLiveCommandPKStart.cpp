@@ -137,16 +137,16 @@ bool BiliLiveCommandPKStart::GetRoomInit()
     }
     // 解析json
     std::string    resStr        = boost::beast::buffers_to_string(res.body().data());
-    nlohmann::json danmuInfoJson = nlohmann::json::parse(resStr);
-    LOG_VAR(LogLevel::Debug, danmuInfoJson.dump(4));
+    nlohmann::json roomInfoJson = nlohmann::json::parse(resStr);
+    LOG_VAR(LogLevel::Debug, roomInfoJson.dump(-1));
     try
     {
-        if (danmuInfoJson["code"] != 0)
+        if (roomInfoJson["code"] != 0)
         {
-            LOG_VAR(LogLevel::Error, danmuInfoJson["message"].dump(4));
+            LOG_VAR(LogLevel::Error, roomInfoJson["message"].dump(4));
             return false;
         }
-        this->oppositeAnchor.SetUid(danmuInfoJson["data"]["uid"].get<uint64_t>());
+        this->oppositeAnchor.SetUid(roomInfoJson["data"]["uid"].get<uint64_t>());
     }
     catch (const nlohmann::json::exception& e)
     {
@@ -194,18 +194,18 @@ bool BiliLiveCommandPKStart::GetUserInfo()
     }
     // 解析json
     std::string    resStr        = boost::beast::buffers_to_string(res.body().data());
-    nlohmann::json danmuInfoJson = nlohmann::json::parse(resStr);
-    LOG_VAR(LogLevel::Debug, danmuInfoJson.dump(4));
+    nlohmann::json userInfoJson = nlohmann::json::parse(resStr);
+    LOG_VAR(LogLevel::Debug, userInfoJson.dump(-1));
     try
     {
-        if (danmuInfoJson["code"] != 0)
+        if (userInfoJson["code"] != 0)
         {
-            LOG_VAR(LogLevel::Error, danmuInfoJson["message"].dump(4));
+            LOG_VAR(LogLevel::Error, userInfoJson["message"].dump(4));
             return false;
         }
-        this->oppositeAnchor.SetUid(danmuInfoJson["data"]["info"]["uid"].get<uint64_t>());
-        this->oppositeAnchor.SetUname(danmuInfoJson["data"]["info"]["uname"].get<std::string>());
-        this->oppositeAnchor.SetFanCount(danmuInfoJson["data"]["follower_num"].get<unsigned>());
+        this->oppositeAnchor.SetUid(userInfoJson["data"]["info"]["uid"].get<uint64_t>());
+        this->oppositeAnchor.SetUname(userInfoJson["data"]["info"]["uname"].get<std::string>());
+        this->oppositeAnchor.SetFanCount(userInfoJson["data"]["follower_num"].get<unsigned>());
     }
     catch (const nlohmann::json::exception& e)
     {
@@ -261,16 +261,16 @@ bool BiliLiveCommandPKStart::GetTopListInfo()
     }
     // 解析json
     std::string    resStr        = boost::beast::buffers_to_string(res.body().data());
-    nlohmann::json danmuInfoJson = nlohmann::json::parse(resStr);
-    LOG_VAR(LogLevel::Debug, danmuInfoJson.dump(4));
+    nlohmann::json topListInfoJson = nlohmann::json::parse(resStr);
+    LOG_VAR(LogLevel::Debug, topListInfoJson.dump(-1));
     try
     {
-        if (danmuInfoJson["code"] != 0)
+        if (topListInfoJson["code"] != 0)
         {
-            LOG_VAR(LogLevel::Error, danmuInfoJson["message"].dump(4));
+            LOG_VAR(LogLevel::Error, topListInfoJson["message"].dump(4));
             return false;
         }
-        this->oppositeAnchor.SetGuardCount(danmuInfoJson["data"]["info"]["num"].get<unsigned>());
+        this->oppositeAnchor.SetGuardCount(topListInfoJson["data"]["info"]["num"].get<unsigned>());
     }
     catch (const nlohmann::json::exception& e)
     {
@@ -334,27 +334,27 @@ bool BiliLiveCommandPKStart::GetRankListInfo()
         }
         // 解析json
         std::string    resStr        = boost::beast::buffers_to_string(res.body().data());
-        nlohmann::json danmuInfoJson = nlohmann::json::parse(resStr);
-        LOG_VAR(LogLevel::Debug, danmuInfoJson.dump(4));
+        nlohmann::json rankInfoJson = nlohmann::json::parse(resStr);
+        LOG_VAR(LogLevel::Debug, rankInfoJson.dump(-1));
         try
         {
-            if (danmuInfoJson["code"] != 0)
+            if (rankInfoJson["code"] != 0)
             {
-                LOG_VAR(LogLevel::Error, danmuInfoJson["message"].dump(4));
+                LOG_VAR(LogLevel::Error, rankInfoJson["message"].dump(4));
                 return false;
             }
-            if (!danmuInfoJson["data"]["OnlineRankItem"].empty() &&
-                (danmuInfoJson["data"]["OnlineRankItem"].size() <
-                 danmuInfoJson["data"]["onlineNum"].get<unsigned>()))
+            if (!rankInfoJson["data"]["OnlineRankItem"].empty() &&
+                (rankInfoJson["data"]["OnlineRankItem"].size() <
+                 rankInfoJson["data"]["onlineNum"].get<unsigned>()))
             {
-                pageSize = danmuInfoJson["data"]["onlineNum"].get<unsigned>() /
-                           danmuInfoJson["data"]["OnlineRankItem"].size();
-                if (danmuInfoJson["data"]["onlineNum"].get<unsigned>() % 50 > 0)
+                pageSize = rankInfoJson["data"]["onlineNum"].get<unsigned>() /
+                           rankInfoJson["data"]["OnlineRankItem"].size();
+                if (rankInfoJson["data"]["onlineNum"].get<unsigned>() % 50 > 0)
                 {
                     pageSize += 1;
                 }
             }
-            for (const auto& item : danmuInfoJson["data"]["OnlineRankItem"])
+            for (const auto& item : rankInfoJson["data"]["OnlineRankItem"])
             {
                 this->totalAudienceNum += 1;
                 this->totalRankcount += item["score"].get<unsigned>();

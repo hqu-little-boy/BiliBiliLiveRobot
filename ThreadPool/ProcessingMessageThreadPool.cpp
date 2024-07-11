@@ -21,7 +21,8 @@ ProcessingMessageThreadPool* ProcessingMessageThreadPool::GetInstance()
     return pInstance;
 }
 
-void ProcessingMessageThreadPool::AddTask(std::string&& message)
+void ProcessingMessageThreadPool::AddTask(
+    std::tuple<BiliApiUtil::LiveCommand, std::string>&& message)
 {
     std::unique_lock<std::mutex> lock(this->processingMessageThreadPoolMutex);
     this->taskQueue.push(message);
@@ -44,37 +45,33 @@ void ProcessingMessageThreadPool::ThreadRun()
     {
         this->processingMessageThreadPoolCondition.wait(
             lock, [this]() { return !this->taskQueue.empty(); });
-        std::string message = std::move(this->taskQueue.front());
+        std::tuple<BiliApiUtil::LiveCommand, std::string> message =
+            std::move(this->taskQueue.front());
         this->taskQueue.pop();
         lock.unlock();
-        auto command = BiliApiUtil::GetLiveCommand(message);
-        if (command == BiliApiUtil::LiveCommand::NONE || command == BiliApiUtil::LiveCommand::OTHER)
-        {
-            assert(false);
-            LOG_MESSAGE(LogLevel::Error, "Invalid command");
-            return;
-        }
         nlohmann::json jsonMessage;
         try
         {
-            jsonMessage = nlohmann::json::parse(message);
+            jsonMessage = nlohmann::json::parse(std::get<1>(message));
         }
         catch (const nlohmann::json::parse_error& e)
         {
             LOG_MESSAGE(LogLevel::Error, e.what());
             return;
         }
-        auto uniqueCommand =
-            std::move(BiliCommandFactory::GetInstance()->GetCommand(command, jsonMessage));
+        auto uniqueCommand = std::move(
+            BiliCommandFactory::GetInstance()->GetCommand(std::get<0>(message), jsonMessage));
         if (uniqueCommand == nullptr)
         {
             LOG_MESSAGE(LogLevel::Error,
-                        BiliApiUtil::GetLiveCommandStr(message) + " Failed to produce command");
+                        BiliApiUtil::GetLiveCommandStr(std::get<1>(message)) +
+                            " Failed to produce command");
             return;
         }
         uniqueCommand->Run();
         uniqueCommand->SetTimeStamp();
-        MessageDeque::GetInstance()->PushCommandPool(uniqueCommand->GetCommandType(), std::move(uniqueCommand));
+        MessageDeque::GetInstance()->PushCommandPool(uniqueCommand->GetCommandType(),
+                                                     std::move(uniqueCommand));
         lock.lock();
     }
 }

@@ -83,7 +83,7 @@ bool BiliLiveSession::InitRoomInfo()
     // 解析json
     std::string    resStr        = boost::beast::buffers_to_string(res.body().data());
     nlohmann::json danmuInfoJson = nlohmann::json::parse(resStr);
-    LOG_VAR(LogLevel::Debug, danmuInfoJson.dump(4));
+    LOG_VAR(LogLevel::Debug, danmuInfoJson.dump(-1));
     if (danmuInfoJson["code"] != 0)
     {
         LOG_VAR(LogLevel::Error, danmuInfoJson["message"].dump(4));
@@ -301,7 +301,7 @@ void BiliLiveSession::on_read(boost::beast::error_code ec, std::size_t bytes_tra
                     boost::asio::buffer_cast<const uint8_t*>(buf) + boost::asio::buffer_size(buf));
     this->buffer.consume(response.size());
     auto pack = BiliApiUtil::Unpack(response);
-    for (auto& [command, content] : pack)
+    for (auto& item : pack)
     {
         // LOG_VAR(LogLevel::Info, std::get<0>(item).ToString());
         // LOG_VAR(LogLevel::Debug, item);
@@ -318,8 +318,8 @@ void BiliLiveSession::on_read(boost::beast::error_code ec, std::size_t bytes_tra
         //     LOG_VAR(LogLevel::Error, content);
         //     // LOG_VAR(LogLevel::Error, result);
         // }
-        LOG_VAR(LogLevel::Debug, content);
-        ProcessingMessageThreadPool::GetInstance()->AddTask(std::move(content));
+        LOG_VAR(LogLevel::Debug, std::get<1>(item));
+        ProcessingMessageThreadPool::GetInstance()->AddTask(std::move(item));
     }
     this->ws.async_read(
         this->buffer,
