@@ -17,6 +17,7 @@
 #include <boost/beast/http/string_body.hpp>
 #include <boost/beast/http/write.hpp>
 
+uint64_t BiliLiveCommandPKStart::lastPKRoomID{0};
 BiliLiveCommandPKStart::BiliLiveCommandPKStart(const nlohmann::json& message)
     : BiliLiveCommandBase(message)
     , oppositeRoomID(0)
@@ -46,7 +47,8 @@ std::string BiliLiveCommandPKStart::ToString() const
 
 bool BiliLiveCommandPKStart::LoadMessage(const nlohmann::json& message)
 {
-    LOG_MESSAGE(LogLevel::Debug, message.dump(4));
+    std::unique_lock<std::mutex> lck(this->mtx);
+    LOG_MESSAGE(LogLevel::Debug, message.dump(-1));
     try
     {
         uint64_t initInfoRoomID  = message["data"]["init_info"]["room_id"].get<uint64_t>();
@@ -71,6 +73,13 @@ bool BiliLiveCommandPKStart::LoadMessage(const nlohmann::json& message)
         LOG_MESSAGE(LogLevel::Error, std::format("Failed to load message: {}", e.what()));
         return false;
     }
+    if (this->oppositeRoomID == lastPKRoomID)
+    {
+        LOG_MESSAGE(LogLevel::Error, "Repeated PK roomID");
+        return false;
+    }
+    lastPKRoomID = this->oppositeRoomID;
+    lck.unlock();
     if (!GetRoomInit())
     {
         LOG_MESSAGE(LogLevel::Error, "Failed to get user uid");
@@ -136,7 +145,7 @@ bool BiliLiveCommandPKStart::GetRoomInit()
         return false;
     }
     // 解析json
-    std::string    resStr        = boost::beast::buffers_to_string(res.body().data());
+    std::string    resStr       = boost::beast::buffers_to_string(res.body().data());
     nlohmann::json roomInfoJson = nlohmann::json::parse(resStr);
     LOG_VAR(LogLevel::Debug, roomInfoJson.dump(-1));
     try
@@ -193,7 +202,7 @@ bool BiliLiveCommandPKStart::GetUserInfo()
         return false;
     }
     // 解析json
-    std::string    resStr        = boost::beast::buffers_to_string(res.body().data());
+    std::string    resStr       = boost::beast::buffers_to_string(res.body().data());
     nlohmann::json userInfoJson = nlohmann::json::parse(resStr);
     LOG_VAR(LogLevel::Debug, userInfoJson.dump(-1));
     try
@@ -260,7 +269,7 @@ bool BiliLiveCommandPKStart::GetTopListInfo()
         return false;
     }
     // 解析json
-    std::string    resStr        = boost::beast::buffers_to_string(res.body().data());
+    std::string    resStr          = boost::beast::buffers_to_string(res.body().data());
     nlohmann::json topListInfoJson = nlohmann::json::parse(resStr);
     LOG_VAR(LogLevel::Debug, topListInfoJson.dump(-1));
     try
@@ -333,7 +342,7 @@ bool BiliLiveCommandPKStart::GetRankListInfo()
             return false;
         }
         // 解析json
-        std::string    resStr        = boost::beast::buffers_to_string(res.body().data());
+        std::string    resStr       = boost::beast::buffers_to_string(res.body().data());
         nlohmann::json rankInfoJson = nlohmann::json::parse(resStr);
         LOG_VAR(LogLevel::Debug, rankInfoJson.dump(-1));
         try
