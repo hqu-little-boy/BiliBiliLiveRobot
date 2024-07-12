@@ -3,10 +3,11 @@
 //
 #include "ProcessingMessageThreadPool.h"
 
-#include "../Entity/BiliEntity/BiliCommandFactory.h"
-#include "../Entity/Global/Logger.h"
-#include "../Entity/Global/MessageDeque.h"
-#include "../Util/BiliUtil/BiliApiUtil.h"
+#include "../../Util/BiliUtil/BiliApiUtil.h"
+#include "../BiliEntity/BiliCommandFactory.h"
+#include "../EntityPool/EntityPool.h"
+#include "../Global/Logger.h"
+#include "../MessageDeque/MessageDeque.h"
 ProcessingMessageThreadPool* ProcessingMessageThreadPool::pInstance{
     new ProcessingMessageThreadPool()};
 const int                    ProcessingMessageThreadPool::threadNum{static_cast<int>(
@@ -70,8 +71,8 @@ void ProcessingMessageThreadPool::ThreadRun()
         }
         uniqueCommand->Run();
         uniqueCommand->SetTimeStamp();
-        MessageDeque::GetInstance()->PushCommandPool(uniqueCommand->GetCommandType(),
-                                                     std::move(uniqueCommand));
+        EntityPool::GetInstance()->PushCommandPool(uniqueCommand->GetCommandType(),
+                                                   std::move(uniqueCommand));
         lock.lock();
     }
 }

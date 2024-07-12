@@ -4,11 +4,12 @@
 
 #include "BiliCommandFactory.h"
 
-#include "../Global/MessageDeque.h"
+#include "../EntityPool/EntityPool.h"
 #include "Command/BiliLiveCommandAnchorLotEnd.h"
 #include "Command/BiliLiveCommandAnchorLotStart.h"
 #include "Command/BiliLiveCommandDanmu.h"
 #include "Command/BiliLiveCommandEntryEffect.h"
+#include "Command/BiliLiveCommandGuardBlindBox.h"
 #include "Command/BiliLiveCommandGuardBuy.h"
 #include "Command/BiliLiveCommandInteractWord.h"
 #include "Command/BiliLiveCommandLive.h"
@@ -46,7 +47,7 @@ std::unique_ptr<BiliLiveCommandBase> BiliCommandFactory::GetCommand(
     }
     if (this->commandMap.contains(eCommand))
     {
-        auto pCommand{MessageDeque::GetInstance()->PopCommandPool(eCommand)};
+        auto pCommand{EntityPool::GetInstance()->PopCommandPool(eCommand)};
         if (pCommand != nullptr && pCommand->LoadMessage(message))
         {
             return std::unique_ptr<BiliLiveCommandBase>(pCommand);
@@ -81,4 +82,6 @@ BiliCommandFactory::BiliCommandFactory()
         CreateCommand<BiliLiveCommandPKStart>;
     this->commandMap[BiliApiUtil::LiveCommand::PK_BATTLE_START_NEW] =
         CreateCommand<BiliLiveCommandPKStart>;
+    this->commandMap[BiliApiUtil::LiveCommand::COMMON_NOTICE_DANMAKU] =
+        CreateCommand<BiliLiveCommandGuardBlindBox>;
 }

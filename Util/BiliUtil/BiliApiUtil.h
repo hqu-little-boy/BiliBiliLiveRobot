@@ -67,6 +67,7 @@ public:
         ANCHOR_LOT_END,                      // 结束抽奖
         PK_BATTLE_START,                     // PK开始
         PK_BATTLE_START_NEW,                 // PK开始
+        COMMON_NOTICE_DANMAKU,               // 大航海盲盒
     };
     static const std::unordered_map<std::string, LiveCommand> liveCommandMap;
     // 自定义Header结构体，用于存储包头信息

@@ -4,7 +4,7 @@
 
 #ifndef PROCESSINGMESSAGETHREADPOOL_H
 #define PROCESSINGMESSAGETHREADPOOL_H
-#include "../Entity/BiliEntity/Command/BiliLiveCommandBase.h"
+#include "../BiliEntity/Command/BiliLiveCommandBase.h"
 
 #include <condition_variable>
 #include <deque>

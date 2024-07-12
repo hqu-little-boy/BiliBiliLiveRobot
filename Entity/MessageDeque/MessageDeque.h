@@ -7,29 +7,31 @@
 #include "../../Util/BiliUtil/BiliApiUtil.h"
 #include "../BiliEntity/Command/BiliLiveCommandBase.h"
 
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/ssl/context.hpp>
 #include <condition_variable>
 #include <mutex>
 #include <queue>
 #include <string>
+#include <thread>
 
 
 // 单例模式，用于存储消息队列，线程安全
 class MessageDeque
 {
 public:
-    static MessageDeque*      GetInstance();
-    void                      PushWaitedMessage(const std::string& message);
-    [[nodiscard]] std::string PopWaitedMessage();
-    void                      ClearWaitedMessage();
-
-    void                               PushCommandPool(BiliApiUtil::LiveCommand               eCommand,
-                                                       std::unique_ptr<BiliLiveCommandBase>&& commandPtr);
-    [[nodiscard]] BiliLiveCommandBase* PopCommandPool(BiliApiUtil::LiveCommand eCommand);
-    void                               ClearCommandPool();
-    [[nodiscard]] bool                 IsCommandPoolEmpty(BiliApiUtil::LiveCommand eCommand);
+    static MessageDeque* GetInstance();
+    void                 PushWaitedMessage(const std::string& message);
+    // [[nodiscard]] std::string PopWaitedMessage();
+    void ClearWaitedMessage();
 
 private:
-    MessageDeque()  = default;
+    void SendMessageInThread();
+
+    bool SendMessage(const std::string& message);
+
+    MessageDeque();
     ~MessageDeque() = default;
 
     MessageDeque(const MessageDeque& other)            = delete;
@@ -42,9 +44,10 @@ private:
     std::mutex              messageQueueMutex;
     std::condition_variable messageQueueCondtionVariable;
 
-    std::unordered_map<BiliApiUtil::LiveCommand, std::queue<std::unique_ptr<BiliLiveCommandBase>>>
-               commandPool;
-    std::mutex commandPoolMutex;
+    std::jthread                   snedMessageThread;
+    boost::asio::io_context        ioc;        // IO上下文
+    boost::asio::ssl::context      ctx;        // SSL上下文
+    boost::asio::ip::tcp::resolver resolver;   // DNS解析器
 };
 
 

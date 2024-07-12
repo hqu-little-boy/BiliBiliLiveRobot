@@ -29,9 +29,14 @@ private:
     unsigned totalAudienceNum;
     unsigned totalRankcount;
 
-    boost::asio::io_context        ioc;        // IO上下文
-    boost::asio::ssl::context      ctx;        // SSL上下文
-    boost::asio::ip::tcp::resolver resolver;   // DNS解析器
+    static uint64_t lastPKRoomID;
+
+    boost::asio::io_context                   ioc;        // IO上下文
+    boost::asio::ssl::context                 ctx;        // SSL上下文
+    boost::asio::ip::tcp::resolver            resolver;   // DNS解析器
+    std::mutex                                mtx;        // 互斥锁
+    static constexpr BiliApiUtil::LiveCommand commandType =
+        BiliApiUtil::LiveCommand::PK_BATTLE_START_NEW;
 };
 
 

@@ -36,6 +36,7 @@ const std::unordered_map<std::string, BiliApiUtil::LiveCommand> BiliApiUtil::liv
     // {"ENTRY_EFFECT", BiliApiUtil::LiveCommand::ENTRY_EFFECT},
     {"PK_BATTLE_START", BiliApiUtil::LiveCommand::PK_BATTLE_START},
     {"PK_BATTLE_START_NEW", BiliApiUtil::LiveCommand::PK_BATTLE_START_NEW},
+    {"COMMON_NOTICE_DANMAKU", BiliApiUtil::LiveCommand::COMMON_NOTICE_DANMAKU},
 };
 
 std::string BiliApiUtil::HeaderTuple::ToString() const

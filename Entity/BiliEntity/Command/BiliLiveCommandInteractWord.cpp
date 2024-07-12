@@ -23,12 +23,12 @@ std::string BiliLiveCommandInteractWord::ToString() const
     }
     case 2:
     {
-        return std::format("{}关注了主播", user.GetUname());
+        return std::format("{}关注了主播", user.ToString());
         break;
     }
     case 3:
     {
-        return std::format("{}分享了直播间", user.GetUname());
+        return std::format("{}分享了直播间", user.ToString());
         break;
     }
     default:

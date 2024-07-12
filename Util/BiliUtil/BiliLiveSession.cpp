@@ -6,7 +6,7 @@
 
 #include "../../Entity/Global/Config.h"
 #include "../../Entity/Global/Logger.h"
-#include "../../ThreadPool/ProcessingMessageThreadPool.h"
+#include "../../Entity/ThreadPool/ProcessingMessageThreadPool.h"
 #include "BiliApiUtil.h"
 #include "BiliRequestHeader.h"
 
