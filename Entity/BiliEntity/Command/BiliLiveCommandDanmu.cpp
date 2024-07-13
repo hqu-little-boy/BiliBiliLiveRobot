@@ -40,8 +40,7 @@ bool BiliLiveCommandDanmu::LoadMessage(const nlohmann::json& message)
 void BiliLiveCommandDanmu::Run() const
 {
     LOG_MESSAGE(LogLevel::Info, this->ToString());
-    MessageDeque::GetInstance()->PushWaitedMessage(
-        std::format("{}你好", this->user.GetUname()));
+    // MessageDeque::GetInstance()->PushWaitedMessage(std::format("{}你好", this->user.GetUname()));
 }
 
 // BiliApiUtil::LiveCommand BiliLiveCommandDanmu::GetCommandType() const

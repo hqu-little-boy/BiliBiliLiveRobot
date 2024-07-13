@@ -4,6 +4,9 @@
 
 #include "BiliLiveCommandAnchorLotStart.h"
 
+#include "../../Global/Config.h"
+#include "../../MessageDeque/MessageDeque.h"
+
 BiliLiveCommandAnchorLotStart::BiliLiveCommandAnchorLotStart(const nlohmann::json& message)
     : BiliLiveCommandBase(message)
 {
@@ -22,4 +25,17 @@ bool BiliLiveCommandAnchorLotStart::LoadMessage(const nlohmann::json& message)
 void BiliLiveCommandAnchorLotStart::Run() const
 {
     LOG_MESSAGE(LogLevel::Info, this->ToString());
+    if (Config::GetInstance()->CanEntryNotice())
+    {
+        Config::GetInstance()->SetCanEntryNotice(false);
+        MessageDeque::GetInstance()->PushWaitedMessage("天选抽奖开始，临时关闭欢迎信息。");
+    }
+    if (Config::GetInstance()->CanThanksFocus())
+    {
+        Config::GetInstance()->SetCanThanksFocus(false);
+    }
+    if (Config::GetInstance()->CanThanksShare())
+    {
+        Config::GetInstance()->SetCanThanksShare(false);
+    }
 }

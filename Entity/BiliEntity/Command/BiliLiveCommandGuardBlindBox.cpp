@@ -4,6 +4,9 @@
 
 #include "BiliLiveCommandGuardBlindBox.h"
 
+#include "../../Global/Config.h"
+#include "../../MessageDeque/MessageDeque.h"
+
 BiliLiveCommandGuardBlindBox::BiliLiveCommandGuardBlindBox(const nlohmann::json& message)
     : BiliLiveCommandBase(message)
     , user(0, "", 0)
@@ -21,6 +24,12 @@ std::string BiliLiveCommandGuardBlindBox::ToString() const
 void BiliLiveCommandGuardBlindBox::Run() const
 {
     LOG_MESSAGE(LogLevel::Info, this->ToString());
+    if (!Config::GetInstance()->CanThanksGift())
+    {
+        return;
+    }
+    MessageDeque::GetInstance()->PushWaitedMessage(
+        std::format("感谢 {} 投喂了{}", this->user.GetUname(), this->content));
 }
 
 bool BiliLiveCommandGuardBlindBox::LoadMessage(const nlohmann::json& message)

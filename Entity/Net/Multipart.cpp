@@ -65,7 +65,7 @@ std::string Multipart::RandomString(uint16_t length)
     std::string result;
     for (size_t i = 0; i < length; i++)
     {
-        result += data[engine() % (sizeof(data) - 1)];
+        result += data[engine() % data.size()];
     }
     return result;
 }

@@ -4,6 +4,9 @@
 
 #include "BiliLiveCommandRedPocketStart.h"
 
+#include "../../Global/Config.h"
+#include "../../MessageDeque/MessageDeque.h"
+
 BiliLiveCommandRedPocketStart::BiliLiveCommandRedPocketStart(const nlohmann::json& message)
     : BiliLiveCommandBase(message)
 {
@@ -22,4 +25,17 @@ bool BiliLiveCommandRedPocketStart::LoadMessage(const nlohmann::json& message)
 void BiliLiveCommandRedPocketStart::Run() const
 {
     LOG_MESSAGE(LogLevel::Info, this->ToString());
+    if (Config::GetInstance()->CanEntryNotice())
+    {
+        Config::GetInstance()->SetCanEntryNotice(false);
+        MessageDeque::GetInstance()->PushWaitedMessage("红包抽奖开始，临时关闭欢迎信息。");
+    }
+    if (Config::GetInstance()->CanThanksFocus())
+    {
+        Config::GetInstance()->SetCanThanksFocus(false);
+    }
+    if (Config::GetInstance()->CanThanksShare())
+    {
+        Config::GetInstance()->SetCanThanksShare(false);
+    }
 }

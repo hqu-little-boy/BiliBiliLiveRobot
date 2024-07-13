@@ -6,6 +6,7 @@
 
 #include "../../../Util/BiliUtil/BiliRequestHeader.h"
 #include "../../Global/Config.h"
+#include "../../MessageDeque/MessageDeque.h"
 
 #include <boost/asio/connect.hpp>
 #include <boost/asio/ssl/stream.hpp>
@@ -106,6 +107,18 @@ bool BiliLiveCommandPKStart::LoadMessage(const nlohmann::json& message)
 void BiliLiveCommandPKStart::Run() const
 {
     LOG_MESSAGE(LogLevel::Info, this->ToString());
+    if (Config::GetInstance()->CanPKNotice())
+    {
+        return;
+    }
+    MessageDeque::GetInstance()->PushWaitedMessage(std::format("PK开始，{}，粉丝数：{}",
+                                                               this->oppositeAnchor.GetUname(),
+                                                               this->oppositeAnchor.GetFanCount()));
+    MessageDeque::GetInstance()->PushWaitedMessage(
+        std::format("总舰长数：{}，总观众数：{}，总亲密度：{}",
+                    this->oppositeAnchor.GetGuardCount(),
+                    this->totalAudienceNum,
+                    this->totalRankcount));
 }
 
 bool BiliLiveCommandPKStart::GetRoomInit()

@@ -4,6 +4,7 @@
 
 #include "BiliLiveCommandInteractWord.h"
 
+#include "../../Global/Config.h"
 #include "../../MessageDeque/MessageDeque.h"
 
 BiliLiveCommandInteractWord::BiliLiveCommandInteractWord(const nlohmann::json& message)
@@ -79,7 +80,42 @@ bool BiliLiveCommandInteractWord::LoadMessage(const nlohmann::json& message)
 void BiliLiveCommandInteractWord::Run() const
 {
     LOG_MESSAGE(LogLevel::Info, this->ToString());
-    MessageDeque::GetInstance()->PushWaitedMessage(std::format("欢迎{}进入直播间", this->user.GetUname()));
+    // MessageDeque::GetInstance()->PushWaitedMessage(std::format("欢迎{}进入直播间",
+    // this->user.GetUname()));
+    if (this->user.GetUid() == 0)
+    {
+        return;
+    }
+    if (this->megType == 1 && Config::GetInstance()->CanEntryNotice())
+    {
+        try
+        {
+            std::string message{std::vformat(Config::GetInstance()->GetNormalEntryNoticeWord(),
+                                             std::make_format_args(this->user.GetUname()))};
+            MessageDeque::GetInstance()->PushWaitedMessage(message);
+            LOG_VAR(LogLevel::Debug, message);
+        }
+        catch (const std::exception& e)
+        {
+            LOG_MESSAGE(LogLevel::Error, e.what());
+        }
+    }
+    else if (this->megType == 2 && Config::GetInstance()->CanThanksFocus())
+    {
+        // MessageDeque::GetInstance()->PushWaitedMessage(
+        //     std::format("感谢{}关注了主播", this->user.GetUname()));
+        std::string message{std::format("感谢{}关注了主播", this->user.GetUname())};
+        MessageDeque::GetInstance()->PushWaitedMessage(message);
+        LOG_VAR(LogLevel::Debug, message);
+    }
+    else if (this->megType == 3 && Config::GetInstance()->CanThanksShare())
+    {
+        // MessageDeque::GetInstance()->PushWaitedMessage(
+        //     std::format("感谢{}分享了直播间", this->user.GetUname()));
+        std::string message{std::format("感谢{}分享了直播间", this->user.GetUname())};
+        MessageDeque::GetInstance()->PushWaitedMessage(message);
+        LOG_VAR(LogLevel::Debug, message);
+    }
 }
 
 // BiliApiUtil::LiveCommand BiliLiveCommandInteractWord::GetCommandType() const
