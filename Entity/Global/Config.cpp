@@ -57,20 +57,23 @@ bool Config::LoadFromJson(const std::string& jsonPath)
         // 从文件中读取json
         nlohmann::json configJson;
         ifs >> configJson;
-        this->roomId       = configJson["roomId"].get<uint64_t>();
-        int logLevelInt    = configJson["logLevel"].get<unsigned>();
-        this->logLevel     = static_cast<LogLevel>(logLevelInt);
-        std::string host   = configJson["danmuSeverConfUrl"]["host"].get<std::string>();
-        unsigned    port   = configJson["danmuSeverConfUrl"]["port"].get<unsigned>();
-        std::string target = configJson["danmuSeverConfUrl"]["target"].get<std::string>();
-        std::list<std::pair<std::string, std::string>> query;
-        query.emplace_back(std::string("id"), std::to_string(this->roomId));
-        for (const auto& [key, value] : configJson["danmuSeverConfUrl"]["query"].items())
-        {
-            // query[key] = value.get<std::string>();
-            query.emplace_back(key, value.get<std::string>());
-        }
-        this->danmuSeverConfUrl = Url(host, port, target, query);
+        this->roomId    = configJson["roomId"].get<uint64_t>();
+        int logLevelInt = configJson["logLevel"].get<unsigned>();
+        this->logLevel  = static_cast<LogLevel>(logLevelInt);
+        // std::string host   = configJson["danmuSeverConfUrl"]["host"].get<std::string>();
+        // unsigned    port   = configJson["danmuSeverConfUrl"]["port"].get<unsigned>();
+        // std::string target = configJson["danmuSeverConfUrl"]["target"].get<std::string>();
+        // std::list<std::pair<std::string, std::string>> query;
+        // query.emplace_back(std::string("id"), std::to_string(this->roomId));
+        // for (const auto& [key, value] : configJson["danmuSeverConfUrl"]["query"].items())
+        // {
+        //     // query[key] = value.get<std::string>();
+        //     query.emplace_back(key, value.get<std::string>());
+        // }
+        this->danmuSeverConfUrl = Url("api.live.bilibili.com",
+                                      443,
+                                      "/xlive/web-room/v1/index/getDanmuInfo",
+                                      {{"id", std::to_string(this->roomId)}, {"type", "0"}});
         this->logPath           = configJson["logPath"].get<std::string>();
     }
     catch (const nlohmann::json::exception& e)

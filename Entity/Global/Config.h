@@ -5,7 +5,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 #include "Logger.h"
-#include "Url.h"
+#include "../Net/Url.h"
 
 
 /// @brief 配置类，单例模式

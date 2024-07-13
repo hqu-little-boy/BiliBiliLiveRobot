@@ -10,3 +10,6 @@
 [submodule "ThirdParty/concurrencpp"]
 	path = ThirdParty/concurrencpp
 	url = https://github.com/David-Haim/concurrencpp.git
+[submodule "ThirdParty/utfcpp"]
+	path = ThirdParty/utfcpp
+	url = https://github.com/nemtrif/utfcpp.git

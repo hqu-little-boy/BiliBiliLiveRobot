@@ -119,8 +119,7 @@ bool BiliLiveCommandPKStart::GetRoomInit()
     const auto results = resolver.resolve(url.GetHost(), std::to_string(url.GetPort()));
 
     // 创建SSL流并连接
-    boost::asio::io_context                                iocHttp;
-    boost::asio::ssl::stream<boost::asio::ip::tcp::socket> stream(iocHttp, this->ctx);
+    boost::asio::ssl::stream<boost::asio::ip::tcp::socket> stream(this->ioc, this->ctx);
     boost::asio::connect(stream.next_layer(), results.begin(), results.end());
     stream.handshake(boost::asio::ssl::stream_base::client);
     // 构建GET请求
@@ -176,8 +175,7 @@ bool BiliLiveCommandPKStart::GetUserInfo()
     const auto results = resolver.resolve(url.GetHost(), std::to_string(url.GetPort()));
 
     // 创建SSL流并连接
-    boost::asio::io_context                                iocHttp;
-    boost::asio::ssl::stream<boost::asio::ip::tcp::socket> stream(iocHttp, this->ctx);
+    boost::asio::ssl::stream<boost::asio::ip::tcp::socket> stream(this->ioc, this->ctx);
     boost::asio::connect(stream.next_layer(), results.begin(), results.end());
     stream.handshake(boost::asio::ssl::stream_base::client);
     // 构建GET请求
@@ -243,8 +241,7 @@ bool BiliLiveCommandPKStart::GetTopListInfo()
     const auto results = resolver.resolve(url.GetHost(), std::to_string(url.GetPort()));
 
     // 创建SSL流并连接
-    boost::asio::io_context                                iocHttp;
-    boost::asio::ssl::stream<boost::asio::ip::tcp::socket> stream(iocHttp, this->ctx);
+    boost::asio::ssl::stream<boost::asio::ip::tcp::socket> stream(this->ioc, this->ctx);
     boost::asio::connect(stream.next_layer(), results.begin(), results.end());
     stream.handshake(boost::asio::ssl::stream_base::client);
     // 构建GET请求
@@ -316,8 +313,7 @@ bool BiliLiveCommandPKStart::GetRankListInfo()
         const auto results = resolver.resolve(url.GetHost(), std::to_string(url.GetPort()));
 
         // 创建SSL流并连接
-        boost::asio::io_context                                iocHttp;
-        boost::asio::ssl::stream<boost::asio::ip::tcp::socket> stream(iocHttp, this->ctx);
+        boost::asio::ssl::stream<boost::asio::ip::tcp::socket> stream(this->ioc, this->ctx);
         boost::asio::connect(stream.next_layer(), results.begin(), results.end());
         stream.handshake(boost::asio::ssl::stream_base::client);
         // 构建GET请求

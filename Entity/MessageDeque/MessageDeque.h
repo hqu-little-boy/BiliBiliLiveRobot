@@ -6,6 +6,7 @@
 #define MESSAGEDEQUE_H
 #include "../../Util/BiliUtil/BiliApiUtil.h"
 #include "../BiliEntity/Command/BiliLiveCommandBase.h"
+#include "../Net/Url.h"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -29,7 +30,7 @@ public:
 private:
     void SendMessageInThread();
 
-    bool SendMessage(const std::string& message);
+    bool SendMessageToBili(const std::string& message);
 
     MessageDeque();
     ~MessageDeque() = default;
@@ -43,6 +44,8 @@ private:
     std::queue<std::string> messageQueue;
     std::mutex              messageQueueMutex;
     std::condition_variable messageQueueCondtionVariable;
+
+    const static Url url;
 
     std::jthread                   snedMessageThread;
     boost::asio::io_context        ioc;        // IO上下文

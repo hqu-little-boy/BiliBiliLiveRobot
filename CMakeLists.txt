@@ -34,7 +34,7 @@ add_custom_command(TARGET BiliBiliLiveRobot PRE_BUILD
         "${CMAKE_BINARY_DIR}/Config/configure.json"
 )
 # 加入Boost库
-find_package(Boost COMPONENTS context filesystem system thread iostreams REQUIRED)
+find_package(Boost COMPONENTS context iostreams REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 find_package(OpenSSL REQUIRED)
 include_directories(${OPENSSL_INCLUDE_DIR})
@@ -42,26 +42,20 @@ add_subdirectory(ThirdParty/json)
 include_directories(ThirdParty/json/include)
 add_subdirectory(ThirdParty/brotli)
 include_directories(ThirdParty/brotli/c/include)
-#add_subdirectory(ThirdParty/QRCode-generator)
-#include_directories(ThirdParty/QRCode-generator/include)
 add_subdirectory(ThirdParty/libqrencode)
 include_directories(ThirdParty/libqrencode)
 add_subdirectory(ThirdParty/concurrencpp)
 include_directories(ThirdParty/concurrencpp/include)
+add_subdirectory(ThirdParty/utfcpp)
+include_directories(ThirdParty/utfcpp/source)
 target_link_libraries(BiliBiliLiveRobot PRIVATE
         OpenSSL::SSL
         OpenSSL::Crypto
         Boost::context
-        Boost::filesystem
-        Boost::system
-        Boost::thread
         Boost::iostreams
         nlohmann_json::nlohmann_json
-        #        qrcodegen
-        #        qrenc
         qrencode
-#        brotlienc
         brotlidec
-#        brotlicommon
         concurrencpp
+        utf8cpp
 )

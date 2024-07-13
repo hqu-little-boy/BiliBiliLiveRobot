@@ -4,6 +4,8 @@
 
 #include "BiliLiveCommandInteractWord.h"
 
+#include "../../MessageDeque/MessageDeque.h"
+
 BiliLiveCommandInteractWord::BiliLiveCommandInteractWord(const nlohmann::json& message)
     : BiliLiveCommandBase{message}
     , megType{UINT_MAX}
@@ -77,6 +79,7 @@ bool BiliLiveCommandInteractWord::LoadMessage(const nlohmann::json& message)
 void BiliLiveCommandInteractWord::Run() const
 {
     LOG_MESSAGE(LogLevel::Info, this->ToString());
+    MessageDeque::GetInstance()->PushWaitedMessage(std::format("欢迎{}进入直播间", this->user.GetUname()));
 }
 
 // BiliApiUtil::LiveCommand BiliLiveCommandInteractWord::GetCommandType() const

@@ -5,7 +5,7 @@
 #ifndef BILILIVESESSION_H
 #define BILILIVESESSION_H
 #include "../../Base/noncopyable.h"
-#include "../../Entity/Global/Url.h"
+#include "../../Entity/Net/Url.h"
 #include "concurrencpp/concurrencpp.h"
 
 #include <boost/asio/ssl.hpp>

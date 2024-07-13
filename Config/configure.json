@@ -1,14 +1,5 @@
 {
-  "roomId": 32124956,
+  "roomId": 27157735,
   "logLevel": 4,
-  "danmuSeverConfUrl": {
-    "protocol": "https:",
-    "host": "api.live.bilibili.com",
-    "target": "/xlive/web-room/v1/index/getDanmuInfo",
-    "port": 443,
-    "query": {
-      "type": "0"
-    }
-  },
   "logPath": "./log.txt"
 }
