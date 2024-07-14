@@ -28,14 +28,40 @@ MessageDeque* MessageDeque::GetInstance()
 
 void MessageDeque::PushWaitedMessage(const std::string& message)
 {
-    std::unique_lock<std::mutex> lock{this->messageQueueMutex};
-    int                          length = utf8::distance(message.begin(), message.end());
-    if (length > 20)
+    int length = utf8::distance(message.begin(), message.end());
+    if (length > 40)
     {
+        LOG_VAR(LogLevel::Warn, message);
         LOG_MESSAGE(LogLevel::Warn, "Message is too long");
         return;
     }
-    this->messageQueue.push(message);
+    else if (length < 1)
+    {
+        LOG_VAR(LogLevel::Warn, message);
+        LOG_MESSAGE(LogLevel::Warn, "Message is too short");
+        return;
+    }
+    std::unique_lock<std::mutex> lock{this->messageQueueMutex};
+    if (length > 20)
+    {
+        //使用utfcpp库分割字符串
+        std::string::const_iterator start = message.begin();
+        std::string::const_iterator end   = message.begin();
+        while (end != message.end())
+        {
+            utf8::next(end, message.end());
+            if (utf8::distance(start, end) > 20)
+            {
+                std::string subMessage{start, end};
+                this->messageQueue.push(subMessage);
+                start = end;
+            }
+        }
+    }
+    else
+    {
+        this->messageQueue.push(message);
+    }
     this->messageQueueCondtionVariable.notify_one();
 }
 

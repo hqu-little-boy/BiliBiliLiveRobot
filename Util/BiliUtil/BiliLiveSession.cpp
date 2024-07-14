@@ -297,6 +297,9 @@ void BiliLiveSession::on_read(boost::beast::error_code ec, std::size_t bytes_tra
         //     authMessage,
         //     boost::beast::bind_front_handler(&BiliLiveSession::on_write, shared_from_this()));
         LOG_VAR(LogLevel::Error, ec.message());
+        this->ws.close(boost::beast::websocket::close_code::normal);
+        // 执行重连
+        this->run();
         return;
     }
     // std::cout << boost::beast::make_printable(this->buffer.data()) << std::endl;
