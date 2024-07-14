@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.28)
+cmake_minimum_required(VERSION 3.21)
 project(BiliBiliLiveRobot)
 
 if (POLICY CMP0167)
@@ -59,3 +59,15 @@ target_link_libraries(BiliBiliLiveRobot PRIVATE
         concurrencpp
         utf8cpp
 )
+
+if(MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest")
+    add_definitions(-D_WIN32_WINNT=0x0601)
+    include_directories(
+            ${VCPKG_INCLUDE_DIRS}
+    )
+    target_link_libraries(BiliBiliLiveRobot
+            ${VCPKG_LIBRARIES}
+    )
+endif()
