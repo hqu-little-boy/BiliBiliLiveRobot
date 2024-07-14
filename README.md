@@ -1,4 +1,4 @@
-#BiliBiliLiveRobot
+# BiliBiliLiveRobot
 ## 本项目概述
 本项目是一个基于C++ boost 异步处理的B站直播弹幕机器人，可以实现自动回复弹幕、自动发送弹幕、自动抽奖等功能。
 
