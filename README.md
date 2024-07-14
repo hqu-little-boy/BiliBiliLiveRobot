@@ -1,4 +1,4 @@
-# BiliBiliLiveRobot
+#BiliBiliLiveRobot
 ## 本项目概述
 本项目是一个基于C++ boost 异步处理的B站直播弹幕机器人，可以实现自动回复弹幕、自动发送弹幕、自动抽奖等功能。
 
@@ -17,12 +17,12 @@
 * PK 输出对手信息
 * 对方用户串门识别
 ## 构建环境
-**C++ 23**
-**CMake 3.21+**
-**Boost 1.83+**
-**iconv**
-**openssl**
-**zlib**
+* C++ 23
+* CMake 3.21+
+* Boost 1.83+
+* iconv
+* openssl
+* zlib
 
 ## 构建步骤
 ```bash
