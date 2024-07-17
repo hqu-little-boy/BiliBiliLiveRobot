@@ -11,7 +11,7 @@
 ProcessingMessageThreadPool* ProcessingMessageThreadPool::pInstance{
     new ProcessingMessageThreadPool()};
 const int ProcessingMessageThreadPool::threadNum{
-    static_cast<int>((std::thread::hardware_concurrency() + 1) / 2)};
+    static_cast<int>((std::thread::hardware_concurrency() + 15) / 16)};
 ProcessingMessageThreadPool* ProcessingMessageThreadPool::GetInstance()
 {
     if (pInstance == nullptr)
@@ -41,15 +41,20 @@ void ProcessingMessageThreadPool::Start()
 
 void ProcessingMessageThreadPool::ThreadRun()
 {
-    std::unique_lock<std::mutex> lock(this->processingMessageThreadPoolMutex);
     while (true)
     {
-        this->processingMessageThreadPoolCondition.wait(
-            lock, [this]() { return !this->taskQueue.empty(); });
-        std::tuple<BiliApiUtil::LiveCommand, std::string> message =
-            std::move(this->taskQueue.front());
-        this->taskQueue.pop();
-        lock.unlock();
+        std::tuple<BiliApiUtil::LiveCommand, std::string> message;
+        // 及时释放锁
+        {
+            std::unique_lock<std::mutex> lock(this->processingMessageThreadPoolMutex);
+            if (this->taskQueue.empty())
+            {
+                this->processingMessageThreadPoolCondition.wait(
+                    lock, [this]() { return !this->taskQueue.empty(); });
+            }
+            message = std::move(this->taskQueue.front());
+            this->taskQueue.pop();
+        }
         nlohmann::json jsonMessage;
         try
         {
@@ -58,8 +63,7 @@ void ProcessingMessageThreadPool::ThreadRun()
         catch (const nlohmann::json::parse_error& e)
         {
             LOG_MESSAGE(LogLevel::Error, e.what());
-            lock.lock();
-            return;
+            continue;
         }
         auto uniqueCommand = std::move(
             BiliCommandFactory::GetInstance()->GetCommand(std::get<0>(message), jsonMessage));
@@ -68,13 +72,11 @@ void ProcessingMessageThreadPool::ThreadRun()
             LOG_MESSAGE(LogLevel::Error,
                         BiliApiUtil::GetLiveCommandStr(std::get<1>(message)) +
                             " Failed to produce command");
-            lock.lock();
-            return;
+            continue;
         }
         uniqueCommand->Run();
         uniqueCommand->SetTimeStamp();
         EntityPool::GetInstance()->PushCommandPool(uniqueCommand->GetCommandType(),
                                                    std::move(uniqueCommand));
-        lock.lock();
     }
 }
