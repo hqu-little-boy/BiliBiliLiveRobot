@@ -15,7 +15,7 @@
 class BiliLiveCommandBase
 {
 public:
-    explicit BiliLiveCommandBase(const nlohmann::json& message);
+    explicit BiliLiveCommandBase();
     virtual ~BiliLiveCommandBase() = default;
 
     [[nodiscard]] virtual std::string ToString() const                           = 0;

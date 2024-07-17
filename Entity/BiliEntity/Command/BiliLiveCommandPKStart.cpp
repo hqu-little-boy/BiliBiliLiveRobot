@@ -19,8 +19,8 @@
 #include <boost/beast/http/write.hpp>
 
 uint64_t BiliLiveCommandPKStart::lastPKRoomID{0};
-BiliLiveCommandPKStart::BiliLiveCommandPKStart(const nlohmann::json& message)
-    : BiliLiveCommandBase(message)
+BiliLiveCommandPKStart::BiliLiveCommandPKStart()
+    : BiliLiveCommandBase()
     , oppositeRoomID(0)
     , oppositeAnchor(0, "", 0, 0)
     , totalAudienceNum(0)
@@ -29,7 +29,6 @@ BiliLiveCommandPKStart::BiliLiveCommandPKStart(const nlohmann::json& message)
     , ctx(boost::asio::ssl::context::tlsv12_client)
     , resolver(ioc)
 {
-    LoadMessage(message);
 }
 
 std::string BiliLiveCommandPKStart::ToString() const

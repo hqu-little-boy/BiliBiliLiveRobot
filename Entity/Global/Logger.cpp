@@ -120,6 +120,11 @@ constexpr std::string Logger::GetSign(LogLevel level)
         return "DEBUG";
         break;
     }
+    case LogLevel::Test:
+    {
+        return "TEST";
+        break;
+    }
     default:
     {
         break;
@@ -156,6 +161,11 @@ constexpr std::string Logger::GetSignWithColor(LogLevel level)
     case LogLevel::Debug:
     {
         return "\033[37mDEBUG\033[0m";
+        break;
+    }
+    case LogLevel::Test:
+    {
+        return "\033[36mTEST\033[0m";
         break;
     }
     default:

@@ -39,6 +39,13 @@ public:
     [[nodiscard]] const std::string& GetGuardEntryNoticeWord() const;
     [[nodiscard]] std::string        ToString() const;
 
+#if defined(TEST)
+    constexpr inline bool IsTest()
+    {
+        return true;
+    }
+#endif
+
 private:
     Config();
     ~Config()                        = default;

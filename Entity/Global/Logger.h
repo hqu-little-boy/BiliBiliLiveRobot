@@ -14,6 +14,7 @@ enum class LogLevel
     Warn  = 2,
     Info  = 3,
     Debug = 4,
+    Test  = 5,
 };
 
 #include "../../Base/noncopyable.h"

@@ -4,14 +4,13 @@
 
 #include "BiliLiveCommandGuardBuy.h"
 
-BiliLiveCommandGuardBuy::BiliLiveCommandGuardBuy(const nlohmann::json& message)
-    : BiliLiveCommandBase(message)
+BiliLiveCommandGuardBuy::BiliLiveCommandGuardBuy()
+    : BiliLiveCommandBase()
     , user(0, "", 0)
     , guardLevel(0)
     , num(0)
     , price(0)
 {
-    LoadMessage(message);
 }
 
 std::string BiliLiveCommandGuardBuy::ToString() const

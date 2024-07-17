@@ -12,7 +12,7 @@
 class BiliLiveCommandPKStart : public BiliLiveCommandBase
 {
 public:
-    explicit BiliLiveCommandPKStart(const nlohmann::json& message);
+    explicit BiliLiveCommandPKStart();
     ~BiliLiveCommandPKStart() = default;
 
     [[nodiscard]] virtual std::string ToString() const override;

@@ -26,7 +26,7 @@ private:
 
     static BiliCommandFactory* pInstance;
     std::unordered_map<BiliApiUtil::LiveCommand,
-                       std::function<std::unique_ptr<BiliLiveCommandBase>(const nlohmann::json&)>>
+                       std::function<std::unique_ptr<BiliLiveCommandBase>()>>
         commandMap;
 };
 

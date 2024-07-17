@@ -7,8 +7,8 @@
 #include "../../Global/Config.h"
 #include "../../MessageDeque/MessageDeque.h"
 
-BiliLiveCommandRedPocketEnd::BiliLiveCommandRedPocketEnd(const nlohmann::json& message)
-    : BiliLiveCommandBase(message)
+BiliLiveCommandRedPocketEnd::BiliLiveCommandRedPocketEnd()
+    : BiliLiveCommandBase()
 {
 }
 

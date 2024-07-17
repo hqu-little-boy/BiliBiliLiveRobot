@@ -11,7 +11,7 @@
 class BiliLiveCommandEntryEffect : public BiliLiveCommandBase
 {
 public:
-    explicit BiliLiveCommandEntryEffect(const nlohmann::json& message);
+    explicit BiliLiveCommandEntryEffect();
     ~BiliLiveCommandEntryEffect() override = default;
 
     [[nodiscard]] virtual std::string ToString() const override;

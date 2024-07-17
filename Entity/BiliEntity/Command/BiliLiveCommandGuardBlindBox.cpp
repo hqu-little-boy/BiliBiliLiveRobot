@@ -7,8 +7,8 @@
 #include "../../Global/Config.h"
 #include "../../MessageDeque/MessageDeque.h"
 
-BiliLiveCommandGuardBlindBox::BiliLiveCommandGuardBlindBox(const nlohmann::json& message)
-    : BiliLiveCommandBase(message)
+BiliLiveCommandGuardBlindBox::BiliLiveCommandGuardBlindBox()
+    : BiliLiveCommandBase()
     , user(0, "", 0)
     , content("")
 {
@@ -38,6 +38,11 @@ bool BiliLiveCommandGuardBlindBox::LoadMessage(const nlohmann::json& message)
     try
     {
         const auto& data{message["data"]};
+        if (data["content_segments"].size() < 5)
+        {
+            LOG_VAR(LogLevel::Warn, message.dump(-1));
+            return false;
+        }
         if (data["content_segments"][1]["text"].get<std::string>() != "投喂" ||
             data["content_segments"][2]["text"].get<std::string>() != "大航海盲盒")
         {
@@ -45,7 +50,7 @@ bool BiliLiveCommandGuardBlindBox::LoadMessage(const nlohmann::json& message)
             return false;
         }
         this->user.SetUname(data["content_segments"][0]["text"].get<std::string>());
-        this->user.SetUname(data["content_segments"][4]["text"].get<std::string>());
+        this->content = data["content_segments"][4]["text"].get<std::string>();
     }
     catch (const nlohmann::json::exception& e)
     {

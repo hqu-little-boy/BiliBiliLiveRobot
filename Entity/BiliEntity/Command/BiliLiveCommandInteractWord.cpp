@@ -7,12 +7,11 @@
 #include "../../Global/Config.h"
 #include "../../MessageDeque/MessageDeque.h"
 
-BiliLiveCommandInteractWord::BiliLiveCommandInteractWord(const nlohmann::json& message)
-    : BiliLiveCommandBase{message}
+BiliLiveCommandInteractWord::BiliLiveCommandInteractWord()
+    : BiliLiveCommandBase{}
     , megType{UINT_MAX}
     , user{0, "", 0}
 {
-    LoadMessage(message);
 }
 
 std::string BiliLiveCommandInteractWord::ToString() const
@@ -90,8 +89,18 @@ void BiliLiveCommandInteractWord::Run() const
     {
         try
         {
-            std::string message{std::vformat(Config::GetInstance()->GetNormalEntryNoticeWord(),
-                                             std::make_format_args(this->user.GetUname()))};
+            std::string message{};
+            if (!this->user.IsGuard())
+            {
+                message = std::vformat(Config::GetInstance()->GetNormalEntryNoticeWord(),
+                                       std::make_format_args(this->user.GetUname()));
+            }
+            else
+            {
+                message = std::vformat(
+                    Config::GetInstance()->GetGuardEntryNoticeWord(),
+                    std::make_format_args(this->user.GetGuardLevel(), this->user.GetUname()));
+            }
             MessageDeque::GetInstance()->PushWaitedMessage(message);
             LOG_VAR(LogLevel::Debug, message);
         }

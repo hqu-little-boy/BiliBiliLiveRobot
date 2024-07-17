@@ -11,7 +11,7 @@
 class BiliLiveCommandPreparing : public BiliLiveCommandBase
 {
 public:
-    explicit BiliLiveCommandPreparing(const nlohmann::json& message);
+    explicit BiliLiveCommandPreparing();
     ~BiliLiveCommandPreparing() override = default;
 
     [[nodiscard]] virtual std::string ToString() const override;

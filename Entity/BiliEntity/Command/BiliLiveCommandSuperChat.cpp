@@ -4,13 +4,12 @@
 
 #include "BiliLiveCommandSuperChat.h"
 
-BiliLiveCommandSuperChat::BiliLiveCommandSuperChat(const nlohmann::json& message)
-    :BiliLiveCommandBase(message)
+BiliLiveCommandSuperChat::BiliLiveCommandSuperChat()
+    :BiliLiveCommandBase()
     ,user(0,"",0)
     ,price(0)
     ,message("")
 {
-    LoadMessage(message);
 }
 
 std::string BiliLiveCommandSuperChat::ToString() const

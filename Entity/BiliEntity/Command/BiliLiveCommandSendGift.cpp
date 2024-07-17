@@ -4,8 +4,8 @@
 
 #include "BiliLiveCommandSendGift.h"
 
-BiliLiveCommandSendGift::BiliLiveCommandSendGift(const nlohmann::json& message)
-    : BiliLiveCommandBase(message)
+BiliLiveCommandSendGift::BiliLiveCommandSendGift()
+    : BiliLiveCommandBase()
     , user(0, "", 0)
     , giftCount(0)
     , giftPrice(0)
@@ -13,7 +13,6 @@ BiliLiveCommandSendGift::BiliLiveCommandSendGift(const nlohmann::json& message)
     , originalGiftPrice(0)
     , originalGiftName("")
 {
-    LoadMessage(message);
 }
 
 std::string BiliLiveCommandSendGift::ToString() const

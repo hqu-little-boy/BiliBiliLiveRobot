@@ -6,11 +6,10 @@
 
 #include "../../Global/Logger.h"
 
-BiliLiveCommandEntryEffect::BiliLiveCommandEntryEffect(const nlohmann::json& message)
-    : BiliLiveCommandBase(message)
+BiliLiveCommandEntryEffect::BiliLiveCommandEntryEffect()
+    : BiliLiveCommandBase()
     , user(0, "", 0)
 {
-    LoadMessage(message);
 }
 
 std::string BiliLiveCommandEntryEffect::ToString() const

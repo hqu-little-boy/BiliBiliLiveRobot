@@ -10,7 +10,7 @@
 class BiliLiveCommandDanmu : public BiliLiveCommandBase
 {
 public:
-    explicit BiliLiveCommandDanmu(const nlohmann::json& message);
+    explicit BiliLiveCommandDanmu();
     ~BiliLiveCommandDanmu() override = default;
 
     [[nodiscard]] virtual std::string ToString() const override;

@@ -10,7 +10,7 @@
 class BiliLiveCommandRedPocketEnd : public BiliLiveCommandBase
 {
 public:
-    explicit BiliLiveCommandRedPocketEnd(const nlohmann::json& message);
+    explicit BiliLiveCommandRedPocketEnd();
     ~BiliLiveCommandRedPocketEnd() override = default;
 
     [[nodiscard]] virtual std::string ToString() const override;

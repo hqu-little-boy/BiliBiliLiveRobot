@@ -77,6 +77,9 @@ bool Config::LoadFromJson(const std::string& jsonPath)
         this->canEntryNotice     = configJson["canEntryNotice"].get<bool>();
         this->normalEntryNoticeList =
             configJson["normalEntryNoticeList"].get<std::vector<std::string>>();
+        this->guardEntryNoticeList =
+            configJson["guardEntryNoticeList"].get<std::vector<std::string>>();
+
         this->canThanksFocus = configJson["canThanksFocus"].get<bool>();
         this->canThanksShare = configJson["canThanksShare"].get<bool>();
     }

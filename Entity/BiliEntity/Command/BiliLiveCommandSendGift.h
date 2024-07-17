@@ -12,7 +12,7 @@
 class BiliLiveCommandSendGift : public BiliLiveCommandBase
 {
 public:
-    explicit BiliLiveCommandSendGift(const nlohmann::json& message);
+    explicit BiliLiveCommandSendGift();
     ~BiliLiveCommandSendGift() override = default;
 
     [[nodiscard]] virtual std::string ToString() const override;

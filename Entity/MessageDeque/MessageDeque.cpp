@@ -44,15 +44,16 @@ void MessageDeque::PushWaitedMessage(const std::string& message)
     std::unique_lock<std::mutex> lock{this->messageQueueMutex};
     if (length > 20)
     {
-        //使用utfcpp库分割字符串
+        // 使用utfcpp库分割字符串
         std::string::const_iterator start = message.begin();
         std::string::const_iterator end   = message.begin();
         while (end != message.end())
         {
             utf8::next(end, message.end());
-            if (utf8::distance(start, end) > 20)
+            if (utf8::distance(start, end) > 19 || end == message.end())
             {
                 std::string subMessage{start, end};
+                // LOG_VAR(LogLevel::Test, subMessage);
                 this->messageQueue.push(subMessage);
                 start = end;
             }
@@ -91,6 +92,13 @@ void MessageDeque::SendMessageInThread()
                                                 [this] { return !this->messageQueue.empty(); });
         std::string message{std::move(this->messageQueue.front())};
         this->messageQueue.pop();
+#if defined(TEST)
+        if (Config::GetInstance()->IsTest())
+        {
+            LOG_VAR(LogLevel::Test, message);
+            continue;
+        }
+#endif
         if (!this->SendMessageToBili(message))
         {
             LOG_MESSAGE(LogLevel::Warn, "Send message failed");
@@ -150,7 +158,23 @@ bool MessageDeque::SendMessageToBili(const std::string& message)
     {
         return false;
     }
-    LOG_VAR(LogLevel::Info, boost::beast::buffers_to_string(res.body().data()));
+    // LOG_VAR(LogLevel::Info, boost::beast::buffers_to_string(res.body().data()));
+    std::string    resStr       = boost::beast::buffers_to_string(res.body().data());
+    nlohmann::json roomInfoJson = nlohmann::json::parse(resStr);
+    LOG_VAR(LogLevel::Debug, roomInfoJson.dump(-1));
+    try
+    {
+        if (roomInfoJson["code"] != 0)
+        {
+            LOG_VAR(LogLevel::Error, roomInfoJson["message"].dump(4));
+            return false;
+        }
+    }
+    catch (const nlohmann::json::exception& e)
+    {
+        LOG_VAR(LogLevel::Error, e.what());
+        return false;
+    }
     return true;
 }
 

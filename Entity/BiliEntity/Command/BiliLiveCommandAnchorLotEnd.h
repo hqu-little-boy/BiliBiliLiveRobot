@@ -10,7 +10,7 @@
 
 class BiliLiveCommandAnchorLotEnd : public BiliLiveCommandBase{
 public:
-    explicit BiliLiveCommandAnchorLotEnd(const nlohmann::json& message);
+    explicit BiliLiveCommandAnchorLotEnd();
     ~BiliLiveCommandAnchorLotEnd() override = default;
 
     [[nodiscard]] virtual std::string ToString() const override;

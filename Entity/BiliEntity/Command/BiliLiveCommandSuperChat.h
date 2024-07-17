@@ -11,7 +11,7 @@
 class BiliLiveCommandSuperChat : public BiliLiveCommandBase
 {
 public:
-    explicit BiliLiveCommandSuperChat(const nlohmann::json& message);
+    explicit BiliLiveCommandSuperChat();
     ~BiliLiveCommandSuperChat() override = default;
 
     [[nodiscard]] virtual std::string ToString() const override;

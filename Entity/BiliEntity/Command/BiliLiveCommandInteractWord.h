@@ -11,7 +11,7 @@
 class BiliLiveCommandInteractWord : public BiliLiveCommandBase
 {
 public:
-    explicit BiliLiveCommandInteractWord(const nlohmann::json& message);
+    explicit BiliLiveCommandInteractWord();
     ~BiliLiveCommandInteractWord() override = default;
 
     [[nodiscard]] virtual std::string ToString() const override;

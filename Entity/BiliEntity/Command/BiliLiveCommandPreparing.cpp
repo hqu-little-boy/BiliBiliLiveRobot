@@ -4,8 +4,8 @@
 
 #include "BiliLiveCommandPreparing.h"
 
-BiliLiveCommandPreparing::BiliLiveCommandPreparing(const nlohmann::json& message)
-    : BiliLiveCommandBase(message)
+BiliLiveCommandPreparing::BiliLiveCommandPreparing()
+    : BiliLiveCommandBase()
 {
 }
 

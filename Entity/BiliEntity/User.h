@@ -27,8 +27,9 @@ public:
     void                             SetFanCount(unsigned fanCount);
     [[nodiscard]] unsigned           GetGuardCount() const;
     void                             SetGuardCount(unsigned guardCount);
-
-    [[nodiscard]] std::string ToString() const;
+    [[nodiscard]] const std::string  GetGuardLevel() const;
+    [[nodiscard]] bool               IsGuard() const;
+    [[nodiscard]] std::string        ToString() const;
 
 private:
     uint64_t    uid;

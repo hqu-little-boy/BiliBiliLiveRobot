@@ -20,10 +20,9 @@
 #include "Command/BiliLiveCommandSendGift.h"
 #include "Command/BiliLiveCommandSuperChat.h"
 
-template<typename T>
-std::unique_ptr<BiliLiveCommandBase> CreateCommand(const nlohmann::json& message)
+template<typename T> std::unique_ptr<BiliLiveCommandBase> CreateCommand()
 {
-    return std::make_unique<T>(message);
+    return std::make_unique<T>();
 }
 
 BiliCommandFactory* BiliCommandFactory::pInstance{new BiliCommandFactory()};
@@ -52,7 +51,12 @@ std::unique_ptr<BiliLiveCommandBase> BiliCommandFactory::GetCommand(
         {
             return std::unique_ptr<BiliLiveCommandBase>(pCommand);
         }
-        return this->commandMap[eCommand](message);
+        auto pNewCommand{this->commandMap[eCommand]()};
+        if (pNewCommand->LoadMessage(message))
+        {
+            return pNewCommand;
+        }
+        return nullptr;
     }
     return nullptr;
 }

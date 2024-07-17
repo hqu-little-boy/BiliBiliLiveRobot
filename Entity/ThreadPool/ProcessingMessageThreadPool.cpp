@@ -10,8 +10,8 @@
 #include "../MessageDeque/MessageDeque.h"
 ProcessingMessageThreadPool* ProcessingMessageThreadPool::pInstance{
     new ProcessingMessageThreadPool()};
-const int                    ProcessingMessageThreadPool::threadNum{static_cast<int>(
-    std::thread::hardware_concurrency() > 2 ? std::thread::hardware_concurrency() / 2 : 1)};
+const int ProcessingMessageThreadPool::threadNum{
+    static_cast<int>((std::thread::hardware_concurrency() + 1) / 2)};
 ProcessingMessageThreadPool* ProcessingMessageThreadPool::GetInstance()
 {
     if (pInstance == nullptr)
@@ -58,6 +58,7 @@ void ProcessingMessageThreadPool::ThreadRun()
         catch (const nlohmann::json::parse_error& e)
         {
             LOG_MESSAGE(LogLevel::Error, e.what());
+            lock.lock();
             return;
         }
         auto uniqueCommand = std::move(
@@ -67,6 +68,7 @@ void ProcessingMessageThreadPool::ThreadRun()
             LOG_MESSAGE(LogLevel::Error,
                         BiliApiUtil::GetLiveCommandStr(std::get<1>(message)) +
                             " Failed to produce command");
+            lock.lock();
             return;
         }
         uniqueCommand->Run();

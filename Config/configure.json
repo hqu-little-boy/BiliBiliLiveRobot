@@ -1,6 +1,6 @@
 {
-  "roomId": 25673317,
-  "logLevel": 4,
+  "roomId": 21452505,
+  "logLevel": 5,
   "logPath": "./log.txt",
   "danmuLength": 20,
   "canPKNotice": true,
@@ -33,11 +33,7 @@
   ],
   "canEntryNotice": true,
   "normalEntryNoticeList": [
-    "欢迎 {} 的到来，一起加油吧！",
-    "欢迎 {} 的到来，一起加入我们的行列吧！",
-    "欢迎 {} ~",
-    "欢迎 {} 木嘛~",
-    "欢迎 {} 好诶~"
+    "欢迎 {} 的到来，最喜欢你捏！"
   ],
   "guardEntryNoticeList": [
     "{} {}来给主播打call啦！"

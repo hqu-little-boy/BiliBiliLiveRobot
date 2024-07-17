@@ -7,8 +7,8 @@
 #include "../../Global/Config.h"
 #include "../../MessageDeque/MessageDeque.h"
 
-BiliLiveCommandAnchorLotEnd::BiliLiveCommandAnchorLotEnd(const nlohmann::json& message)
-    : BiliLiveCommandBase(message)
+BiliLiveCommandAnchorLotEnd::BiliLiveCommandAnchorLotEnd()
+    : BiliLiveCommandBase()
 {
 }
 

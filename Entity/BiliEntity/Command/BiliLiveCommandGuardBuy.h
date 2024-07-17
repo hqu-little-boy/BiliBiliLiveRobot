@@ -10,7 +10,7 @@
 class BiliLiveCommandGuardBuy : public BiliLiveCommandBase
 {
 public:
-    explicit BiliLiveCommandGuardBuy(const nlohmann::json& message);
+    explicit BiliLiveCommandGuardBuy();
     ~BiliLiveCommandGuardBuy() override = default;
 
     [[nodiscard]] std::string              ToString() const override;

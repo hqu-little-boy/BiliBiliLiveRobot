@@ -4,6 +4,8 @@
 
 #include "User.h"
 
+#include "../Global/Logger.h"
+
 #include <format>
 
 // User::User(uint64_t uid, const std::string& uname, unsigned guardLevel)
@@ -119,4 +121,38 @@ unsigned User::GetGuardCount() const
 void User::SetGuardCount(unsigned guardCount)
 {
     this->guardCount = guardCount;
+}
+
+const std::string User::GetGuardLevel() const
+{
+    switch (this->guardLevel)
+    {
+    case 0:
+    {
+        return "";
+    }
+    case 1:
+    {
+        return "总督";
+    }
+    case 2:
+    {
+        return "提督";
+    }
+    case 3:
+    {
+        return "舰长";
+    }
+    default:
+    {
+        LOG_VAR(LogLevel::Error, this->guardLevel);
+        return "";
+    }
+    }
+    return "";
+}
+
+bool User::IsGuard() const
+{
+    return this->guardLevel > 0;
 }

@@ -10,7 +10,7 @@
 class BiliLiveCommandGuardBlindBox : public BiliLiveCommandBase
 {
 public:
-    explicit BiliLiveCommandGuardBlindBox(const nlohmann::json& message);
+    explicit BiliLiveCommandGuardBlindBox();
     ~BiliLiveCommandGuardBlindBox() override = default;
 
     [[nodiscard]] std::string ToString() const override;

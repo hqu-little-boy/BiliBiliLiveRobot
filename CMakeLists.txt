@@ -15,13 +15,11 @@ set(CMAKE_CXX_STANDARD 23)
 file(GLOB_RECURSE BASE_SOURCES "Base/*.h" "Base/*.cpp")
 file(GLOB_RECURSE ENTITY_SOURCES "Entity/*.h" "Entity/*.cpp")
 file(GLOB_RECURSE UTIL_SOURCES "Util/*.h" "Util/*.cpp")
-file(GLOB_RECURSE THREADPOOL_SOURCES "ThreadPool/*.h" "ThreadPool/*.cpp")
 add_executable(BiliBiliLiveRobot
         main.cpp
         ${BASE_SOURCES}
         ${ENTITY_SOURCES}
         ${UTIL_SOURCES}
-        ${THREADPOOL_SOURCES}
 )
 
 add_custom_command(TARGET BiliBiliLiveRobot PRE_BUILD
