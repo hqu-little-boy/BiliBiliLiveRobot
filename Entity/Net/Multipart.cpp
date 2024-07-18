@@ -6,6 +6,7 @@
 
 #include <format>
 #include <random>
+#include <array>
 
 // Part::Part(const std::string& name, const std::string& value, const std::string& contentType)
 //     : name{name}

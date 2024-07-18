@@ -53,6 +53,7 @@ private:
     std::ofstream  logFile;
     bool           isLogInFile;
 #ifdef WIN32
+    using DWORD = unsigned long;
     static DWORD pid;
 #elif defined(__linux__)
     static pid_t pid;
