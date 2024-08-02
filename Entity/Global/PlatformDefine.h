@@ -22,5 +22,4 @@
 
 #endif  // MACOS
 
-
 #endif   // PLATFORMDEFINE_H
