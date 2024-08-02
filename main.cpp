@@ -40,7 +40,7 @@ int main()
     }
     Logger::GetInstance()->SetLogLevel(Config::GetInstance()->GetLogLevel());
     Logger::GetInstance()->SetLogPath(Config::GetInstance()->GetLogPath());
-    LOG_MESSAGE(LogLevel::Debug, std::format("Config: ({})", Config::GetInstance()->ToString()));
+    LOG_MESSAGE(LogLevel::Debug, FORMAT("Config: ({})", Config::GetInstance()->ToString()));
     ProcessingMessageThreadPool::GetInstance()->Start();
     boost::asio::io_context ioc;
     std::make_shared<BiliLiveSession>(ioc)->run();
@@ -77,7 +77,7 @@ int main()
 //     }
 //     Logger::GetInstance()->SetLogLevel(Config::GetInstance()->GetLogLevel());
 //     Logger::GetInstance()->SetLogPath(Config::GetInstance()->GetLogPath());
-//     LOG_MESSAGE(LogLevel::Debug, std::format("Config: ({})", Config::GetInstance()->ToString()));
+//     LOG_MESSAGE(LogLevel::Debug, FORMAT("Config: ({})", Config::GetInstance()->ToString()));
 //
 //     Url url{"api.live.bilibili.com", 443, "/msg/send"};
 //     LOG_VAR(LogLevel::Debug, url.ToString());

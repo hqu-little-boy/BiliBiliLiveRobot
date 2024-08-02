@@ -14,14 +14,14 @@ BiliLiveCommandEntryEffect::BiliLiveCommandEntryEffect()
 
 std::string BiliLiveCommandEntryEffect::ToString() const
 {
-    return std::format("User: {0}进入直播间", user.GetUname());
+    return FORMAT("User: {0}进入直播间", user.GetUname());
 }
 
-bool BiliLiveCommandEntryEffect::LoadMessage(const nlohmann::json& message)
+bool BiliLiveCommandEntryEffect::LoadMessage(const nlohmann::json &message)
 {
     try
     {
-        const auto& uinfo{message["data"]["uinfo"]};
+        const auto &uinfo{message["data"]["uinfo"]};
         auto        uid{uinfo["uid"].get<uint64_t>()};
         auto        uname{uinfo["base"]["name"].get<std::string>()};
         auto        guardLevel = 0;
@@ -33,7 +33,7 @@ bool BiliLiveCommandEntryEffect::LoadMessage(const nlohmann::json& message)
         this->user = User(uid, uname, guardLevel, wealthLevel);
         return true;
     }
-    catch (const nlohmann::json::exception& e)
+    catch (const nlohmann::json::exception &e)
     {
         LOG_MESSAGE(LogLevel::Error, e.what());
         return false;

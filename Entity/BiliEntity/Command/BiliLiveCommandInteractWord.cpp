@@ -18,36 +18,36 @@ std::string BiliLiveCommandInteractWord::ToString() const
 {
     switch (megType)
     {
-    case 1:
-    {
-        return std::format("{}进入直播间", user.ToString());
-        break;
-    }
-    case 2:
-    {
-        return std::format("{}关注了主播", user.ToString());
-        break;
-    }
-    case 3:
-    {
-        return std::format("{}分享了直播间", user.ToString());
-        break;
-    }
-    default:
-    {
-        LOG_VAR(LogLevel::Error, megType);
-        break;
-    }
+        case 1:
+        {
+            return FORMAT("{}进入直播间", user.ToString());
+            break;
+        }
+        case 2:
+        {
+            return FORMAT("{}关注了主播", user.ToString());
+            break;
+        }
+        case 3:
+        {
+            return FORMAT("{}分享了直播间", user.ToString());
+            break;
+        }
+        default:
+        {
+            LOG_VAR(LogLevel::Error, megType);
+            break;
+        }
     }
     return "";
 }
 
-bool BiliLiveCommandInteractWord::LoadMessage(const nlohmann::json& message)
+bool BiliLiveCommandInteractWord::LoadMessage(const nlohmann::json &message)
 {
     try
     {
-        const auto& data{message["data"]};
-        const auto& uinfo{message["data"]["uinfo"]};
+        const auto &data{message["data"]};
+        const auto &uinfo{message["data"]["uinfo"]};
         this->megType = data["msg_type"].get<unsigned>();
         // LOG_VAR(LogLevel::Debug, megType);
         auto uid{data["uid"].get<uint64_t>()};
@@ -69,7 +69,7 @@ bool BiliLiveCommandInteractWord::LoadMessage(const nlohmann::json& message)
         this->user = User(uid, uname, guardLevel, wealthLevel);
         return true;
     }
-    catch (const nlohmann::json::exception& e)
+    catch (const nlohmann::json::exception &e)
     {
         LOG_MESSAGE(LogLevel::Error, e.what());
         return false;
@@ -79,7 +79,7 @@ bool BiliLiveCommandInteractWord::LoadMessage(const nlohmann::json& message)
 void BiliLiveCommandInteractWord::Run() const
 {
     LOG_MESSAGE(LogLevel::Info, this->ToString());
-    // MessageDeque::GetInstance()->PushWaitedMessage(std::format("欢迎{}进入直播间",
+    // MessageDeque::GetInstance()->PushWaitedMessage(FORMAT("欢迎{}进入直播间",
     // this->user.GetUname()));
     if (this->user.GetUid() == 0)
     {
@@ -92,19 +92,19 @@ void BiliLiveCommandInteractWord::Run() const
             std::string message{};
             if (!this->user.IsGuard())
             {
-                message = std::vformat(Config::GetInstance()->GetNormalEntryNoticeWord(),
-                                       std::make_format_args(this->user.GetUname()));
+                message = VFORMAT(Config::GetInstance()->GetNormalEntryNoticeWord(),
+                                  MK_FMT_ARGS(this->user.GetUname()));
             }
             else
             {
-                message = std::vformat(
-                    Config::GetInstance()->GetGuardEntryNoticeWord(),
-                    std::make_format_args(this->user.GetGuardLevel(), this->user.GetUname()));
+                message = VFORMAT(
+                              Config::GetInstance()->GetGuardEntryNoticeWord(),
+                              MK_FMT_ARGS(this->user.GetGuardLevel(), this->user.GetUname()));
             }
             MessageDeque::GetInstance()->PushWaitedMessage(message);
             LOG_VAR(LogLevel::Debug, message);
         }
-        catch (const std::exception& e)
+        catch (const std::exception &e)
         {
             LOG_MESSAGE(LogLevel::Error, e.what());
         }
@@ -112,16 +112,16 @@ void BiliLiveCommandInteractWord::Run() const
     else if (this->megType == 2 && Config::GetInstance()->CanThanksFocus())
     {
         // MessageDeque::GetInstance()->PushWaitedMessage(
-        //     std::format("感谢{}关注了主播", this->user.GetUname()));
-        std::string message{std::format("感谢{}关注了主播", this->user.GetUname())};
+        //     FORMAT("感谢{}关注了主播", this->user.GetUname()));
+        std::string message{FORMAT("感谢{}关注了主播", this->user.GetUname())};
         MessageDeque::GetInstance()->PushWaitedMessage(message);
         LOG_VAR(LogLevel::Debug, message);
     }
     else if (this->megType == 3 && Config::GetInstance()->CanThanksShare())
     {
         // MessageDeque::GetInstance()->PushWaitedMessage(
-        //     std::format("感谢{}分享了直播间", this->user.GetUname()));
-        std::string message{std::format("感谢{}分享了直播间", this->user.GetUname())};
+        //     FORMAT("感谢{}分享了直播间", this->user.GetUname()));
+        std::string message{FORMAT("感谢{}分享了直播间", this->user.GetUname())};
         MessageDeque::GetInstance()->PushWaitedMessage(message);
         LOG_VAR(LogLevel::Debug, message);
     }

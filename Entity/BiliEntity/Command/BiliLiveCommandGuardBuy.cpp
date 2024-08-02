@@ -15,11 +15,11 @@ BiliLiveCommandGuardBuy::BiliLiveCommandGuardBuy()
 
 std::string BiliLiveCommandGuardBuy::ToString() const
 {
-    return std::format("User: {} 购买了舰长, GuardLevel: {}, Num: {}, Price: {}",
-                       user.GetUname(),
-                       guardLevel,
-                       num,
-                       price);
+    return FORMAT("User: {} 购买了舰长, GuardLevel: {}, Num: {}, Price: {}",
+                  user.GetUname(),
+                  guardLevel,
+                  num,
+                  price);
 }
 
 void BiliLiveCommandGuardBuy::Run() const
@@ -27,11 +27,11 @@ void BiliLiveCommandGuardBuy::Run() const
     LOG_MESSAGE(LogLevel::Info, this->ToString());
 }
 
-bool BiliLiveCommandGuardBuy::LoadMessage(const nlohmann::json& message)
+bool BiliLiveCommandGuardBuy::LoadMessage(const nlohmann::json &message)
 {
     try
     {
-        const auto& data{message["data"]};
+        const auto &data{message["data"]};
         auto        uname{data["username"].get<std::string>()};
         auto        uid{data["uid"].get<uint64_t>()};
         auto        guardLevel{data["guard_level"].get<unsigned>()};
@@ -40,7 +40,7 @@ bool BiliLiveCommandGuardBuy::LoadMessage(const nlohmann::json& message)
         this->num        = data["num"].get<unsigned>();
         this->price      = data["price"].get<unsigned>();
     }
-    catch (const nlohmann::json::exception& e)
+    catch (const nlohmann::json::exception &e)
     {
         LOG_MESSAGE(LogLevel::Error, e.what());
         return false;

@@ -14,7 +14,7 @@ BiliLiveCommandSuperChat::BiliLiveCommandSuperChat()
 
 std::string BiliLiveCommandSuperChat::ToString() const
 {
-    return std::format("User: {} 送出了超级聊天, Price: {}元, Message: {}",
+    return FORMAT("User: {} 送出了超级聊天, Price: {}元, Message: {}",
                        user.GetUname(),
                        price,
                        message);

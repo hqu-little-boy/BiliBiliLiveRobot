@@ -3,6 +3,11 @@
 //
 
 #include "TimeStamp.h"
+#include <iomanip>
+
+#ifdef MACOS
+#include <sstream>
+#endif
 
 TimeStamp::TimeStamp()
     : timePoint{std::chrono::system_clock::now()}
@@ -32,7 +37,15 @@ std::string TimeStamp::ToString() const
     // std::stringstream ss;
     // ss << std::put_time(&now_tm, "%Y-%m-%d %H:%M:%S
     // return ss.str();
-    return std::format("{:%Y-%m-%d %H:%M:%S}", std::chrono::current_zone()->to_local(timePoint));
+#ifdef MACOS
+    std::time_t tt = std::chrono::system_clock::to_time_t(timePoint);
+    std::tm tm = *std::gmtime(&tt);
+    std::stringstream ss;
+    ss << std::put_time(&tm, "%Y-%m-%d %H:%M:%S");
+    return ss.str();
+#else
+    return FORMAT("{:%Y-%m-%d %H:%M:%S}", std::chrono::current_zone()->to_local(timePoint));
+#endif
 }
 
 bool TimeStamp::IsTimeOut(std::chrono::milliseconds milliseconds) const

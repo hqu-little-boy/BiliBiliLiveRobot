@@ -3,6 +3,7 @@
 //
 
 #include "Multipart.h"
+#include "../Global/PlatformDefine.h"
 
 #include <format>
 #include <random>
@@ -22,19 +23,19 @@
 // {
 // }
 //
-Multipart::Multipart(const std::initializer_list<std::pair<std::string, std::string>>& parts)
+Multipart::Multipart(const std::initializer_list<std::pair<std::string, std::string>> &parts)
     : parts{parts}
     , boundary{MakeMultipartDataBoundary()}
 {
 }
 
-Multipart::Multipart(const std::list<std::pair<std::string, std::string>>& parts)
+Multipart::Multipart(const std::list<std::pair<std::string, std::string>> &parts)
     : parts{parts}
     , boundary{MakeMultipartDataBoundary()}
 {
 }
 
-Multipart::Multipart(const std::list<std::pair<std::string, std::string>>&& parts)
+Multipart::Multipart(const std::list<std::pair<std::string, std::string>> &&parts)
     : parts{parts}
     , boundary{MakeMultipartDataBoundary()}
 {
@@ -42,12 +43,13 @@ Multipart::Multipart(const std::list<std::pair<std::string, std::string>>&& part
 
 std::string Multipart::MakeMultipartDataBoundary()
 {
-    return std::format("----WebKitFormBoundary{}", this->RandomString(16));
+    return FORMAT("----WebKitFormBoundary{}", this->RandomString(16));
 }
 
 std::string Multipart::RandomString(uint16_t length)
 {
-    constexpr std::array<char, 62> data{
+    constexpr std::array<char, 62> data
+    {
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F',
         'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
         'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
@@ -73,20 +75,20 @@ std::string Multipart::RandomString(uint16_t length)
 
 std::string Multipart::GetSerializeMultipartFormdataGetContentType()
 {
-    return std::format("multipart/form-data; boundary={}", this->boundary);
+    return FORMAT("multipart/form-data; boundary={}", this->boundary);
 }
 
 std::string Multipart::GetSerializeMultipartFormdata()
 {
     std::string body;
 
-    for (const auto& part : this->parts)
+    for (const auto &part : this->parts)
     {
-        body += std::format("--{}\r\n", this->boundary);
-        body += std::format("Content-Disposition: form-data; name=\"{}\"\r\n\r\n", part.first);
+        body += FORMAT("--{}\r\n", this->boundary);
+        body += FORMAT("Content-Disposition: form-data; name=\"{}\"\r\n\r\n", part.first);
         body += part.second;
         body += "\r\n";
     }
-    body += std::format("--{}--\r\n", this->boundary);
+    body += FORMAT("--{}--\r\n", this->boundary);
     return body;
 }

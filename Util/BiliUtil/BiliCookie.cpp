@@ -22,7 +22,7 @@ bool BiliCookie::LoadBiliCookieByJson(const nlohmann::json& json)
     }
     catch (const nlohmann::json::exception& e)
     {
-        LOG_MESSAGE(LogLevel::Error, std::format("Failed to load BiliCookie: {}", e.what()));
+        LOG_MESSAGE(LogLevel::Error, FORMAT("Failed to load BiliCookie: {}", e.what()));
         return false;
     }
 }
@@ -37,14 +37,14 @@ bool BiliCookie::LoadBiliCookieByJson(const nlohmann::json& json)
 //
 //     if (!std::filesystem::exists(jsonPath))
 //     {
-//         LOG_MESSAGE(LogLevel::Error, std::format("File not exists: {}", jsonPath));
+//         LOG_MESSAGE(LogLevel::Error, FORMAT("File not exists: {}", jsonPath));
 //         return false;
 //     }
 //
 //     std::ifstream ifs(jsonPath);
 //     if (!ifs.is_open())
 //     {
-//         LOG_MESSAGE(LogLevel::Error, std::format("Failed to open file: {}", jsonPath));
+//         LOG_MESSAGE(LogLevel::Error, FORMAT("Failed to open file: {}", jsonPath));
 //         return false;
 //     }
 //
@@ -91,7 +91,7 @@ const std::string& BiliCookie::GetDedeUserIDCkMd5() const
 
 std::string BiliCookie::ToString() const
 {
-    return std::format("SESSDATA={}; buvid3={}; buvid4={}; bili_jct={}; sid={}; DedeUserID={}; "
+    return FORMAT("SESSDATA={}; buvid3={}; buvid4={}; bili_jct={}; sid={}; DedeUserID={}; "
                        "DedeUserID__ckMd5={}",
                        this->strSESSDATA,
                        this->buvid3,

@@ -33,8 +33,8 @@ BiliLiveCommandPKStart::BiliLiveCommandPKStart()
 
 std::string BiliLiveCommandPKStart::ToString() const
 {
-    // return std::format("BiliLiveCommandPKStart: roomID: {}", oppositeRoomID);
-    return std::format("BiliLiveCommandPKStart: roomID: {}, anchor: {}, uid: {}, fanCount: {}, "
+    // return FORMAT("BiliLiveCommandPKStart: roomID: {}", oppositeRoomID);
+    return FORMAT("BiliLiveCommandPKStart: roomID: {}, anchor: {}, uid: {}, fanCount: {}, "
                        "guardCount: {}, totalAudienceNum: {}, totalRankcount: {}",
                        oppositeRoomID,
                        oppositeAnchor.GetUname(),
@@ -70,7 +70,7 @@ bool BiliLiveCommandPKStart::LoadMessage(const nlohmann::json& message)
     }
     catch (const std::exception& e)
     {
-        LOG_MESSAGE(LogLevel::Error, std::format("Failed to load message: {}", e.what()));
+        LOG_MESSAGE(LogLevel::Error, FORMAT("Failed to load message: {}", e.what()));
         return false;
     }
     if (this->oppositeRoomID == lastPKRoomID)
@@ -110,11 +110,11 @@ void BiliLiveCommandPKStart::Run() const
     {
         return;
     }
-    MessageDeque::GetInstance()->PushWaitedMessage(std::format("PK开始，{}，粉丝数：{}",
+    MessageDeque::GetInstance()->PushWaitedMessage(FORMAT("PK开始，{}，粉丝数：{}",
                                                                this->oppositeAnchor.GetUname(),
                                                                this->oppositeAnchor.GetFanCount()));
     MessageDeque::GetInstance()->PushWaitedMessage(
-        std::format("总舰长数：{}，总观众数：{}，总亲密度：{}",
+        FORMAT("总舰长数：{}，总观众数：{}，总亲密度：{}",
                     this->oppositeAnchor.GetGuardCount(),
                     this->totalAudienceNum,
                     this->totalRankcount));
