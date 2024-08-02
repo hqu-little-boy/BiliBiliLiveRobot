@@ -15,11 +15,11 @@ BiliLiveCommandGuardBuy::BiliLiveCommandGuardBuy()
 
 std::string BiliLiveCommandGuardBuy::ToString() const
 {
-    return std::format("User: {} 购买了舰长, GuardLevel: {}, Num: {}, Price: {}",
-                       user.GetUname(),
-                       guardLevel,
-                       num,
-                       price);
+    return FORMAT("User: {} 购买了舰长, GuardLevel: {}, Num: {}, Price: {}",
+                  user.GetUname(),
+                  guardLevel,
+                  num,
+                  price);
 }
 
 void BiliLiveCommandGuardBuy::Run() const

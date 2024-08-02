@@ -14,7 +14,7 @@
 #    include <windows.h>
 // 进程ID
 DWORD Logger::pid = GetCurrentProcessId();
-#elif defined(__linux__)
+#elif defined(__linux__) || defined(MACOS)
 #    include <unistd.h>
 // 进程ID
 pid_t Logger::pid = getpid();
@@ -47,19 +47,19 @@ bool Logger::Log(LogLevel level, const std::string_view& file, int line,
     std::thread::id tid = std::this_thread::get_id();
 
     // 日志内容，包括时间、进程ID、线程ID、文件、行号、函数名、日志级别、日志内容，固定长度和对齐
-    // std::string strLog = std::format("{} {} {} {} {} {} {} {}\n", strTime, pid, tid, file,
+    // std::string strLog = FORMAT("{} {} {} {} {} {} {} {}\n", strTime, pid, tid, file,
     // line, func, strLevel,
     //                                  strMessage);
-    std::string strLog = std::format(
+    std::string strLog = FORMAT(
         "{:<19} {:<5} {:<5} {:<5} {:<5} {:<5} {}", strTime, pid, tid, file, func, line, strMessage);
     // 互斥锁，保证输出到标准输出的内容不会混乱
     std::lock_guard<std::mutex> guard(printMutex);
     // 输出到标准输出
     // std::println(std::cout, "{}", strLog);
-    std::cout << std::format("[{:<7}] {}", this->GetSignWithColor(level), strLog) << std::endl;
+    std::cout << FORMAT("[{:<7}] {}", this->GetSignWithColor(level), strLog) << std::endl;
     if (isLogInFile)
     {
-        this->logFile << std::format("[{:<7}] {}", this->GetSign(level), strLog) << std::endl;
+        this->logFile << FORMAT("[{:<7}] {}", this->GetSign(level), strLog) << std::endl;
         // std::println(this->logFile, "{}", strLog);
     }
     // Logger::sync_out << strLog << std::endl;

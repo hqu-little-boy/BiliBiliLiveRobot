@@ -13,3 +13,6 @@
 [submodule "ThirdParty/utfcpp"]
 	path = ThirdParty/utfcpp
 	url = https://github.com/nemtrif/utfcpp.git
+[submodule "ThirdParty/fmt"]
+	path = ThirdParty/fmt
+	url = https://github.com/fmtlib/fmt.git

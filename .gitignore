@@ -1,0 +1,6 @@
+build
+CMakeLists.txt.user
+_*Bin
+.DS_Store
+._*
+

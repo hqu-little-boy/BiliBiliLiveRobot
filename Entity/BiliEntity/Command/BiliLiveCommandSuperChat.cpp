@@ -14,10 +14,10 @@ BiliLiveCommandSuperChat::BiliLiveCommandSuperChat()
 
 std::string BiliLiveCommandSuperChat::ToString() const
 {
-    return std::format("User: {} 送出了超级聊天, Price: {}元, Message: {}",
-                       user.GetUname(),
-                       price,
-                       message);
+    return FORMAT("User: {} 送出了超级聊天, Price: {}元, Message: {}",
+                  user.GetUname(),
+                  price,
+                  message);
 }
 
 bool BiliLiveCommandSuperChat::LoadMessage(const nlohmann::json& message)

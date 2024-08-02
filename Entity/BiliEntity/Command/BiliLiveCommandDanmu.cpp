@@ -18,7 +18,7 @@ BiliLiveCommandDanmu::BiliLiveCommandDanmu()
 
 std::string BiliLiveCommandDanmu::ToString() const
 {
-    return std::format("{}: {}", this->user.GetUname(), this->content);
+    return FORMAT("{}: {}", this->user.GetUname(), this->content);
 }
 
 bool BiliLiveCommandDanmu::LoadMessage(const nlohmann::json& message)
@@ -50,7 +50,7 @@ void BiliLiveCommandDanmu::Run() const
     if (content == "抽签" && Config::GetInstance()->CanDrawByLot())
     {
         MessageDeque::GetInstance()->PushWaitedMessage(
-            std::format("{} 你的抽奖结果是", this->user.GetUname()));
+            FORMAT("{} 你的抽奖结果是", this->user.GetUname()));
         MessageDeque::GetInstance()->PushWaitedMessage(Config::GetInstance()->GetDrawByLotWord());
     }
 }
