@@ -18,10 +18,17 @@ enum class LogLevel
 };
 
 #include "../../Base/noncopyable.h"
+#include "PlatformDefine.h"
 
 #include <format>
 #include <string_view>
-#include <syncstream>
+
+#ifndef MACOS
+#    include <syncstream>
+#else
+#    include <fmt/format.h>
+#endif
+
 
 class Logger : noncopyable
 {
@@ -52,12 +59,14 @@ private:
     std::mutex     printMutex;
     std::ofstream  logFile;
     bool           isLogInFile;
+
 #ifdef WIN32
     using DWORD = unsigned long;
     static DWORD pid;
-#elif defined(__linux__)
+#elif defined(__linux__) || defined(MACOS)
     static pid_t pid;
 #endif
+
     // static std::osyncstream sync_out;   // std::cout 的同步包装
 };
 
@@ -68,6 +77,6 @@ private:
 #define LOG_VAR(level, var)                                                                    \
     Logger::GetInstance()->GetLogLevel() >= level                                              \
         ? Logger::GetInstance()->Log(                                                          \
-              level, __FILE__, __LINE__, __FUNCTION__, std::format("{:>5}: {:>5}", #var, var)) \
+              level, __FILE__, __LINE__, __FUNCTION__, FORMAT("{:>5}: {:>5}", #var, var)) \
         : false
 #endif   // LOGGER_H

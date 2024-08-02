@@ -50,14 +50,14 @@ bool BiliRequestHeader::LoadBiliCookieByPath(const std::string_view& jsonPath)
 
     if (!std::filesystem::exists(jsonPath))
     {
-        LOG_MESSAGE(LogLevel::Error, std::format("File not exists: {}", jsonPath));
+        LOG_MESSAGE(LogLevel::Error, FORMAT("File not exists: {}", jsonPath));
         return false;
     }
 
     std::ifstream ifs(jsonPath.data());
     if (!ifs.is_open())
     {
-        LOG_MESSAGE(LogLevel::Error, std::format("Failed to open file: {}", jsonPath));
+        LOG_MESSAGE(LogLevel::Error, FORMAT("Failed to open file: {}", jsonPath));
         return false;
     }
 

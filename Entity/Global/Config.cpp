@@ -40,7 +40,7 @@ bool Config::LoadFromJson(const std::string& jsonPath)
 
     if (!std::filesystem::exists(jsonPath))
     {
-        LOG_MESSAGE(LogLevel::Error, std::format("File not exists: {}", jsonPath));
+        LOG_MESSAGE(LogLevel::Error, FORMAT("File not exists: {}", jsonPath));
         throw std::runtime_error("File not exists: " + jsonPath);
         return false;
     }
@@ -48,7 +48,7 @@ bool Config::LoadFromJson(const std::string& jsonPath)
     std::ifstream ifs(jsonPath);
     if (!ifs.is_open())
     {
-        LOG_MESSAGE(LogLevel::Error, std::format("Failed to open file: {}", jsonPath));
+        LOG_MESSAGE(LogLevel::Error, FORMAT("Failed to open file: {}", jsonPath));
         throw std::runtime_error("Failed to open file: " + jsonPath);
         return false;
     }
@@ -85,7 +85,7 @@ bool Config::LoadFromJson(const std::string& jsonPath)
     }
     catch (const nlohmann::json::exception& e)
     {
-        LOG_MESSAGE(LogLevel::Error, std::format("Failed to parse json: {}", e.what()));
+        LOG_MESSAGE(LogLevel::Error, FORMAT("Failed to parse json: {}", e.what()));
         // throw std::runtime_error("Failed to parse json: " + std::string(e.what()));
         return false;
     }
@@ -203,27 +203,26 @@ const std::string& Config::GetGuardEntryNoticeWord() const
 
 std::string Config::ToString() const
 {
-    // return std::format("roomId: {}, danmuSeverConfUrl: {}", roomId,
+    // return FORMAT("roomId: {}, danmuSeverConfUrl: {}", roomId,
     // danmuSeverConfUrl.ToString());
-    return std::format(
-        "roomId: {}, danmuSeverConfUrl: {} ,logLevel: {}, logPath: {}, danmuLength: {}, "
-        "canPKNotice: {}, canGuardNotice: {}, canThanksGift: {}, canSuperChatNotice: {}, "
-        "thanksGiftTimeout: {}, canDrawByLot: {}, canEntryNotice: {}, "
-        "canThanksFocus: {}, canThanksShare: {}",
-        this->roomId,
-        this->danmuSeverConfUrl.ToString(),
-        static_cast<uint8_t>(this->logLevel),
-        this->logPath,
-        this->danmuLength,
-        this->canPKNotice,
-        this->canGuardNotice,
-        this->canThanksGift,
-        this->canSuperChatNotice,
-        this->thanksGiftTimeout,
-        this->canDrawByLot,
-        this->canEntryNotice,
-        this->canThanksFocus,
-        this->canThanksShare);
+    return FORMAT("roomId: {}, danmuSeverConfUrl: {} ,logLevel: {}, logPath: {}, danmuLength: {}, "
+                  "canPKNotice: {}, canGuardNotice: {}, canThanksGift: {}, canSuperChatNotice: {}, "
+                  "thanksGiftTimeout: {}, canDrawByLot: {}, canEntryNotice: {}, "
+                  "canThanksFocus: {}, canThanksShare: {}",
+                  this->roomId,
+                  this->danmuSeverConfUrl.ToString(),
+                  static_cast<uint8_t>(this->logLevel),
+                  this->logPath,
+                  this->danmuLength,
+                  this->canPKNotice,
+                  this->canGuardNotice,
+                  this->canThanksGift,
+                  this->canSuperChatNotice,
+                  this->thanksGiftTimeout,
+                  this->canDrawByLot,
+                  this->canEntryNotice,
+                  this->canThanksFocus,
+                  this->canThanksShare);
 }
 
 Config::Config()

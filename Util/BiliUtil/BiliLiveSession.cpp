@@ -165,7 +165,7 @@ void BiliLiveSession::on_connect(boost::beast::error_code                       
     // Update the host_ string. This will provide the value of the
     // Host HTTP header during the WebSocket handshake.
     // See https://tools.ietf.org/html/rfc7230#section-5.4
-    this->host = std::format("{}:{}", this->liveUrls.back().host, ep.port());
+    this->host = FORMAT("{}:{}", this->liveUrls.back().host, ep.port());
 
     // Perform the SSL handshake
     this->ws.next_layer().async_handshake(
@@ -231,7 +231,7 @@ void BiliLiveSession::on_handshake(boost::beast::error_code ec)
     //                       R"(, "key": ")" + this->token + R"("})";
     // std::string bodyStr =
     //     "{" +
-    //     std::format(
+    //     FORMAT(
     //         R"("uid": {}, "roomid": {}, "protover": 3, "platform": "web", "type": 2, "key": "{}",
     //         "buvid": {})",
     //         // BiliRequestHeader::GetInstance()->GetBiliCookie().GetDedeUserID(),

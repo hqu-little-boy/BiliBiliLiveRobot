@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 project(BiliBiliLiveRobot)
 
+set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/_${CMAKE_BUILD_TYPE}Bin)
 if (POLICY CMP0167)
     cmake_policy(SET CMP0167 NEW)
 endif ()
@@ -15,22 +16,24 @@ set(CMAKE_CXX_STANDARD 23)
 file(GLOB_RECURSE BASE_SOURCES "Base/*.h" "Base/*.cpp")
 file(GLOB_RECURSE ENTITY_SOURCES "Entity/*.h" "Entity/*.cpp")
 file(GLOB_RECURSE UTIL_SOURCES "Util/*.h" "Util/*.cpp")
-add_executable(BiliBiliLiveRobot
+
+add_executable(${PROJECT_NAME}
         main.cpp
         ${BASE_SOURCES}
         ${ENTITY_SOURCES}
         ${UTIL_SOURCES}
 )
 
-add_custom_command(TARGET BiliBiliLiveRobot PRE_BUILD
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/Config"
+add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_INSTALL_PREFIX}/Config"
 )
 
-add_custom_command(TARGET BiliBiliLiveRobot PRE_BUILD
+add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
         "${CMAKE_SOURCE_DIR}/Config/configure.json"
-        "${CMAKE_BINARY_DIR}/Config/configure.json"
+        "${CMAKE_INSTALL_PREFIX}/Config/configure.json"
 )
+
 # 加入Boost库
 find_package(Boost COMPONENTS context iostreams REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
@@ -46,7 +49,8 @@ add_subdirectory(ThirdParty/concurrencpp)
 include_directories(ThirdParty/concurrencpp/include)
 add_subdirectory(ThirdParty/utfcpp)
 include_directories(ThirdParty/utfcpp/source)
-target_link_libraries(BiliBiliLiveRobot PRIVATE
+
+target_link_libraries(${PROJECT_NAME} PRIVATE
         OpenSSL::SSL
         OpenSSL::Crypto
         Boost::context
@@ -58,6 +62,15 @@ target_link_libraries(BiliBiliLiveRobot PRIVATE
         utf8cpp
 )
 
+if(APPLE)
+    add_definitions(-DMACOS)
+    add_subdirectory(ThirdParty/fmt)
+    include_directories(ThirdParty/fmt/include)
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+        fmt::fmt
+    )
+endif()
+
 if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest")
@@ -65,7 +78,13 @@ if(MSVC)
     include_directories(
             ${VCPKG_INCLUDE_DIRS}
     )
-    target_link_libraries(BiliBiliLiveRobot
+    target_link_libraries(${PROJECT_NAME}
             ${VCPKG_LIBRARIES}
     )
 endif()
+
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+    "${CMAKE_BINARY_DIR}/${PROJECT_NAME}"
+    "${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}"
+)
