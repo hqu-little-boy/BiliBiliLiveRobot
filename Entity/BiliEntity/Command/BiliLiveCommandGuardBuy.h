@@ -13,9 +13,9 @@ public:
     explicit BiliLiveCommandGuardBuy();
     ~BiliLiveCommandGuardBuy() override = default;
 
-    [[nodiscard]] std::string              ToString() const override;
-    void                                   Run() const override;
-    bool                                   LoadMessage(const nlohmann::json& message) override;
+    [[nodiscard]] std::string ToString() const override;
+    void                      Run() const override;
+    bool                      LoadMessage(const nlohmann::json& message) override;
     // [[nodiscard]] BiliApiUtil::LiveCommand GetCommandType() const;
 
 private:

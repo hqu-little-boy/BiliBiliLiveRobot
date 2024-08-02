@@ -16,8 +16,7 @@
 // BrotliDecoderState* BiliApiUtil::brotliState =
 //     BrotliDecoderCreateInstance(nullptr, nullptr, nullptr);
 
-const std::unordered_map<std::string, BiliApiUtil::LiveCommand> BiliApiUtil::liveCommandMap
-{
+const std::unordered_map<std::string, BiliApiUtil::LiveCommand> BiliApiUtil::liveCommandMap{
     {"DANMU_MSG", BiliApiUtil::LiveCommand::DANMU_MSG},
     {"INTERACT_WORD", BiliApiUtil::LiveCommand::INTERACT_WORD},
     // {"USER_TOAST_MSG", BiliApiUtil::LiveCommand::USER_TOAST_MSG},
@@ -30,10 +29,8 @@ const std::unordered_map<std::string, BiliApiUtil::LiveCommand> BiliApiUtil::liv
     {"PREPARING", BiliApiUtil::LiveCommand::PREPARING},
     // {"POPULARITY_RED_POCKET_NEW", BiliApiUtil::LiveCommand::POPULARITY_RED_POCKET_NEW},
     {"POPULARITY_RED_POCKET_START", BiliApiUtil::LiveCommand::POPULARITY_RED_POCKET_START},
-    {
-        "POPULARITY_RED_POCKET_WINNER_LIST",
-        BiliApiUtil::LiveCommand::POPULARITY_RED_POCKET_WINNER_LIST
-    },
+    {"POPULARITY_RED_POCKET_WINNER_LIST",
+     BiliApiUtil::LiveCommand::POPULARITY_RED_POCKET_WINNER_LIST},
     {"ANCHOR_LOT_START", BiliApiUtil::LiveCommand::ANCHOR_LOT_START},
     {"ANCHOR_LOT_END", BiliApiUtil::LiveCommand::ANCHOR_LOT_END},
     // {"ENTRY_EFFECT", BiliApiUtil::LiveCommand::ENTRY_EFFECT},
@@ -44,33 +41,31 @@ const std::unordered_map<std::string, BiliApiUtil::LiveCommand> BiliApiUtil::liv
 
 std::string BiliApiUtil::HeaderTuple::ToString() const
 {
-    return FORMAT(
-               "totalSize: {}, headerSize: {}, version: {}, operationCode: {}, sequenceId: {}",
-               totalSize,
-               headerSize,
-               version,
-               operationCode,
-               sequenceId);
+    return FORMAT("totalSize: {}, headerSize: {}, version: {}, operationCode: {}, sequenceId: {}",
+                  totalSize,
+                  headerSize,
+                  version,
+                  operationCode,
+                  sequenceId);
 }
 
-bool BiliApiUtil::MakePack(const std::string_view &body,
+bool BiliApiUtil::MakePack(const std::string_view& body,
                            Operation               eOperation,
-                           std::vector<uint8_t>   &res)
+                           std::vector<uint8_t>&   res)
 {
     // LOG_VAR(LogLevel::Debug, body.size());
     // 构建包头
-    HeaderTuple header
-    {
+    HeaderTuple header{
         .totalSize  = boost::endian::native_to_big(static_cast<uint32_t>(body.size() + 16)),
         .headerSize = boost::endian::native_to_big(static_cast<uint16_t>(16)),
         .version    = boost::endian::native_to_big(static_cast<uint16_t>(1)),
         .operationCode =
-        boost::endian::native_to_big(static_cast<uint32_t>(static_cast<int>(eOperation))),
+            boost::endian::native_to_big(static_cast<uint32_t>(static_cast<int>(eOperation))),
         .sequenceId = boost::endian::native_to_big(static_cast<uint32_t>(1)),
     };
     // 将包头和包体拼接
-    std::vector<uint8_t> headerBuffer(reinterpret_cast<uint8_t *>(&header),
-                                      reinterpret_cast<uint8_t *>(&header) + sizeof(HeaderTuple));
+    std::vector<uint8_t> headerBuffer(reinterpret_cast<uint8_t*>(&header),
+                                      reinterpret_cast<uint8_t*>(&header) + sizeof(HeaderTuple));
 
     std::vector<uint8_t> bodyBuffer(body.begin(), body.end());
     // std::vector<uint8_t> buffer;
@@ -81,7 +76,7 @@ bool BiliApiUtil::MakePack(const std::string_view &body,
 }
 
 std::list<std::tuple<BiliApiUtil::LiveCommand, std::string>> BiliApiUtil::Unpack(
-            const std::span<const uint8_t> &buffer)
+    const std::span<const uint8_t>& buffer)
 {
     uint32_t                                                     start     = 0;
     size_t                                                       bufferLen = buffer.size();
@@ -106,33 +101,33 @@ std::list<std::tuple<BiliApiUtil::LiveCommand, std::string>> BiliApiUtil::Unpack
         {
             switch (static_cast<BiliApiUtil::ZipOperation>(header.version))
             {
-                case ZipOperation::NormalNone:
-                case ZipOperation::HeartBeatNone:
+            case ZipOperation::NormalNone:
+            case ZipOperation::HeartBeatNone:
+            {
+                temp.emplace_back(BiliApiUtil::UnpackBodyNoneCompress(
+                    buffer, start + sizeof(HeaderTuple), start + header.totalSize));
+                break;
+            }
+            case ZipOperation::NormalZlib:
+            {
+                // 将decompressedBufferUnpack使用std::move插入到res中
+                for (auto& command : BiliApiUtil::UnpackBodyZlib(
+                         buffer, start + sizeof(HeaderTuple), start + header.totalSize))
                 {
-                    temp.emplace_back(BiliApiUtil::UnpackBodyNoneCompress(
-                                          buffer, start + sizeof(HeaderTuple), start + header.totalSize));
-                    break;
+                    temp.emplace_back(std::move(command));
                 }
-                case ZipOperation::NormalZlib:
+                break;
+            }
+            case ZipOperation::NormalBrotli:
+            {
+                // LOG_MESSAGE(LogLevel::Debug, "ZipOperation::NormalBrotli");
+                for (auto& command : BiliApiUtil::UnpackBodyBrotli(
+                         buffer, start + sizeof(HeaderTuple), start + header.totalSize))
                 {
-                    // 将decompressedBufferUnpack使用std::move插入到res中
-                    for (auto &command : BiliApiUtil::UnpackBodyZlib(
-                             buffer, start + sizeof(HeaderTuple), start + header.totalSize))
-                    {
-                        temp.emplace_back(std::move(command));
-                    }
-                    break;
+                    temp.emplace_back(std::move(command));
                 }
-                case ZipOperation::NormalBrotli:
-                {
-                    // LOG_MESSAGE(LogLevel::Debug, "ZipOperation::NormalBrotli");
-                    for (auto &command : BiliApiUtil::UnpackBodyBrotli(
-                             buffer, start + sizeof(HeaderTuple), start + header.totalSize))
-                    {
-                        temp.emplace_back(std::move(command));
-                    }
-                    break;
-                }
+                break;
+            }
             }
             start += header.totalSize;
         }
@@ -149,12 +144,12 @@ std::list<std::tuple<BiliApiUtil::LiveCommand, std::string>> BiliApiUtil::Unpack
     return res;
 }
 
-BiliApiUtil::HeaderTuple BiliApiUtil::UnpackHeader(const std::span<const uint8_t> &buffer,
-        unsigned                        front)
+BiliApiUtil::HeaderTuple BiliApiUtil::UnpackHeader(const std::span<const uint8_t>& buffer,
+                                                   unsigned                        front)
 {
     BiliApiUtil::HeaderTuple header{};
     std::copy(
-        buffer.begin() + front, buffer.begin() + front + 16, reinterpret_cast<uint8_t *>(&header));
+        buffer.begin() + front, buffer.begin() + front + 16, reinterpret_cast<uint8_t*>(&header));
     // 将网络字节序转为本地字节序
     header.totalSize     = boost::endian::big_to_native(header.totalSize);
     header.headerSize    = boost::endian::big_to_native(header.headerSize);
@@ -165,7 +160,7 @@ BiliApiUtil::HeaderTuple BiliApiUtil::UnpackHeader(const std::span<const uint8_t
 }
 
 std::tuple<BiliApiUtil::LiveCommand, std::string> BiliApiUtil::UnpackBodyNoneCompress(
-    const std::span<const uint8_t> &buffer, unsigned front, unsigned end)
+    const std::span<const uint8_t>& buffer, unsigned front, unsigned end)
 {
     std::string content{buffer.begin() + front, buffer.begin() + end};
     auto        command{BiliApiUtil::GetLiveCommand(content)};
@@ -174,7 +169,7 @@ std::tuple<BiliApiUtil::LiveCommand, std::string> BiliApiUtil::UnpackBodyNoneCom
 }
 
 std::list<std::tuple<BiliApiUtil::LiveCommand, std::string>> BiliApiUtil::UnpackBodyZlib(
-            const std::span<const uint8_t> &buffer, unsigned front, unsigned end)
+    const std::span<const uint8_t>& buffer, unsigned front, unsigned end)
 {
     std::stringstream compressedStream(std::string(buffer.begin() + front, buffer.begin() + end));
     std::stringstream decompressedStream;
@@ -190,15 +185,15 @@ std::list<std::tuple<BiliApiUtil::LiveCommand, std::string>> BiliApiUtil::Unpack
 #endif
     // decompressedStream将内部数据构造为std::span<uint_8>
     std::span<const uint8_t> decompressedBuffer(
-        reinterpret_cast<const uint8_t *>(decompressedStreamStringView.data()),
+        reinterpret_cast<const uint8_t*>(decompressedStreamStringView.data()),
         decompressedStreamStringView.size());
     return BiliApiUtil::Unpack(decompressedBuffer);
 }
 
 std::list<std::tuple<BiliApiUtil::LiveCommand, std::string>> BiliApiUtil::UnpackBodyBrotli(
-            const std::span<const uint8_t> &buffer, unsigned front, unsigned end)
+    const std::span<const uint8_t>& buffer, unsigned front, unsigned end)
 {
-    BrotliDecoderState *pBrotliState = BrotliDecoderCreateInstance(nullptr, nullptr, nullptr);
+    BrotliDecoderState* pBrotliState = BrotliDecoderCreateInstance(nullptr, nullptr, nullptr);
 
     if (!pBrotliState)
     {
@@ -209,9 +204,9 @@ std::list<std::tuple<BiliApiUtil::LiveCommand, std::string>> BiliApiUtil::Unpack
     std::vector<uint8_t>     decompressedData;
 
     size_t         availableInput = compressedData.size();
-    const uint8_t *nextInput      = compressedData.data();
+    const uint8_t* nextInput      = compressedData.data();
     size_t         availableOut;
-    uint8_t       *nextOutput;
+    uint8_t*       nextOutput;
 
     // Define a maximum output buffer size
     constexpr size_t     outputBufferSize = 256;
@@ -223,7 +218,7 @@ std::list<std::tuple<BiliApiUtil::LiveCommand, std::string>> BiliApiUtil::Unpack
         availableOut = outputBuffer.size();
         nextOutput   = outputBuffer.data();
         result       = BrotliDecoderDecompressStream(
-                           pBrotliState, &availableInput, &nextInput, &availableOut, &nextOutput, nullptr);
+            pBrotliState, &availableInput, &nextInput, &availableOut, &nextOutput, nullptr);
         // decompressedData.(reinterpret_cast<const char *>(buffer.data()), );
         if (outputBufferSize - availableOut > 0)
         {
@@ -248,7 +243,7 @@ std::list<std::tuple<BiliApiUtil::LiveCommand, std::string>> BiliApiUtil::Unpack
     return BiliApiUtil::Unpack(decompressedData);
 }
 
-BiliApiUtil::LiveCommand BiliApiUtil::GetLiveCommand(const std::string_view &cmd)
+BiliApiUtil::LiveCommand BiliApiUtil::GetLiveCommand(const std::string_view& cmd)
 {
     if (!cmd.contains(R"("cmd":")"))
     {
@@ -273,7 +268,7 @@ BiliApiUtil::LiveCommand BiliApiUtil::GetLiveCommand(const std::string_view &cmd
     return BiliApiUtil::LiveCommand::OTHER;
 }
 
-std::string BiliApiUtil::GetLiveCommandStr(const std::string_view &cmd)
+std::string BiliApiUtil::GetLiveCommandStr(const std::string_view& cmd)
 {
     if (!cmd.contains(R"("cmd":")"))
     {

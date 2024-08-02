@@ -6,8 +6,8 @@
 #define MESSAGEDEQUE_H
 #include "../../Util/BiliUtil/BiliApiUtil.h"
 #include "../BiliEntity/Command/BiliLiveCommandBase.h"
-#include "../Net/Url.h"
 #include "../Global/PlatformDefine.h"
+#include "../Net/Url.h"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -23,32 +23,32 @@
 class MessageDeque
 {
 public:
-    static MessageDeque *GetInstance();
-    void                 PushWaitedMessage(const std::string &message);
+    static MessageDeque* GetInstance();
+    void                 PushWaitedMessage(const std::string& message);
     // [[nodiscard]] std::string PopWaitedMessage();
     void ClearWaitedMessage();
 
 private:
     void SendMessageInThread();
 
-    bool SendMessageToBili(const std::string &message);
+    bool SendMessageToBili(const std::string& message);
 
     MessageDeque();
     ~MessageDeque() = default;
 
-    MessageDeque(const MessageDeque &other)            = delete;
-    MessageDeque(MessageDeque &&other)                 = delete;
-    MessageDeque &operator=(const MessageDeque &other) = delete;
-    MessageDeque &operator=(MessageDeque &&other)      = delete;
+    MessageDeque(const MessageDeque& other)            = delete;
+    MessageDeque(MessageDeque&& other)                 = delete;
+    MessageDeque& operator=(const MessageDeque& other) = delete;
+    MessageDeque& operator=(MessageDeque&& other)      = delete;
 
-    static MessageDeque    *pInstance;
+    static MessageDeque*    pInstance;
     std::queue<std::string> messageQueue;
     std::mutex              messageQueueMutex;
     std::condition_variable messageQueueCondtionVariable;
 
     const static Url url;
 
-    THREAD                   snedMessageThread;
+    THREAD                         snedMessageThread;
     boost::asio::io_context        ioc;        // IO上下文
     boost::asio::ssl::context      ctx;        // SSL上下文
     boost::asio::ip::tcp::resolver resolver;   // DNS解析器

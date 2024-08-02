@@ -5,19 +5,17 @@
 #include "BiliLiveCommandSuperChat.h"
 
 BiliLiveCommandSuperChat::BiliLiveCommandSuperChat()
-    :BiliLiveCommandBase()
-    ,user(0,"",0)
-    ,price(0)
-    ,message("")
+    : BiliLiveCommandBase()
+    , user(0, "", 0)
+    , price(0)
+    , message("")
 {
 }
 
 std::string BiliLiveCommandSuperChat::ToString() const
 {
-    return FORMAT("User: {} 送出了超级聊天, Price: {}元, Message: {}",
-                       user.GetUname(),
-                       price,
-                       message);
+    return FORMAT(
+        "User: {} 送出了超级聊天, Price: {}元, Message: {}", user.GetUname(), price, message);
 }
 
 bool BiliLiveCommandSuperChat::LoadMessage(const nlohmann::json& message)

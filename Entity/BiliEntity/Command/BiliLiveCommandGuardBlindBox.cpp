@@ -32,12 +32,12 @@ void BiliLiveCommandGuardBlindBox::Run() const
         FORMAT("感谢 {} 投喂了{}", this->user.GetUname(), this->content));
 }
 
-bool BiliLiveCommandGuardBlindBox::LoadMessage(const nlohmann::json &message)
+bool BiliLiveCommandGuardBlindBox::LoadMessage(const nlohmann::json& message)
 {
     LOG_VAR(LogLevel::Debug, message.dump(-1));
     try
     {
-        const auto &data{message["data"]};
+        const auto& data{message["data"]};
         if (data["content_segments"].size() < 5)
         {
             LOG_VAR(LogLevel::Warn, message.dump(-1));
@@ -52,7 +52,7 @@ bool BiliLiveCommandGuardBlindBox::LoadMessage(const nlohmann::json &message)
         this->user.SetUname(data["content_segments"][0]["text"].get<std::string>());
         this->content = data["content_segments"][4]["text"].get<std::string>();
     }
-    catch (const nlohmann::json::exception &e)
+    catch (const nlohmann::json::exception& e)
     {
         LOG_MESSAGE(LogLevel::Error, e.what());
         return false;

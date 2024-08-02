@@ -17,20 +17,20 @@
 class ProcessingMessageThreadPool
 {
 public:
-    static ProcessingMessageThreadPool *GetInstance();
-    void AddTask(std::tuple<BiliApiUtil::LiveCommand, std::string> &&message);
+    static ProcessingMessageThreadPool* GetInstance();
+    void AddTask(std::tuple<BiliApiUtil::LiveCommand, std::string>&& message);
     void Start();
 
 private:
     ProcessingMessageThreadPool()                                              = default;
     ~ProcessingMessageThreadPool()                                             = default;
-    ProcessingMessageThreadPool(const ProcessingMessageThreadPool &)            = delete;
-    ProcessingMessageThreadPool &operator=(const ProcessingMessageThreadPool &) = delete;
+    ProcessingMessageThreadPool(const ProcessingMessageThreadPool&)            = delete;
+    ProcessingMessageThreadPool& operator=(const ProcessingMessageThreadPool&) = delete;
 
     void                                                          ThreadRun();
-    static ProcessingMessageThreadPool                           *pInstance;
+    static ProcessingMessageThreadPool*                           pInstance;
     std::queue<std::tuple<BiliApiUtil::LiveCommand, std::string>> taskQueue;
-    std::list<THREAD>                                       processingMessageThreadPool;
+    std::list<THREAD>                                             processingMessageThreadPool;
     std::mutex                                                    processingMessageThreadPoolMutex;
     std::condition_variable processingMessageThreadPoolCondition;
     static const int        threadNum;

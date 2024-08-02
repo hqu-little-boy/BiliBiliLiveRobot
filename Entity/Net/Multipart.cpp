@@ -3,11 +3,12 @@
 //
 
 #include "Multipart.h"
+
 #include "../Global/PlatformDefine.h"
 
+#include <array>
 #include <format>
 #include <random>
-#include <array>
 
 // Part::Part(const std::string& name, const std::string& value, const std::string& contentType)
 //     : name{name}
@@ -23,19 +24,19 @@
 // {
 // }
 //
-Multipart::Multipart(const std::initializer_list<std::pair<std::string, std::string>> &parts)
+Multipart::Multipart(const std::initializer_list<std::pair<std::string, std::string>>& parts)
     : parts{parts}
     , boundary{MakeMultipartDataBoundary()}
 {
 }
 
-Multipart::Multipart(const std::list<std::pair<std::string, std::string>> &parts)
+Multipart::Multipart(const std::list<std::pair<std::string, std::string>>& parts)
     : parts{parts}
     , boundary{MakeMultipartDataBoundary()}
 {
 }
 
-Multipart::Multipart(const std::list<std::pair<std::string, std::string>> &&parts)
+Multipart::Multipart(const std::list<std::pair<std::string, std::string>>&& parts)
     : parts{parts}
     , boundary{MakeMultipartDataBoundary()}
 {
@@ -48,8 +49,7 @@ std::string Multipart::MakeMultipartDataBoundary()
 
 std::string Multipart::RandomString(uint16_t length)
 {
-    constexpr std::array<char, 62> data
-    {
+    constexpr std::array<char, 62> data{
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F',
         'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
         'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
@@ -82,7 +82,7 @@ std::string Multipart::GetSerializeMultipartFormdata()
 {
     std::string body;
 
-    for (const auto &part : this->parts)
+    for (const auto& part : this->parts)
     {
         body += FORMAT("--{}\r\n", this->boundary);
         body += FORMAT("Content-Disposition: form-data; name=\"{}\"\r\n\r\n", part.first);

@@ -21,11 +21,11 @@ DWORD Logger::pid = GetCurrentProcessId();
 pid_t Logger::pid = getpid();
 #endif
 
-Logger *Logger::pInstance = new Logger();
+Logger* Logger::pInstance = new Logger();
 // std::osyncstream Logger::sync_out  = std::osyncstream{std::cout};
 
 
-Logger *Logger::GetInstance()
+Logger* Logger::GetInstance()
 {
     // if (pInstance == nullptr)
     // {
@@ -40,8 +40,8 @@ Logger *Logger::GetInstance()
 //     log_level_ = level;
 // }
 
-bool Logger::Log(LogLevel level, const std::string_view &file, int line,
-                 const std::string_view &func, const std::string_view &strMessage)
+bool Logger::Log(LogLevel level, const std::string_view& file, int line,
+                 const std::string_view& func, const std::string_view& strMessage)
 {
     std::string strTime = TimeStamp::Now().ToString();
     // 线程ID
@@ -52,7 +52,26 @@ bool Logger::Log(LogLevel level, const std::string_view &file, int line,
     // line, func, strLevel,
     //                                  strMessage);
     std::string strLog = FORMAT(
-                             "{:<19} {:<5} {:<5} {:<5} {:<5} {:<5} {}", strTime, pid, tid, file, func, line, strMessage);
+        "{:<19} {:<5} {:<5} {:<5} {:<5} {:<5} {}", strTime, pid, tid, file, func, line, strMessage);
+    // 互斥锁，保证输出到标准输出的内容不会混乱
+    std::lock_guard<std::mutex> guard(printMutex);
+    // 输出到标准输出
+    // std::println(std::cout, "{}", strLog);
+    std::cout << FORMAT("[{:<7}] {}", this->GetSignWithColor(level), strLog) << std::endl;
+    if (isLogInFile)
+    {
+        this->logFile << FORMAT("[{:<7}] {}", this->GetSign(level), strLog) << std::endl;
+        // std::println(this->logFile, "{}", strLog);
+    }
+    // Logger::sync_out << strLog << std::endl;
+    return true;
+}
+
+bool Logger::Log(LogLevel level, const std::string_view& strMessage)
+{
+    std::string strTime = TimeStamp::Now().ToString();
+
+    std::string strLog = FORMAT("{:<19} {}", strTime, strMessage);
     // 互斥锁，保证输出到标准输出的内容不会混乱
     std::lock_guard<std::mutex> guard(printMutex);
     // 输出到标准输出
@@ -77,7 +96,7 @@ LogLevel Logger::GetLogLevel() const
     return logLevel;
 }
 
-void Logger::SetLogPath(const std::string &path)
+void Logger::SetLogPath(const std::string& path)
 {
     if (path.empty())
     {
@@ -96,40 +115,40 @@ constexpr std::string Logger::GetSign(LogLevel level)
 {
     switch (level)
     {
-        case LogLevel::Info:
-        {
-            return "INFO";
-            break;
-        }
-        case LogLevel::Warn:
-        {
-            return "WARN";
-            break;
-        }
-        case LogLevel::Error:
-        {
-            return "ERROR";
-            break;
-        }
-        case LogLevel::Fatal:
-        {
-            return "FATAL";
-            break;
-        }
-        case LogLevel::Debug:
-        {
-            return "DEBUG";
-            break;
-        }
-        case LogLevel::Test:
-        {
-            return "TEST";
-            break;
-        }
-        default:
-        {
-            break;
-        }
+    case LogLevel::Info:
+    {
+        return "INFO";
+        break;
+    }
+    case LogLevel::Warn:
+    {
+        return "WARN";
+        break;
+    }
+    case LogLevel::Error:
+    {
+        return "ERROR";
+        break;
+    }
+    case LogLevel::Fatal:
+    {
+        return "FATAL";
+        break;
+    }
+    case LogLevel::Debug:
+    {
+        return "DEBUG";
+        break;
+    }
+    case LogLevel::Test:
+    {
+        return "TEST";
+        break;
+    }
+    default:
+    {
+        break;
+    }
     }
     LOG_MESSAGE(LogLevel::Error, "Invalid log level");
     return "";
@@ -139,40 +158,40 @@ constexpr std::string Logger::GetSignWithColor(LogLevel level)
 {
     switch (level)
     {
-        case LogLevel::Info:
-        {
-            return "\033[32mINFO\033[0m";
-            break;
-        }
-        case LogLevel::Warn:
-        {
-            return "\033[33mWARN\033[0m";
-            break;
-        }
-        case LogLevel::Error:
-        {
-            return "\033[31mERROR\033[0m";
-            break;
-        }
-        case LogLevel::Fatal:
-        {
-            return "\033[31mFATAL\033[0m";
-            break;
-        }
-        case LogLevel::Debug:
-        {
-            return "\033[37mDEBUG\033[0m";
-            break;
-        }
-        case LogLevel::Test:
-        {
-            return "\033[36mTEST\033[0m";
-            break;
-        }
-        default:
-        {
-            break;
-        }
+    case LogLevel::Info:
+    {
+        return "\033[32mINFO\033[0m";
+        break;
+    }
+    case LogLevel::Warn:
+    {
+        return "\033[33mWARN\033[0m";
+        break;
+    }
+    case LogLevel::Error:
+    {
+        return "\033[31mERROR\033[0m";
+        break;
+    }
+    case LogLevel::Fatal:
+    {
+        return "\033[31mFATAL\033[0m";
+        break;
+    }
+    case LogLevel::Debug:
+    {
+        return "\033[37mDEBUG\033[0m";
+        break;
+    }
+    case LogLevel::Test:
+    {
+        return "\033[36mTEST\033[0m";
+        break;
+    }
+    default:
+    {
+        break;
+    }
     }
     LOG_MESSAGE(LogLevel::Error, "Invalid log level");
     return "";

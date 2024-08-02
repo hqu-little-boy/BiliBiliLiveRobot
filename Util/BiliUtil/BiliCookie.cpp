@@ -92,12 +92,12 @@ const std::string& BiliCookie::GetDedeUserIDCkMd5() const
 std::string BiliCookie::ToString() const
 {
     return FORMAT("SESSDATA={}; buvid3={}; buvid4={}; bili_jct={}; sid={}; DedeUserID={}; "
-                       "DedeUserID__ckMd5={}",
-                       this->strSESSDATA,
-                       this->buvid3,
-                       this->buvid4,
-                       this->bili_jct,
-                       this->sid,
-                       this->strDedeUserID,
-                       this->strDedeUserID__ckMd5);
+                  "DedeUserID__ckMd5={}",
+                  this->strSESSDATA,
+                  this->buvid3,
+                  this->buvid4,
+                  this->bili_jct,
+                  this->sid,
+                  this->strDedeUserID,
+                  this->strDedeUserID__ckMd5);
 }

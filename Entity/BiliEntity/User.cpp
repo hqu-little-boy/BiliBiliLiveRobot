@@ -83,14 +83,13 @@ std::string User::ToString() const
 {
     // return FORMAT(
     //     "uid: {}, uname: {}, guardLevel: {}", this->uid, this->uname, this->guardLevel);
-    return FORMAT(
-        "uid: {}, uname: {}, guardLevel: {}, level: {}, fanCount: {}, guardCount: {}",
-        this->uid,
-        this->uname,
-        this->guardLevel,
-        this->level,
-        this->fanCount,
-        this->guardCount);
+    return FORMAT("uid: {}, uname: {}, guardLevel: {}, level: {}, fanCount: {}, guardCount: {}",
+                  this->uid,
+                  this->uname,
+                  this->guardLevel,
+                  this->level,
+                  this->fanCount,
+                  this->guardCount);
 }
 
 void User::SetUid(uint64_t uid)

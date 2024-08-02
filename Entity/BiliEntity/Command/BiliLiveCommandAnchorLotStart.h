@@ -8,7 +8,8 @@
 
 #include "BiliLiveCommandBase.h"
 
-class BiliLiveCommandAnchorLotStart: public BiliLiveCommandBase{
+class BiliLiveCommandAnchorLotStart : public BiliLiveCommandBase
+{
 public:
     explicit BiliLiveCommandAnchorLotStart();
     ~BiliLiveCommandAnchorLotStart() override = default;
@@ -16,10 +17,12 @@ public:
     [[nodiscard]] virtual std::string ToString() const override;
     virtual bool                      LoadMessage(const nlohmann::json& message) override;
     virtual void                      Run() const override;
+
 private:
-    static constexpr BiliApiUtil::LiveCommand commandType = BiliApiUtil::LiveCommand::ANCHOR_LOT_START;
+    static constexpr BiliApiUtil::LiveCommand commandType =
+        BiliApiUtil::LiveCommand::ANCHOR_LOT_START;
 };
 
 
 
-#endif //BILILIVECOMMANDANCHORLOTSTART_H
+#endif   // BILILIVECOMMANDANCHORLOTSTART_H

@@ -7,9 +7,9 @@
 class copyable
 {
 protected:
-    copyable() = default;
+    copyable()  = default;
     ~copyable() = default;
 };
 
 
-#endif //COPYABLE_H
+#endif   // COPYABLE_H

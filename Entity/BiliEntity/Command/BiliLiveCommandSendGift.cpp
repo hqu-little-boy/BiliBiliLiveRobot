@@ -18,13 +18,13 @@ BiliLiveCommandSendGift::BiliLiveCommandSendGift()
 std::string BiliLiveCommandSendGift::ToString() const
 {
     return FORMAT("User: {} 赠送, GiftCount: {}, GiftPrice: {}, GiftName: {}, "
-                       "OriginalGiftPrice: {}, OriginalGiftName: {}",
-                       user.GetUname(),
-                       giftCount,
-                       giftPrice,
-                       giftName,
-                       originalGiftPrice,
-                       originalGiftName);
+                  "OriginalGiftPrice: {}, OriginalGiftName: {}",
+                  user.GetUname(),
+                  giftCount,
+                  giftPrice,
+                  giftName,
+                  originalGiftPrice,
+                  originalGiftName);
 }
 
 bool BiliLiveCommandSendGift::LoadMessage(const nlohmann::json& message)

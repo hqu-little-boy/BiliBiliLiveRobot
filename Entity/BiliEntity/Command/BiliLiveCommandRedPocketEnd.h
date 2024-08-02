@@ -16,8 +16,10 @@ public:
     [[nodiscard]] virtual std::string ToString() const override;
     virtual bool                      LoadMessage(const nlohmann::json& message) override;
     virtual void                      Run() const override;
+
 private:
-    const static BiliApiUtil::LiveCommand commandType = BiliApiUtil::LiveCommand::POPULARITY_RED_POCKET_WINNER_LIST;
+    const static BiliApiUtil::LiveCommand commandType =
+        BiliApiUtil::LiveCommand::POPULARITY_RED_POCKET_WINNER_LIST;
 };
 
 

@@ -3,10 +3,11 @@
 //
 
 #include "TimeStamp.h"
+
 #include <iomanip>
 
 #ifdef MACOS
-#include <sstream>
+#    include <sstream>
 #endif
 
 TimeStamp::TimeStamp()
@@ -38,8 +39,8 @@ std::string TimeStamp::ToString() const
     // ss << std::put_time(&now_tm, "%Y-%m-%d %H:%M:%S
     // return ss.str();
 #ifdef MACOS
-    std::time_t tt = std::chrono::system_clock::to_time_t(timePoint);
-    std::tm tm = *std::gmtime(&tt);
+    std::time_t       tt = std::chrono::system_clock::to_time_t(timePoint);
+    std::tm           tm = *std::gmtime(&tt);
     std::stringstream ss;
     ss << std::put_time(&tm, "%Y-%m-%d %H:%M:%S");
     return ss.str();

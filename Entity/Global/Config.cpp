@@ -205,25 +205,24 @@ std::string Config::ToString() const
 {
     // return FORMAT("roomId: {}, danmuSeverConfUrl: {}", roomId,
     // danmuSeverConfUrl.ToString());
-    return FORMAT(
-        "roomId: {}, danmuSeverConfUrl: {} ,logLevel: {}, logPath: {}, danmuLength: {}, "
-        "canPKNotice: {}, canGuardNotice: {}, canThanksGift: {}, canSuperChatNotice: {}, "
-        "thanksGiftTimeout: {}, canDrawByLot: {}, canEntryNotice: {}, "
-        "canThanksFocus: {}, canThanksShare: {}",
-        this->roomId,
-        this->danmuSeverConfUrl.ToString(),
-        static_cast<uint8_t>(this->logLevel),
-        this->logPath,
-        this->danmuLength,
-        this->canPKNotice,
-        this->canGuardNotice,
-        this->canThanksGift,
-        this->canSuperChatNotice,
-        this->thanksGiftTimeout,
-        this->canDrawByLot,
-        this->canEntryNotice,
-        this->canThanksFocus,
-        this->canThanksShare);
+    return FORMAT("roomId: {}, danmuSeverConfUrl: {} ,logLevel: {}, logPath: {}, danmuLength: {}, "
+                  "canPKNotice: {}, canGuardNotice: {}, canThanksGift: {}, canSuperChatNotice: {}, "
+                  "thanksGiftTimeout: {}, canDrawByLot: {}, canEntryNotice: {}, "
+                  "canThanksFocus: {}, canThanksShare: {}",
+                  this->roomId,
+                  this->danmuSeverConfUrl.ToString(),
+                  static_cast<uint8_t>(this->logLevel),
+                  this->logPath,
+                  this->danmuLength,
+                  this->canPKNotice,
+                  this->canGuardNotice,
+                  this->canThanksGift,
+                  this->canSuperChatNotice,
+                  this->thanksGiftTimeout,
+                  this->canDrawByLot,
+                  this->canEntryNotice,
+                  this->canThanksFocus,
+                  this->canThanksShare);
 }
 
 Config::Config()

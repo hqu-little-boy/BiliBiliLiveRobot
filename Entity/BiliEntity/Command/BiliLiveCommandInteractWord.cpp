@@ -18,36 +18,36 @@ std::string BiliLiveCommandInteractWord::ToString() const
 {
     switch (megType)
     {
-        case 1:
-        {
-            return FORMAT("{}进入直播间", user.ToString());
-            break;
-        }
-        case 2:
-        {
-            return FORMAT("{}关注了主播", user.ToString());
-            break;
-        }
-        case 3:
-        {
-            return FORMAT("{}分享了直播间", user.ToString());
-            break;
-        }
-        default:
-        {
-            LOG_VAR(LogLevel::Error, megType);
-            break;
-        }
+    case 1:
+    {
+        return FORMAT("{}进入直播间", user.ToString());
+        break;
+    }
+    case 2:
+    {
+        return FORMAT("{}关注了主播", user.ToString());
+        break;
+    }
+    case 3:
+    {
+        return FORMAT("{}分享了直播间", user.ToString());
+        break;
+    }
+    default:
+    {
+        LOG_VAR(LogLevel::Error, megType);
+        break;
+    }
     }
     return "";
 }
 
-bool BiliLiveCommandInteractWord::LoadMessage(const nlohmann::json &message)
+bool BiliLiveCommandInteractWord::LoadMessage(const nlohmann::json& message)
 {
     try
     {
-        const auto &data{message["data"]};
-        const auto &uinfo{message["data"]["uinfo"]};
+        const auto& data{message["data"]};
+        const auto& uinfo{message["data"]["uinfo"]};
         this->megType = data["msg_type"].get<unsigned>();
         // LOG_VAR(LogLevel::Debug, megType);
         auto uid{data["uid"].get<uint64_t>()};
@@ -69,7 +69,7 @@ bool BiliLiveCommandInteractWord::LoadMessage(const nlohmann::json &message)
         this->user = User(uid, uname, guardLevel, wealthLevel);
         return true;
     }
-    catch (const nlohmann::json::exception &e)
+    catch (const nlohmann::json::exception& e)
     {
         LOG_MESSAGE(LogLevel::Error, e.what());
         return false;
@@ -97,14 +97,13 @@ void BiliLiveCommandInteractWord::Run() const
             }
             else
             {
-                message = VFORMAT(
-                              Config::GetInstance()->GetGuardEntryNoticeWord(),
-                              MK_FMT_ARGS(this->user.GetGuardLevel(), this->user.GetUname()));
+                message = VFORMAT(Config::GetInstance()->GetGuardEntryNoticeWord(),
+                                  MK_FMT_ARGS(this->user.GetGuardLevel(), this->user.GetUname()));
             }
             MessageDeque::GetInstance()->PushWaitedMessage(message);
             LOG_VAR(LogLevel::Debug, message);
         }
-        catch (const std::exception &e)
+        catch (const std::exception& e)
         {
             LOG_MESSAGE(LogLevel::Error, e.what());
         }

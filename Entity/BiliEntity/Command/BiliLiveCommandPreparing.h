@@ -19,8 +19,7 @@ public:
     virtual void                      Run() const override;
 
 private:
-    static constexpr BiliApiUtil::LiveCommand commandType =
-        BiliApiUtil::LiveCommand::PREPARING;
+    static constexpr BiliApiUtil::LiveCommand commandType = BiliApiUtil::LiveCommand::PREPARING;
 };
 
 

@@ -14,7 +14,7 @@ public:
     void operator=(const noncopyable&) = delete;
 
 protected:
-    noncopyable() = default;
+    noncopyable()  = default;
     ~noncopyable() = default;
 };
-#endif //NONCOPYABLE_H
+#endif   // NONCOPYABLE_H
