@@ -8,6 +8,7 @@
 
 #include <fmt/format.h>
 #include <fstream>
+#include <source_location>
 #include <string_view>
 
 #ifndef MACOS
@@ -34,8 +35,15 @@ public:
     // ///@brief 设置日志级别
     // void set_log_level(LogLevel level);
     ///@brief 打印日志，使用std::format
-    bool Log(LogLevel level, const std::string_view& file, int line, const std::string_view& func,
+    bool Log(LogLevel                level,
+             const std::string_view& file,
+             int                     line,
+             const std::string_view& func,
              const std::string_view& strMessage);
+    ///@brief 打印日志，使用fmt::format
+    bool Log(LogLevel                   level,
+             const std::source_location location,
+             const std::string_view&    strMessage);
     ///@brief 设置日志级别
     void SetLogLevel(LogLevel level);
     ///@brief 获取日志级别
@@ -66,13 +74,24 @@ private:
     // static std::osyncstream sync_out;   // std::cout 的同步包装
 };
 
-#define LOG_MESSAGE(level, message)                                                    \
-    Logger::GetInstance()->GetLogLevel() >= level                                      \
-        ? Logger::GetInstance()->Log(level, __FILE__, __LINE__, __FUNCTION__, message) \
+// #define LOG_MESSAGE(level, message)                                                    \
+//     Logger::GetInstance()->GetLogLevel() >= level                                      \
+//         ? Logger::GetInstance()->Log(level, __FILE__, __LINE__, __FUNCTION__, message) \
+//         : false
+// #define LOG_VAR(level, var)                                                                    \
+//     Logger::GetInstance()->GetLogLevel() >= level                                              \
+//         ? Logger::GetInstance()->Log(                                                          \
+//               level, __FILE__, __LINE__, __FUNCTION__, fmt::format("{:>5}: {:>5}", #var, var)) \
+//         : false
+
+#define LOG_MESSAGE(level, message)                                                   \
+    Logger::GetInstance()->GetLogLevel() >= level                                     \
+        ? Logger::GetInstance()->Log(level, std::source_location::current(), message) \
         : false
-#define LOG_VAR(level, var)                                                                    \
-    Logger::GetInstance()->GetLogLevel() >= level                                              \
-        ? Logger::GetInstance()->Log(                                                          \
-              level, __FILE__, __LINE__, __FUNCTION__, fmt::format("{:>5}: {:>5}", #var, var)) \
+#define LOG_VAR(level, var)                                                                   \
+    Logger::GetInstance()->GetLogLevel() >= level                                             \
+        ? Logger::GetInstance()->Log(                                                         \
+              level, std::source_location::current(), fmt::format("{:>5}: {:>5}", #var, var)) \
         : false
+
 #endif   // LOGGER_H

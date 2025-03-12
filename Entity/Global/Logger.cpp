@@ -52,8 +52,14 @@ bool Logger::Log(LogLevel level, const std::string_view& file, int line,
     // std::string strLog = fmt::format("{} {} {} {} {} {} {} {}\n", strTime, pid, tid, file,
     // line, func, strLevel,
     //                                  strMessage);
-    std::string strLog = fmt::format(
-        "{:<19} {:<5} {:<5} {:<5} {:<5} {:<5} {}", strTime, pid, tid, file, func, line, strMessage);
+    std::string strLog = fmt::format("{:<19} {:<5} {:<5} [{:<5}:{}]:[{:<5}] {}",
+                                     strTime,
+                                     pid,
+                                     tid,
+                                     file,
+                                     line,
+                                     func,
+                                     strMessage);
     // 互斥锁，保证输出到标准输出的内容不会混乱
     std::lock_guard<std::mutex> guard(printMutex);
     // 输出到标准输出
@@ -66,6 +72,12 @@ bool Logger::Log(LogLevel level, const std::string_view& file, int line,
     }
     // Logger::sync_out << strLog << std::endl;
     return true;
+}
+
+bool Logger::Log(LogLevel level, const std::source_location location,
+                 const std::string_view& strMessage)
+{
+    return Log(level, location.file_name(), location.line(), location.function_name(), strMessage);
 }
 
 void Logger::SetLogLevel(LogLevel level)
