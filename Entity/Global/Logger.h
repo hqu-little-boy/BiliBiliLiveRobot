@@ -4,7 +4,16 @@
 
 #ifndef LOGGER_H
 #define LOGGER_H
+#include "../../Base/noncopyable.h"
+
+#include <fmt/format.h>
 #include <fstream>
+#include <string_view>
+
+#ifndef MACOS
+#    include <syncstream>
+#else
+#endif
 
 // 定义日志级别
 enum class LogLevel
@@ -16,19 +25,6 @@ enum class LogLevel
     Debug = 4,
     Test  = 5,
 };
-
-#include "../../Base/noncopyable.h"
-#include "PlatformDefine.h"
-
-#include <format>
-#include <string_view>
-
-#ifndef MACOS
-#    include <syncstream>
-#else
-#    include <fmt/format.h>
-#endif
-
 
 class Logger : noncopyable
 {
@@ -77,6 +73,6 @@ private:
 #define LOG_VAR(level, var)                                                                    \
     Logger::GetInstance()->GetLogLevel() >= level                                              \
         ? Logger::GetInstance()->Log(                                                          \
-              level, __FILE__, __LINE__, __FUNCTION__, FORMAT("{:>5}: {:>5}", #var, var)) \
+              level, __FILE__, __LINE__, __FUNCTION__, fmt::format("{:>5}: {:>5}", #var, var)) \
         : false
 #endif   // LOGGER_H

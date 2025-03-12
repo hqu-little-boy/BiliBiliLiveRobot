@@ -5,7 +5,6 @@
 #ifndef PROCESSINGMESSAGETHREADPOOL_H
 #define PROCESSINGMESSAGETHREADPOOL_H
 #include "../BiliEntity/Command/BiliLiveCommandBase.h"
-#include "../Global/PlatformDefine.h"
 
 #include <condition_variable>
 #include <deque>
@@ -30,7 +29,7 @@ private:
     void                                                          ThreadRun();
     static ProcessingMessageThreadPool*                           pInstance;
     std::queue<std::tuple<BiliApiUtil::LiveCommand, std::string>> taskQueue;
-    std::list<THREAD>                                             processingMessageThreadPool;
+    std::list<std::thread>                                        processingMessageThreadPool;
     std::mutex                                                    processingMessageThreadPoolMutex;
     std::condition_variable processingMessageThreadPoolCondition;
     static const int        threadNum;

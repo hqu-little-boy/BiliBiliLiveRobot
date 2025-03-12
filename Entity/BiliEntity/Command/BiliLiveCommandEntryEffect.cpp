@@ -14,7 +14,7 @@ BiliLiveCommandEntryEffect::BiliLiveCommandEntryEffect()
 
 std::string BiliLiveCommandEntryEffect::ToString() const
 {
-    return FORMAT("User: {0}进入直播间", user.GetUname());
+    return fmt::format("User: {0}进入直播间", user.GetUname());
 }
 
 bool BiliLiveCommandEntryEffect::LoadMessage(const nlohmann::json& message)

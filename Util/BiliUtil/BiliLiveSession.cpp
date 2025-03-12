@@ -165,7 +165,7 @@ void BiliLiveSession::on_connect(boost::beast::error_code                       
     // Update the host_ string. This will provide the value of the
     // Host HTTP header during the WebSocket handshake.
     // See https://tools.ietf.org/html/rfc7230#section-5.4
-    this->host = FORMAT("{}:{}", this->liveUrls.back().host, ep.port());
+    this->host = fmt::format("{}:{}", this->liveUrls.back().host, ep.port());
 
     // Perform the SSL handshake
     this->ws.next_layer().async_handshake(
@@ -231,7 +231,7 @@ void BiliLiveSession::on_handshake(boost::beast::error_code ec)
     //                       R"(, "key": ")" + this->token + R"("})";
     // std::string bodyStr =
     //     "{" +
-    //     FORMAT(
+    //     fmt::format(
     //         R"("uid": {}, "roomid": {}, "protover": 3, "platform": "web", "type": 2, "key": "{}",
     //         "buvid": {})",
     //         // BiliRequestHeader::GetInstance()->GetBiliCookie().GetDedeUserID(),
@@ -305,10 +305,11 @@ void BiliLiveSession::on_read(boost::beast::error_code ec, std::size_t bytes_tra
     // std::cout << boost::beast::make_printable(this->buffer.data()) << std::endl;
     // LOG_VAR(LogLevel::Debug, std::string(boost::beast::buffers_to_string(this->buffer.data())));
     // 将this->buffer.data()转为std::vector<uint8_t>
-    auto                 buf = this->buffer.data();
+    auto                 buf     = this->buffer.data();
+    auto                 bufData = buf.data();
     std::vector<uint8_t> response;
-    response.assign(boost::asio::buffer_cast<const uint8_t*>(buf),
-                    boost::asio::buffer_cast<const uint8_t*>(buf) + boost::asio::buffer_size(buf));
+    response.assign(static_cast<const uint8_t*>(bufData),
+                    static_cast<const uint8_t*>(bufData) + boost::asio::buffer_size(buf));
     this->buffer.consume(response.size());
     auto pack = BiliApiUtil::Unpack(response);
     for (auto& item : pack)

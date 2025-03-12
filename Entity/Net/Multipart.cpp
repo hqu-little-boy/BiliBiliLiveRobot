@@ -4,10 +4,9 @@
 
 #include "Multipart.h"
 
-#include "../Global/PlatformDefine.h"
 
 #include <array>
-#include <format>
+#include <fmt/format.h>
 #include <random>
 
 // Part::Part(const std::string& name, const std::string& value, const std::string& contentType)
@@ -44,7 +43,7 @@ Multipart::Multipart(const std::list<std::pair<std::string, std::string>>&& part
 
 std::string Multipart::MakeMultipartDataBoundary()
 {
-    return FORMAT("----WebKitFormBoundary{}", this->RandomString(16));
+    return fmt::format("----WebKitFormBoundary{}", this->RandomString(16));
 }
 
 std::string Multipart::RandomString(uint16_t length)
@@ -75,7 +74,7 @@ std::string Multipart::RandomString(uint16_t length)
 
 std::string Multipart::GetSerializeMultipartFormdataGetContentType()
 {
-    return FORMAT("multipart/form-data; boundary={}", this->boundary);
+    return fmt::format("multipart/form-data; boundary={}", this->boundary);
 }
 
 std::string Multipart::GetSerializeMultipartFormdata()
@@ -84,11 +83,11 @@ std::string Multipart::GetSerializeMultipartFormdata()
 
     for (const auto& part : this->parts)
     {
-        body += FORMAT("--{}\r\n", this->boundary);
-        body += FORMAT("Content-Disposition: form-data; name=\"{}\"\r\n\r\n", part.first);
+        body += fmt::format("--{}\r\n", this->boundary);
+        body += fmt::format("Content-Disposition: form-data; name=\"{}\"\r\n\r\n", part.first);
         body += part.second;
         body += "\r\n";
     }
-    body += FORMAT("--{}--\r\n", this->boundary);
+    body += fmt::format("--{}--\r\n", this->boundary);
     return body;
 }

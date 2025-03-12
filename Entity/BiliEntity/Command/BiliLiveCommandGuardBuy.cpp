@@ -15,7 +15,7 @@ BiliLiveCommandGuardBuy::BiliLiveCommandGuardBuy()
 
 std::string BiliLiveCommandGuardBuy::ToString() const
 {
-    return FORMAT("User: {} 购买了舰长, GuardLevel: {}, Num: {}, Price: {}",
+    return fmt::format("User: {} 购买了舰长, GuardLevel: {}, Num: {}, Price: {}",
                   user.GetUname(),
                   guardLevel,
                   num,

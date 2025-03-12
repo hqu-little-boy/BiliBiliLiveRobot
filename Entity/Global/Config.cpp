@@ -40,7 +40,7 @@ bool Config::LoadFromJson(const std::string& jsonPath)
 
     if (!std::filesystem::exists(jsonPath))
     {
-        LOG_MESSAGE(LogLevel::Error, FORMAT("File not exists: {}", jsonPath));
+        LOG_MESSAGE(LogLevel::Error, fmt::format("File not exists: {}", jsonPath));
         throw std::runtime_error("File not exists: " + jsonPath);
         return false;
     }
@@ -48,7 +48,7 @@ bool Config::LoadFromJson(const std::string& jsonPath)
     std::ifstream ifs(jsonPath);
     if (!ifs.is_open())
     {
-        LOG_MESSAGE(LogLevel::Error, FORMAT("Failed to open file: {}", jsonPath));
+        LOG_MESSAGE(LogLevel::Error, fmt::format("Failed to open file: {}", jsonPath));
         throw std::runtime_error("Failed to open file: " + jsonPath);
         return false;
     }
@@ -85,7 +85,7 @@ bool Config::LoadFromJson(const std::string& jsonPath)
     }
     catch (const nlohmann::json::exception& e)
     {
-        LOG_MESSAGE(LogLevel::Error, FORMAT("Failed to parse json: {}", e.what()));
+        LOG_MESSAGE(LogLevel::Error, fmt::format("Failed to parse json: {}", e.what()));
         // throw std::runtime_error("Failed to parse json: " + std::string(e.what()));
         return false;
     }
@@ -203,9 +203,9 @@ const std::string& Config::GetGuardEntryNoticeWord() const
 
 std::string Config::ToString() const
 {
-    // return FORMAT("roomId: {}, danmuSeverConfUrl: {}", roomId,
+    // return fmt::format("roomId: {}, danmuSeverConfUrl: {}", roomId,
     // danmuSeverConfUrl.ToString());
-    return FORMAT("roomId: {}, danmuSeverConfUrl: {} ,logLevel: {}, logPath: {}, danmuLength: {}, "
+    return fmt::format("roomId: {}, danmuSeverConfUrl: {} ,logLevel: {}, logPath: {}, danmuLength: {}, "
                   "canPKNotice: {}, canGuardNotice: {}, canThanksGift: {}, canSuperChatNotice: {}, "
                   "thanksGiftTimeout: {}, canDrawByLot: {}, canEntryNotice: {}, "
                   "canThanksFocus: {}, canThanksShare: {}",

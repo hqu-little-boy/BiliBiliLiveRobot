@@ -16,7 +16,7 @@ BiliLiveCommandGuardBlindBox::BiliLiveCommandGuardBlindBox()
 
 std::string BiliLiveCommandGuardBlindBox::ToString() const
 {
-    return FORMAT("BiliLiveCommandGuardBlindBox: user: {}, content: {}",
+    return fmt::format("BiliLiveCommandGuardBlindBox: user: {}, content: {}",
                   this->user.GetUname(),
                   this->content);
 }
@@ -29,7 +29,7 @@ void BiliLiveCommandGuardBlindBox::Run() const
         return;
     }
     MessageDeque::GetInstance()->PushWaitedMessage(
-        FORMAT("感谢 {} 投喂了{}", this->user.GetUname(), this->content));
+        fmt::format("感谢 {} 投喂了{}", this->user.GetUname(), this->content));
 }
 
 bool BiliLiveCommandGuardBlindBox::LoadMessage(const nlohmann::json& message)

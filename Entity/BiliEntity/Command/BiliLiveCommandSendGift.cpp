@@ -17,7 +17,7 @@ BiliLiveCommandSendGift::BiliLiveCommandSendGift()
 
 std::string BiliLiveCommandSendGift::ToString() const
 {
-    return FORMAT("User: {} 赠送, GiftCount: {}, GiftPrice: {}, GiftName: {}, "
+    return fmt::format("User: {} 赠送, GiftCount: {}, GiftPrice: {}, GiftName: {}, "
                   "OriginalGiftPrice: {}, OriginalGiftName: {}",
                   user.GetUname(),
                   giftCount,

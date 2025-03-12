@@ -12,6 +12,10 @@ set(CMAKE_CXX_STANDARD 23)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Werror -fsanitize=address -fsanitize=undefined -fsanitize=leak") # 指定编译选项
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=thread -fsanitize=undefined") # 指定编译选项
 
+set(Test ON)
+if (Test)
+    add_definitions(-DTEST)
+endif ()
 # 添加源文件
 file(GLOB_RECURSE BASE_SOURCES "Base/*.h" "Base/*.cpp")
 file(GLOB_RECURSE ENTITY_SOURCES "Entity/*.h" "Entity/*.cpp")
@@ -49,6 +53,9 @@ add_subdirectory(ThirdParty/concurrencpp)
 include_directories(ThirdParty/concurrencpp/include)
 add_subdirectory(ThirdParty/utfcpp)
 include_directories(ThirdParty/utfcpp/source)
+add_subdirectory(ThirdParty/fmt)
+include_directories(ThirdParty/fmt/include)
+target_link_libraries(${PROJECT_NAME} PRIVATE fmt::fmt)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
         OpenSSL::SSL
@@ -62,16 +69,11 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
         utf8cpp
 )
 
-if(APPLE)
+if (APPLE)
     add_definitions(-DMACOS)
-    add_subdirectory(ThirdParty/fmt)
-    include_directories(ThirdParty/fmt/include)
-    target_link_libraries(${PROJECT_NAME} PRIVATE
-        fmt::fmt
-    )
-endif()
+endif ()
 
-if(MSVC)
+if (MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest")
     add_definitions(-D_WIN32_WINNT=0x0601)
@@ -81,10 +83,10 @@ if(MSVC)
     target_link_libraries(${PROJECT_NAME}
             ${VCPKG_LIBRARIES}
     )
-endif()
+endif ()
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy
-    "${CMAKE_BINARY_DIR}/${PROJECT_NAME}"
-    "${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}"
+        COMMAND ${CMAKE_COMMAND} -E copy
+        "${CMAKE_BINARY_DIR}/${PROJECT_NAME}"
+        "${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}"
 )

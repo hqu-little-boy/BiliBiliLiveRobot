@@ -8,6 +8,8 @@
 
 #include <cassert>
 #include <chrono>
+#include <fmt/os.h>
+#include <fmt/std.h>
 #include <iostream>
 #include <thread>
 #ifdef WIN32
@@ -47,19 +49,19 @@ bool Logger::Log(LogLevel level, const std::string_view& file, int line,
     std::thread::id tid = std::this_thread::get_id();
 
     // 日志内容，包括时间、进程ID、线程ID、文件、行号、函数名、日志级别、日志内容，固定长度和对齐
-    // std::string strLog = FORMAT("{} {} {} {} {} {} {} {}\n", strTime, pid, tid, file,
+    // std::string strLog = fmt::format("{} {} {} {} {} {} {} {}\n", strTime, pid, tid, file,
     // line, func, strLevel,
     //                                  strMessage);
-    std::string strLog = FORMAT(
+    std::string strLog = fmt::format(
         "{:<19} {:<5} {:<5} {:<5} {:<5} {:<5} {}", strTime, pid, tid, file, func, line, strMessage);
     // 互斥锁，保证输出到标准输出的内容不会混乱
     std::lock_guard<std::mutex> guard(printMutex);
     // 输出到标准输出
     // std::println(std::cout, "{}", strLog);
-    std::cout << FORMAT("[{:<7}] {}", this->GetSignWithColor(level), strLog) << std::endl;
+    std::cout << fmt::format("[{:<7}] {}", this->GetSignWithColor(level), strLog) << std::endl;
     if (isLogInFile)
     {
-        this->logFile << FORMAT("[{:<7}] {}", this->GetSign(level), strLog) << std::endl;
+        this->logFile << fmt::format("[{:<7}] {}", this->GetSign(level), strLog) << std::endl;
         // std::println(this->logFile, "{}", strLog);
     }
     // Logger::sync_out << strLog << std::endl;

@@ -41,12 +41,13 @@ const std::unordered_map<std::string, BiliApiUtil::LiveCommand> BiliApiUtil::liv
 
 std::string BiliApiUtil::HeaderTuple::ToString() const
 {
-    return FORMAT("totalSize: {}, headerSize: {}, version: {}, operationCode: {}, sequenceId: {}",
-                  totalSize,
-                  headerSize,
-                  version,
-                  operationCode,
-                  sequenceId);
+    return fmt::format(
+        "totalSize: {}, headerSize: {}, version: {}, operationCode: {}, sequenceId: {}",
+        totalSize,
+        headerSize,
+        version,
+        operationCode,
+        sequenceId);
 }
 
 bool BiliApiUtil::MakePack(const std::string_view& body,
@@ -178,11 +179,7 @@ std::list<std::tuple<BiliApiUtil::LiveCommand, std::string>> BiliApiUtil::Unpack
     in.push(boost::iostreams::zlib_decompressor());
     in.push(compressedStream);
     boost::iostreams::copy(in, decompressedStream);
-#ifdef MACOS
-    std::string_view decompressedStreamStringView(decompressedStream.str());
-#else
     std::string_view decompressedStreamStringView = decompressedStream.view();
-#endif
     // decompressedStream将内部数据构造为std::span<uint_8>
     std::span<const uint8_t> decompressedBuffer(
         reinterpret_cast<const uint8_t*>(decompressedStreamStringView.data()),

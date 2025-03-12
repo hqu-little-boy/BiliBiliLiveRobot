@@ -6,7 +6,7 @@
 
 #include "../Global/Logger.h"
 
-#include <format>
+#include <fmt/format.h>
 
 // User::User(uint64_t uid, const std::string& uname, unsigned guardLevel)
 //     : uid(uid)
@@ -81,9 +81,9 @@ const std::string& User::GetUname() const
 
 std::string User::ToString() const
 {
-    // return FORMAT(
+    // return fmt::format(
     //     "uid: {}, uname: {}, guardLevel: {}", this->uid, this->uname, this->guardLevel);
-    return FORMAT("uid: {}, uname: {}, guardLevel: {}, level: {}, fanCount: {}, guardCount: {}",
+    return fmt::format("uid: {}, uname: {}, guardLevel: {}, level: {}, fanCount: {}, guardCount: {}",
                   this->uid,
                   this->uname,
                   this->guardLevel,

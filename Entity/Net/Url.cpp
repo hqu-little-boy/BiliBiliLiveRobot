@@ -4,9 +4,7 @@
 
 #include "Url.h"
 
-#include "../Global/PlatformDefine.h"
-
-#include <format>
+#include <fmt/format.h>
 
 Url::Url(const std::string_view& host, unsigned port, const std::string_view& target,
          const std::list<std::pair<std::string, std::string>>& query)
@@ -40,14 +38,14 @@ const std::string Url::GetTargetWithQuery() const
     {
         if (strQuery.empty())
         {
-            strQuery = FORMAT("{}={}", key, value);
+            strQuery = fmt::format("{}={}", key, value);
         }
         else
         {
-            strQuery = FORMAT("{}&{}={}", strQuery, key, value);
+            strQuery = fmt::format("{}&{}={}", strQuery, key, value);
         }
     }
-    return FORMAT("{}?{}", target, strQuery);
+    return fmt::format("{}?{}", target, strQuery);
 }
 
 const std::list<std::pair<std::string, std::string>>& Url::GetQuery() const
@@ -62,5 +60,5 @@ void Url::SetQuery(const std::list<std::pair<std::string, std::string>>& query)
 
 std::string Url::ToString() const
 {
-    return FORMAT("{}:{}{}", host, port, this->GetTargetWithQuery());
+    return fmt::format("{}:{}{}", host, port, this->GetTargetWithQuery());
 }

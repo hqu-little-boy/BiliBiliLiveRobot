@@ -6,7 +6,6 @@
 #define MESSAGEDEQUE_H
 #include "../../Util/BiliUtil/BiliApiUtil.h"
 #include "../BiliEntity/Command/BiliLiveCommandBase.h"
-#include "../Global/PlatformDefine.h"
 #include "../Net/Url.h"
 
 #include <boost/asio/io_context.hpp>
@@ -48,7 +47,7 @@ private:
 
     const static Url url;
 
-    THREAD                         snedMessageThread;
+    std::thread                         snedMessageThread;
     boost::asio::io_context        ioc;        // IO上下文
     boost::asio::ssl::context      ctx;        // SSL上下文
     boost::asio::ip::tcp::resolver resolver;   // DNS解析器
