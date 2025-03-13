@@ -35,14 +35,14 @@ std::string BiliLiveCommandPKStart::ToString() const
 {
     // return fmt::format("BiliLiveCommandPKStart: roomID: {}", oppositeRoomID);
     return fmt::format("BiliLiveCommandPKStart: roomID: {}, anchor: {}, uid: {}, fanCount: {}, "
-                  "guardCount: {}, totalAudienceNum: {}, totalRankcount: {}",
-                  oppositeRoomID,
-                  oppositeAnchor.GetUname(),
-                  oppositeAnchor.GetUid(),
-                  oppositeAnchor.GetFanCount(),
-                  oppositeAnchor.GetGuardCount(),
-                  totalAudienceNum,
-                  totalRankcount);
+                       "guardCount: {}, totalAudienceNum: {}, totalRankcount: {}",
+                       oppositeRoomID,
+                       oppositeAnchor.GetUname(),
+                       oppositeAnchor.GetUid(),
+                       oppositeAnchor.GetFanCount(),
+                       oppositeAnchor.GetGuardCount(),
+                       totalAudienceNum,
+                       totalRankcount);
 }
 
 bool BiliLiveCommandPKStart::LoadMessage(const nlohmann::json& message)
@@ -75,7 +75,7 @@ bool BiliLiveCommandPKStart::LoadMessage(const nlohmann::json& message)
     }
     if (this->oppositeRoomID == lastPKRoomID)
     {
-        LOG_MESSAGE(LogLevel::Error, "Repeated PK roomID");
+        LOG_MESSAGE(LogLevel::Warn, "Repeated PK roomID");
         return false;
     }
     lastPKRoomID = this->oppositeRoomID;
@@ -111,13 +111,13 @@ void BiliLiveCommandPKStart::Run() const
         return;
     }
     MessageDeque::GetInstance()->PushWaitedMessage(fmt::format("PK开始，{}，粉丝数：{}",
-                                                          this->oppositeAnchor.GetUname(),
-                                                          this->oppositeAnchor.GetFanCount()));
+                                                               this->oppositeAnchor.GetUname(),
+                                                               this->oppositeAnchor.GetFanCount()));
     MessageDeque::GetInstance()->PushWaitedMessage(
         fmt::format("总舰长数：{}，总观众数：{}，总亲密度：{}",
-               this->oppositeAnchor.GetGuardCount(),
-               this->totalAudienceNum,
-               this->totalRankcount));
+                    this->oppositeAnchor.GetGuardCount(),
+                    this->totalAudienceNum,
+                    this->totalRankcount));
 }
 
 bool BiliLiveCommandPKStart::GetRoomInit()

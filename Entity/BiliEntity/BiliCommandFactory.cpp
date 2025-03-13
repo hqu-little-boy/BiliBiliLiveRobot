@@ -4,6 +4,7 @@
 
 #include "BiliCommandFactory.h"
 
+#include "../../Entity/Global/Logger.h"
 #include "../EntityPool/EntityPool.h"
 #include "Command/BiliLiveCommandAnchorLotEnd.h"
 #include "Command/BiliLiveCommandAnchorLotStart.h"
@@ -42,6 +43,8 @@ std::unique_ptr<BiliLiveCommandBase> BiliCommandFactory::GetCommand(
 {
     if (eCommand == BiliApiUtil::LiveCommand::NONE || eCommand == BiliApiUtil::LiveCommand::OTHER)
     {
+        LOG_MESSAGE(LogLevel::Error,
+                    fmt::format("Invalid command type:{}", fmt::underlying(eCommand)));
         return nullptr;
     }
     if (this->commandMap.contains(eCommand))
@@ -56,8 +59,10 @@ std::unique_ptr<BiliLiveCommandBase> BiliCommandFactory::GetCommand(
         {
             return pNewCommand;
         }
+        LOG_MESSAGE(LogLevel::Error, fmt::format("Failed to load message: {}", message.dump(-1)));
         return nullptr;
     }
+    LOG_MESSAGE(LogLevel::Error, fmt::format("Invalid command type:{}", fmt::underlying(eCommand)));
     return nullptr;
 }
 

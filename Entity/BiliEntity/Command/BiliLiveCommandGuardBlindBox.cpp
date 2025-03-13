@@ -40,7 +40,7 @@ bool BiliLiveCommandGuardBlindBox::LoadMessage(const nlohmann::json& message)
         const auto& data{message["data"]};
         if (data["content_segments"].size() < 5)
         {
-            LOG_VAR(LogLevel::Warn, message.dump(-1));
+                LOG_VAR(LogLevel::Warn, message.dump(-1));
             return false;
         }
         if (data["content_segments"][1]["text"].get<std::string>() != "投喂" ||
