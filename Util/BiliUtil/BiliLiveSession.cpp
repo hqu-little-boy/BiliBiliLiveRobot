@@ -23,6 +23,7 @@ BiliLiveSession::BiliLiveSession(boost::asio::io_context& ioc)
     , host("")
     , target("/sub")
     , runtime{}
+    , stopFlag{true}
 {
 }
 
@@ -103,6 +104,13 @@ bool BiliLiveSession::InitRoomInfo()
 
 void BiliLiveSession::run()
 {
+    if (!this->stopFlag.load())
+    {
+        LOG_MESSAGE(LogLevel::Error, "Thread pool is already running");
+        return;
+    }
+
+    this->stopFlag.store(false);
     if (!this->InitSSLCert())
     {
         LOG_MESSAGE(LogLevel::Error, "Failed to init ssl cert");
@@ -123,6 +131,15 @@ void BiliLiveSession::run()
     //     boost::beast::bind_front_handler(&BiliLiveSession::on_read, shared_from_this()));
 }
 
+void BiliLiveSession::stop()
+{
+    this->stopFlag.store(true);
+    this->runtime.timer_queue()->shutdown();
+    this->ws.async_close(
+        boost::beast::websocket::close_code::normal,
+        boost::beast::bind_front_handler(&BiliLiveSession::on_close, shared_from_this()));
+}
+
 void BiliLiveSession::on_resolve(boost::beast::error_code                            ec,
                                  const boost::asio::ip::tcp::resolver::results_type& results)
 {
@@ -130,6 +147,11 @@ void BiliLiveSession::on_resolve(boost::beast::error_code                       
     if (ec)
     {
         LOG_VAR(LogLevel::Error, ec.message());
+        return;
+    }
+    if (this->stopFlag.load())
+    {
+        LOG_MESSAGE(LogLevel::Error, "BiliLiveSession is stopped");
         return;
     }
     // 设置超时时间
@@ -147,6 +169,11 @@ void BiliLiveSession::on_connect(boost::beast::error_code                       
     if (ec)
     {
         LOG_VAR(LogLevel::Error, ec.message());
+        return;
+    }
+    if (this->stopFlag.load())
+    {
+        LOG_MESSAGE(LogLevel::Error, "BiliLiveSession is stopped");
         return;
     }
     // Set a timeout on the operation
@@ -178,6 +205,11 @@ void BiliLiveSession::on_ssl_handshake(boost::beast::error_code ec)
     if (ec)
     {
         LOG_VAR(LogLevel::Error, ec.message());
+        return;
+    }
+    if (this->stopFlag.load())
+    {
+        LOG_MESSAGE(LogLevel::Error, "BiliLiveSession is stopped");
         return;
     }
     // Turn off the timeout on the tcp_stream, because
@@ -212,6 +244,11 @@ void BiliLiveSession::on_handshake(boost::beast::error_code ec)
     if (ec)
     {
         LOG_VAR(LogLevel::Error, ec.message());
+        return;
+    }
+    if (this->stopFlag.load())
+    {
+        LOG_MESSAGE(LogLevel::Error, "BiliLiveSession is stopped");
         return;
     }
     nlohmann::json body;
@@ -259,6 +296,11 @@ void BiliLiveSession::on_write(boost::beast::error_code ec, std::size_t bytes_tr
         LOG_VAR(LogLevel::Error, ec.message());
         return;
     }
+    if (this->stopFlag.load())
+    {
+        LOG_MESSAGE(LogLevel::Error, "BiliLiveSession is stopped");
+        return;
+    }
     // // std::this_thread::sleep_for(std::chrono::seconds(5));
     // // Read a message into our buffer
     // this->ws.async_read(
@@ -300,6 +342,11 @@ void BiliLiveSession::on_read(boost::beast::error_code ec, std::size_t bytes_tra
         this->ws.close(boost::beast::websocket::close_code::normal);
         // 执行重连
         this->run();
+        return;
+    }
+    if (this->stopFlag.load())
+    {
+        LOG_MESSAGE(LogLevel::Error, "BiliLiveSession is stopped");
         return;
     }
     // std::cout << boost::beast::make_printable(this->buffer.data()) << std::endl;
@@ -365,6 +412,11 @@ void BiliLiveSession::do_ping()
     //     // this->ws.write(boost::asio::buffer(authMessage));
     //     std::this_thread::sleep_for(std::chrono::seconds(29));
     // }
+    if (this->stopFlag.load())
+    {
+        LOG_MESSAGE(LogLevel::Error, "BiliLiveSession is stopped");
+        return;
+    }
 
     std::vector<uint8_t> authMessage;
     BiliApiUtil::MakePack("{}", BiliApiUtil::Operation::HEARTBEAT, authMessage);

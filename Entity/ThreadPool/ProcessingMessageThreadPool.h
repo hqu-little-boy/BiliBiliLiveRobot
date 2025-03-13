@@ -19,9 +19,10 @@ public:
     static ProcessingMessageThreadPool* GetInstance();
     void AddTask(std::tuple<BiliApiUtil::LiveCommand, std::string>&& message);
     void Start();
-
+    void Stop();
+    bool IsRunning() const;
 private:
-    ProcessingMessageThreadPool()                                              = default;
+    ProcessingMessageThreadPool();
     ~ProcessingMessageThreadPool()                                             = default;
     ProcessingMessageThreadPool(const ProcessingMessageThreadPool&)            = delete;
     ProcessingMessageThreadPool& operator=(const ProcessingMessageThreadPool&) = delete;
@@ -32,6 +33,7 @@ private:
     std::list<std::thread>                                        processingMessageThreadPool;
     std::mutex                                                    processingMessageThreadPoolMutex;
     std::condition_variable processingMessageThreadPoolCondition;
+    std::atomic<bool>       stopFlag;
     static const int        threadNum;
 };
 

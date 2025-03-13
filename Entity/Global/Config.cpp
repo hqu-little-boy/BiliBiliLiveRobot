@@ -5,6 +5,7 @@
 #include "Config.h"
 
 #include "Logger.h"
+#include "TimeStamp.h"
 #include "nlohmann/json.hpp"
 
 #include <fstream>
@@ -58,14 +59,15 @@ bool Config::LoadFromJson(const std::string& jsonPath)
         // 从文件中读取json
         nlohmann::json configJson;
         ifs >> configJson;
-        this->roomId             = configJson["roomId"].get<uint64_t>();
-        int logLevelInt          = configJson["logLevel"].get<unsigned>();
-        this->logLevel           = static_cast<LogLevel>(logLevelInt);
-        this->danmuSeverConfUrl  = Url("api.live.bilibili.com",
+        this->roomId            = configJson["roomId"].get<uint64_t>();
+        int logLevelInt         = configJson["logLevel"].get<unsigned>();
+        this->logLevel          = static_cast<LogLevel>(logLevelInt);
+        this->danmuSeverConfUrl = Url("api.live.bilibili.com",
                                       443,
                                       "/xlive/web-room/v1/index/getDanmuInfo",
-                                       {{"id", std::to_string(this->roomId)}, {"type", "0"}});
-        this->logPath            = configJson["logPath"].get<std::string>();
+                                      {{"id", std::to_string(this->roomId)}, {"type", "0"}});
+        this->logPath           = fmt::format(
+            "{}.{}", configJson["logPath"].get<std::string>(), TimeStamp::Now().ToString());
         this->danmuLength        = configJson["danmuLength"].get<uint8_t>();
         this->canPKNotice        = configJson["canPKNotice"].get<bool>();
         this->canGuardNotice     = configJson["canGuardNotice"].get<bool>();
@@ -205,24 +207,25 @@ std::string Config::ToString() const
 {
     // return fmt::format("roomId: {}, danmuSeverConfUrl: {}", roomId,
     // danmuSeverConfUrl.ToString());
-    return fmt::format("roomId: {}, danmuSeverConfUrl: {} ,logLevel: {}, logPath: {}, danmuLength: {}, "
-                  "canPKNotice: {}, canGuardNotice: {}, canThanksGift: {}, canSuperChatNotice: {}, "
-                  "thanksGiftTimeout: {}, canDrawByLot: {}, canEntryNotice: {}, "
-                  "canThanksFocus: {}, canThanksShare: {}",
-                  this->roomId,
-                  this->danmuSeverConfUrl.ToString(),
-                  static_cast<uint8_t>(this->logLevel),
-                  this->logPath,
-                  this->danmuLength,
-                  this->canPKNotice,
-                  this->canGuardNotice,
-                  this->canThanksGift,
-                  this->canSuperChatNotice,
-                  this->thanksGiftTimeout,
-                  this->canDrawByLot,
-                  this->canEntryNotice,
-                  this->canThanksFocus,
-                  this->canThanksShare);
+    return fmt::format(
+        "roomId: {}, danmuSeverConfUrl: {} ,logLevel: {}, logPath: {}, danmuLength: {}, "
+        "canPKNotice: {}, canGuardNotice: {}, canThanksGift: {}, canSuperChatNotice: {}, "
+        "thanksGiftTimeout: {}, canDrawByLot: {}, canEntryNotice: {}, "
+        "canThanksFocus: {}, canThanksShare: {}",
+        this->roomId,
+        this->danmuSeverConfUrl.ToString(),
+        static_cast<uint8_t>(this->logLevel),
+        this->logPath,
+        this->danmuLength,
+        this->canPKNotice,
+        this->canGuardNotice,
+        this->canThanksGift,
+        this->canSuperChatNotice,
+        this->thanksGiftTimeout,
+        this->canDrawByLot,
+        this->canEntryNotice,
+        this->canThanksFocus,
+        this->canThanksShare);
 }
 
 Config::Config()

@@ -28,7 +28,7 @@
 ```bash
 mkdir build
 cd build/
-cmake  -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=/usr/bin/cc -DCMAKE_CXX_COMPILER=/usr/bin/c++ ..
+cmake  -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=/usr/bin/cc -DCMAKE_CXX_COMPILER=/usr/bin/c++ -DTEST=OFF ..
 cmake --build . -j$(nproc)
 ```
 ## 使用说明

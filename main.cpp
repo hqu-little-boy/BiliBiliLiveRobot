@@ -5,10 +5,12 @@
 #include "Entity/Global/Config.h"
 #include "Entity/Global/Logger.h"
 #include "Entity/Net/Multipart.h"
+#include "Entity/Robot/Robot.h"
 #include "Entity/ThreadPool/ProcessingMessageThreadPool.h"
 #include "Util/BiliUtil/BiliLiveSession.h"
 #include "Util/BiliUtil/BiliLogin.h"
 #include "Util/BiliUtil/BiliRequestHeader.h"
+#include "Util/BiliUtil/BiliRoomInfo.h"
 
 #include <boost/asio/io_context.hpp>
 #include <boost/beast/http/dynamic_body.hpp>
@@ -41,13 +43,31 @@ int main()
     Logger::GetInstance()->SetLogLevel(Config::GetInstance()->GetLogLevel());
     Logger::GetInstance()->SetLogPath(Config::GetInstance()->GetLogPath());
     LOG_MESSAGE(LogLevel::Debug, fmt::format("Config: ({})", Config::GetInstance()->ToString()));
-    ProcessingMessageThreadPool::GetInstance()->Start();
-    boost::asio::io_context ioc;
-    std::make_shared<BiliLiveSession>(ioc)->run();
-    ioc.run();
-    // while (true)
-    // {
-    // }
+    // ProcessingMessageThreadPool::GetInstance()->Start();
+    // boost::asio::io_context ioc;
+    // std::make_shared<BiliLiveSession>(ioc)->run();
+    // ioc.run();
+    Robot robot;
+    // robot.Run();
+    BiliRoomInfo roomInfo{Config::GetInstance()->GetRoomId()};
+    while (true)
+    {
+        if (!roomInfo.GetRoomInfo())
+        {
+            LOG_MESSAGE(LogLevel::Error, "Failed to get room info");
+            std::this_thread::sleep_for(std::chrono::seconds(60));
+            continue;
+        }
+        if (roomInfo.IsLiving() && !robot.IsRunning())
+        {
+            robot.Run();
+        }
+        else if (!roomInfo.IsLiving() && robot.IsRunning())
+        {
+            robot.Stop();
+        }
+        std::this_thread::sleep_for(std::chrono::seconds(60));
+    }
     return EXIT_SUCCESS;
 }
 

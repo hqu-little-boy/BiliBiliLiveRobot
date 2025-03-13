@@ -32,6 +32,13 @@ void ProcessingMessageThreadPool::AddTask(
 
 void ProcessingMessageThreadPool::Start()
 {
+    if (!this->processingMessageThreadPool.empty() || !this->stopFlag.load())
+    {
+        LOG_MESSAGE(LogLevel::Error, "Thread pool is already running");
+        return;
+    }
+
+    this->stopFlag.store(false);
     for (int i = 0; i < threadNum; ++i)
     {
         this->processingMessageThreadPool.emplace_back(&ProcessingMessageThreadPool::ThreadRun,
@@ -39,10 +46,36 @@ void ProcessingMessageThreadPool::Start()
     }
 }
 
+void ProcessingMessageThreadPool::Stop()
+{
+    this->stopFlag.store(true);
+    EntityPool::GetInstance()->ClearCommandPool();
+    for (auto& thread : this->processingMessageThreadPool)
+    {
+        thread.join();
+    }
+    this->processingMessageThreadPool.clear();
+}
+
+bool ProcessingMessageThreadPool::IsRunning() const
+{
+    return !this->stopFlag.load();
+}
+
+ProcessingMessageThreadPool::ProcessingMessageThreadPool()
+    : stopFlag{true}
+{
+}
+
 void ProcessingMessageThreadPool::ThreadRun()
 {
     while (true)
     {
+        if (this->stopFlag.load())
+        {
+            break;
+        }
+
         std::tuple<BiliApiUtil::LiveCommand, std::string> message;
         // 及时释放锁
         {

@@ -67,7 +67,8 @@ public:
     bool InitRoomInfo();
     // Start the asynchronous operation
     void run();
-
+    // Stop the asynchronous operation
+    void stop();
     ///@brief 解析完成后的回调函数
     void on_resolve(boost::beast::error_code                            ec,
                     const boost::asio::ip::tcp::resolver::results_type& results);
@@ -105,6 +106,7 @@ private:
     // std::jthread pingThread;   // 心跳线程
     concurrencpp::runtime runtime;
     concurrencpp::timer   pingtimer;   // 心跳定时器
+    std::atomic<bool>     stopFlag;    // 停止标志
 };
 
 
