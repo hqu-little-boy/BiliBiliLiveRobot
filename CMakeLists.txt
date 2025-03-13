@@ -12,6 +12,11 @@ set(CMAKE_CXX_STANDARD 23)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Werror -fsanitize=address -fsanitize=undefined -fsanitize=leak") # 指定编译选项
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=thread -fsanitize=undefined") # 指定编译选项
 
+set(STATIC_BUILD ON)
+if (STATIC_BUILD)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
+endif ()
+
 set(Test ON)
 if (Test)
     add_definitions(-DTEST)
@@ -19,11 +24,13 @@ endif ()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_definitions(-DDEBUG)
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-var-tracking")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-stack-protector")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize-address-use-after-scope")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=signed-integer-overflow")
+    if (NOT STATIC_BUILD)
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address")
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-var-tracking")
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-stack-protector")
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize-address-use-after-scope")
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=signed-integer-overflow")
+    endif ()
 endif ()
 # 添加源文件
 file(GLOB_RECURSE BASE_SOURCES "Base/*.h" "Base/*.cpp")
@@ -64,7 +71,11 @@ add_subdirectory(ThirdParty/utfcpp)
 include_directories(ThirdParty/utfcpp/source)
 add_subdirectory(ThirdParty/fmt)
 include_directories(ThirdParty/fmt/include)
-target_link_libraries(${PROJECT_NAME} PRIVATE fmt::fmt)
+if (STATIC_BUILD)
+    target_link_libraries(${PROJECT_NAME} PRIVATE fmt::fmt-header-only)
+else ()
+    target_link_libraries(${PROJECT_NAME} PRIVATE fmt::fmt)
+endif ()
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
         OpenSSL::SSL
