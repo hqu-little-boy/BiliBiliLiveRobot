@@ -17,7 +17,7 @@ set(WITHOUT_PNG ON)
 set(WITH_TOOLS OFF)
 set(WITH_TESTS OFF)
 
-set(STATIC_BUILD ON)
+set(STATIC_BUILD OFF)
 if (STATIC_BUILD)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
     set(BUILD_SHARED_LIBS OFF)
@@ -40,7 +40,42 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize-address-use-after-scope")
         set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=signed-integer-overflow")
     endif ()
+elseif (CMAKE_BUILD_TYPE STREQUAL "Release")
+    add_definitions(-DRELEASE)
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto")
+#    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
+#    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mtune=native")
+#    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-rtti")
+#    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-stack-protector")
+#    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-omit-frame-pointer")
+#    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-var-tracking")
+#    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-strict-aliasing")
 endif ()
+
+
+if (APPLE)
+    add_definitions(-DMACOS)
+endif ()
+
+if (MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest")
+    add_definitions(-D_WIN32_WINNT=0x0601)
+    include_directories(
+            ${VCPKG_INCLUDE_DIRS}
+    )
+    target_link_libraries(${PROJECT_NAME}
+            ${VCPKG_LIBRARIES}
+    )
+endif ()
+
+# 如果编译器是Clang，添加编译选项
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    # 链接libc++，而不是libstdc++
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+endif ()
+
 # 添加源文件
 file(GLOB_RECURSE BASE_SOURCES "Base/*.h" "Base/*.cpp")
 file(GLOB_RECURSE ENTITY_SOURCES "Entity/*.h" "Entity/*.cpp")
@@ -97,22 +132,6 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
         concurrencpp
         utf8cpp
 )
-
-if (APPLE)
-    add_definitions(-DMACOS)
-endif ()
-
-if (MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++latest")
-    add_definitions(-D_WIN32_WINNT=0x0601)
-    include_directories(
-            ${VCPKG_INCLUDE_DIRS}
-    )
-    target_link_libraries(${PROJECT_NAME}
-            ${VCPKG_LIBRARIES}
-    )
-endif ()
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
