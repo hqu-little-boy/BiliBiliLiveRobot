@@ -44,13 +44,13 @@ elseif (CMAKE_BUILD_TYPE STREQUAL "Release")
     add_definitions(-DRELEASE)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto")
-#    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
-#    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mtune=native")
-#    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-rtti")
-#    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-stack-protector")
-#    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-omit-frame-pointer")
-#    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-var-tracking")
-#    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-strict-aliasing")
+    #    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
+    #    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mtune=native")
+    #    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-rtti")
+    #    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-stack-protector")
+    #    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-omit-frame-pointer")
+    #    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-var-tracking")
+    #    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fno-strict-aliasing")
 endif ()
 
 
@@ -86,6 +86,7 @@ add_executable(${PROJECT_NAME}
         ${BASE_SOURCES}
         ${ENTITY_SOURCES}
         ${UTIL_SOURCES}
+        qml/qml.qrc
 )
 
 add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD
@@ -115,6 +116,8 @@ add_subdirectory(ThirdParty/utfcpp)
 include_directories(ThirdParty/utfcpp/source)
 add_subdirectory(ThirdParty/fmt)
 include_directories(ThirdParty/fmt/include)
+
+# GUI和CLI通用的库
 if (STATIC_BUILD)
     target_link_libraries(${PROJECT_NAME} PRIVATE fmt::fmt-header-only)
 else ()
@@ -132,6 +135,33 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
         concurrencpp
         utf8cpp
 )
+# GUI专用
+find_package(QT NAMES Qt6 REQUIRED)
+find_package(Qt6 REQUIRED COMPONENTS Core Quick Charts Widgets PrintSupport)
+target_link_libraries(${PROJECT_NAME} PRIVATE
+        Qt6::Core
+        Qt6::Quick
+        Qt6::Charts
+        Qt6::Widgets
+        Qt6::PrintSupport
+)
+list(APPEND QML_IMPORT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/qml")
+list(REMOVE_DUPLICATES QML_IMPORT_PATH)
+set(QML_IMPORT_PATH
+        ${QML_IMPORT_PATH}
+        CACHE STRING "Qt Creator 4.1 extra qml import paths" FORCE)
+message(STATUS "QML_IMPORT_PATH=" ${QML_IMPORT_PATH})
+set_target_properties(
+        ${PROJECT_NAME}
+        PROPERTIES
+        AUTOMOC ON
+        AUTORCC ON
+        AUTOUIC ON
+)
+if (QT_VERSION_MAJOR EQUAL 6)
+    qt_import_qml_plugins(${PROJECT_NAME})
+    qt_finalize_executable(${PROJECT_NAME})
+endif ()
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy

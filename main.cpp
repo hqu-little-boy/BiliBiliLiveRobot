@@ -12,11 +12,14 @@
 #include "Util/BiliUtil/BiliRequestHeader.h"
 #include "Util/BiliUtil/BiliRoomInfo.h"
 
+#include <QApplication>
+#include <QDebug>
+#include <QtQuick>
 #include <boost/asio/io_context.hpp>
 #include <boost/beast/http/dynamic_body.hpp>
 #include <cstdlib>
 
-int main()
+bool InitRobot()
 {
     // 判断cookie/bili_cookie.json是否存在
     std::string_view cookiePath = "./cookie/bili_cookie.json";
@@ -68,100 +71,27 @@ int main()
         }
         std::this_thread::sleep_for(std::chrono::seconds(60));
     }
-    return EXIT_SUCCESS;
+    return true;
 }
 
-// int main()
-// {
-//     // 判断cookie/bili_cookie.json是否存在
-//     std::string_view cookiePath = "./cookie/bili_cookie.json";
-//     if (!std::filesystem::exists(cookiePath))
-//     {
-//         BiliLogin login;
-//         if (!login.GetLoginQRCode())
-//         {
-//             LOG_MESSAGE(LogLevel::Error, "Failed to get login QRCode");
-//             return EXIT_FAILURE;
-//         }
-//     }
-//     else if (!BiliRequestHeader::GetInstance()->LoadBiliCookieByPath(cookiePath))
-//     {
-//         LOG_MESSAGE(LogLevel::Error, "Failed to load cookie");
-//         return EXIT_FAILURE;
-//     }
-//
-//     if (!Config::GetInstance()->LoadFromJson("./Config/configure.json"))
-//     {
-//         LOG_MESSAGE(LogLevel::Error, "Failed to load config file");
-//         return EXIT_FAILURE;
-//     }
-//     Logger::GetInstance()->SetLogLevel(Config::GetInstance()->GetLogLevel());
-//     Logger::GetInstance()->SetLogPath(Config::GetInstance()->GetLogPath());
-//     LOG_MESSAGE(LogLevel::Debug, fmt::format("Config: ({})", Config::GetInstance()->ToString()));
-//
-//     Url url{"api.live.bilibili.com", 443, "/msg/send"};
-//     LOG_VAR(LogLevel::Debug, url.ToString());
-//
-//     boost::asio::io_context        ioc;                                             // IO上下文
-//     boost::asio::ssl::context      ctx(boost::asio::ssl::context::tlsv12_client);   // SSL上下文
-//     boost::asio::ip::tcp::resolver resolver(ioc);                                   // DNS解析器
-//
-//     // 解析域名和端口
-//     const auto results = resolver.resolve(url.GetHost(), std::to_string(url.GetPort()));
-
-//     // 创建SSL流并连接
-//     boost::asio::io_context                                iocHttp;
-//     boost::asio::ssl::stream<boost::asio::ip::tcp::socket> stream(iocHttp, ctx);
-//     boost::asio::connect(stream.next_layer(), results.begin(), results.end());
-//     stream.handshake(boost::asio::ssl::stream_base::client);
-//     Multipart multipart{
-//         {"bubble", "5"},
-//         {"msg", "圈宝，可爱"},
-//         {"color", "4546550"},
-//         // {"mode", "1"},
-//         {"room_type", "0"},
-//         // {"jumpfrom", "71002"},
-//         // {"reply_mid", "0"},
-//         // {"reply_attr", "0"},
-//         // {"replay_dmid", ""},
-//         // {"statistics", "{\"appId\":100,\"platform\":5}"},
-//         {"fontsize", "25"},
-//         {"rnd", std::to_string(std::time(nullptr))},
-//         {"roomid", std::to_string(Config::GetInstance()->GetRoomId())},
-//         {"csrf", BiliRequestHeader::GetInstance()->GetBiliCookie().GetBiliJct()},
-//         {"csrf_token", BiliRequestHeader::GetInstance()->GetBiliCookie().GetBiliJct()}};
-//     // 构建POST请求
-//     boost::beast::http::request<boost::beast::http::string_body> req{
-//         boost::beast::http::verb::post, url.GetTarget(), 11};
-//     req.set(boost::beast::http::field::host, url.GetHost());
-//     req.set(boost::beast::http::field::user_agent,
-//             BiliRequestHeader::GetInstance()->GetUserAgent());
-//     req.set(boost::beast::http::field::content_type,
-//             multipart.GetSerializeMultipartFormdataGetContentType());
-//     // 设置cookie
-//     req.set(boost::beast::http::field::cookie,
-//             BiliRequestHeader::GetInstance()->GetBiliCookie().ToString());
-//     //
-//     req.body() = multipart.GetSerializeMultipartFormdata();
-//     req.prepare_payload();
-//     // 发送请求
-//     boost::beast::http::write(stream, req);
-//
-//
-//     // This buffer is used for reading and must be persisted
-//     boost::beast::flat_buffer buffer;
-//
-//     // Declare a container to hold the response
-//     boost::beast::http::response<boost::beast::http::dynamic_body> res;
-//
-//     // Receive the HTTP response
-//     boost::beast::http::read(stream, buffer, res);
-//
-//     // Write the message to standard out
-//     std::cout << res << std::endl;
-//
-//     // Gracefully close the socket
-//     boost::beast::error_code ec;
-//
-//     return true;
-// }
+int main(int argc, char* argv[])
+{
+    QApplication          app(argc, argv);
+    QQmlApplicationEngine engine;
+    engine.addImportPath("qrc:/");
+    const QUrl mainUrl(QStringLiteral("qrc:/main.qml"));
+    QObject::connect(
+        &engine,
+        &QQmlApplicationEngine::objectCreated,
+        &app,
+        [mainUrl](QObject* obj, const QUrl& objUrl) {
+            if (!obj && mainUrl == objUrl)
+            {
+                qDebug() << "qml engine load failed";
+                QCoreApplication::exit(-1);
+            }
+        },
+        Qt::QueuedConnection);
+    engine.load(mainUrl);
+    return app.exec();
+}
