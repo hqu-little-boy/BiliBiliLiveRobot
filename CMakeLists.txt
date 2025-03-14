@@ -12,9 +12,18 @@ set(CMAKE_CXX_STANDARD 23)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Werror -fsanitize=address -fsanitize=undefined -fsanitize=leak") # 指定编译选项
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=thread -fsanitize=undefined") # 指定编译选项
 
+# libqrencode使用，不需要PNG，不需要工具，不需要测试
+set(WITHOUT_PNG ON)
+set(WITH_TOOLS OFF)
+set(WITH_TESTS OFF)
+
 set(STATIC_BUILD ON)
 if (STATIC_BUILD)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
+    set(BUILD_SHARED_LIBS OFF)
+    set(Boost_USE_STATIC_LIBS ON)
+    set(OPENSSL_USE_STATIC_LIBS ON)
+    set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 endif ()
 
 set(Test ON)
