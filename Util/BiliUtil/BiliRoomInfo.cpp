@@ -22,7 +22,7 @@ BiliRoomInfo::BiliRoomInfo(uint64_t roomId)
     , url("api.live.bilibili.com",
           443,
           "/room/v1/Room/get_info",
-          {{{"id", std::to_string(Config::GetInstance()->GetRoomId())}}})
+          {{"id", std::to_string(Config::GetInstance()->GetRoomId())}})
 // , stream(ioc, ctx)
 {
 }

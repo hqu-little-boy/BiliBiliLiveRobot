@@ -6,7 +6,7 @@
 #define BILILIVESESSION_H
 #include "../../Base/noncopyable.h"
 #include "../../Entity/Net/Url.h"
-#include "concurrencpp/concurrencpp.h"
+// #include "concurrencpp/concurrencpp.h"
 
 #include <boost/asio/ssl.hpp>
 #include <boost/asio/strand.hpp>
@@ -66,7 +66,7 @@ public:
     bool InitSSLCert();
     bool InitRoomInfo();
     // Start the asynchronous operation
-    void run();
+    bool run();
     // Stop the asynchronous operation
     void stop();
     ///@brief 解析完成后的回调函数
@@ -89,6 +89,8 @@ public:
     void on_close(boost::beast::error_code ec);
     ///@brief 发送心跳包
     void do_ping();
+    ///@brief 心跳定时器回调函数，用于定时发送心跳包，周期为28秒
+    void ping_task(const boost::system::error_code& ec);
 
 private:
     boost::asio::io_context&       ioc;        // IO上下文
@@ -104,9 +106,10 @@ private:
     std::string               target;   // 目标
 
     // std::jthread pingThread;   // 心跳线程
-    concurrencpp::runtime runtime;
-    concurrencpp::timer   pingtimer;   // 心跳定时器
-    std::atomic<bool>     stopFlag;    // 停止标志
+    // concurrencpp::runtime runtime;
+    // concurrencpp::timer   pingtimer;   // 心跳定时器
+    boost::asio::steady_timer pingTimer;   // 心跳定时器
+    std::atomic<bool>         stopFlag;    // 停止标志
 };
 
 

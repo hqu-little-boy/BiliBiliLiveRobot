@@ -16,10 +16,31 @@
 #include <boost/beast/http/dynamic_body.hpp>
 #include <cstdlib>
 
-int main()
+int main(int argc, char* argv[])
 {
+    if (argc < 2)
+    {
+        LOG_MESSAGE(
+            LogLevel::Warn,
+            fmt::format("Usage: {} <config_file_path> [optional]<cookie_file_path>", argv[0]));
+        return EXIT_FAILURE;
+    }
+    // 判断
+    if (!std::filesystem::exists(argv[1]))
+    {
+        LOG_MESSAGE(LogLevel::Error, fmt::format("Config file does not exist: {}", argv[1]));
+        return EXIT_FAILURE;
+    }
+    std::string_view cookiePath;
+    if (argc == 3)
+    {
+        cookiePath = argv[2];
+    }
+    else
+    {
+        cookiePath = "./cookie/bili_cookie.json";
+    }
     // 判断cookie/bili_cookie.json是否存在
-    std::string_view cookiePath = "./cookie/bili_cookie.json";
     if (!std::filesystem::exists(cookiePath))
     {
         BiliLogin login;
@@ -34,8 +55,8 @@ int main()
         LOG_MESSAGE(LogLevel::Error, "Failed to load cookie");
         return EXIT_FAILURE;
     }
-
-    if (!Config::GetInstance()->LoadFromJson("./Config/configure.json"))
+    std::string_view configPath = argv[1];
+    if (!Config::GetInstance()->LoadFromJson(configPath))
     {
         LOG_MESSAGE(LogLevel::Error, "Failed to load config file");
         return EXIT_FAILURE;

@@ -7,6 +7,7 @@
 #include "../../Base/copyable.h"
 
 #include <list>
+#include <map>
 #include <string>
 #include <unordered_map>
 class Url : public copyable
@@ -14,22 +15,25 @@ class Url : public copyable
 public:
     Url() = default;
     Url(const std::string_view& host, unsigned port, const std::string_view& target,
-        const std::list<std::pair<std::string, std::string>>& query = {});
+        const std::initializer_list<std::pair<std::string, std::string>>& query = {});
 
     [[nodiscard]] const std::string& GetHost() const;
     [[nodiscard]] unsigned           GetPort() const;
     [[nodiscard]] const std::string& GetTarget() const;
     [[nodiscard]] const std::string  GetTargetWithQuery() const;
+    [[nodiscard]] const std::string  GetTargetWithWbiParamSafeQuery() const;
 
-    [[nodiscard]] const std::list<std::pair<std::string, std::string>>& GetQuery() const;
-    void                      SetQuery(const std::list<std::pair<std::string, std::string>>& query);
+    [[nodiscard]] const std::map<std::string, std::string>& GetQuery() const;
+    [[nodiscard]] const std::string                         GetQueryString() const;
+    [[nodiscard]] const std::string                         GetWbiParamSafeQueryString() const;
+    void SetQuery(const std::initializer_list<std::pair<std::string, std::string>>& query);
     [[nodiscard]] std::string ToString() const;
 
 private:
-    std::string                                    host;
-    unsigned                                       port{};
-    std::string                                    target;
-    std::list<std::pair<std::string, std::string>> query;
+    std::string                        host;
+    unsigned                           port{};
+    std::string                        target;
+    std::map<std::string, std::string> query;
 };
 
 

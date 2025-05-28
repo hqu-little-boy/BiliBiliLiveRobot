@@ -22,7 +22,7 @@ BiliLiveSession::BiliLiveSession(boost::asio::io_context& ioc)
     , ws{boost::asio::make_strand(ioc), ctx}
     , host("")
     , target("/sub")
-    , runtime{}
+    , pingTimer{ioc}
     , stopFlag{true}
 {
 }
@@ -47,7 +47,7 @@ bool BiliLiveSession::InitRoomInfo()
     LOG_VAR(LogLevel::Debug, Config::GetInstance()->GetDanmuSeverConfUrl().GetHost());
     LOG_VAR(LogLevel::Debug, Config::GetInstance()->GetDanmuSeverConfUrl().GetPort());
     LOG_VAR(LogLevel::Debug, Config::GetInstance()->GetDanmuSeverConfUrl().GetTarget());
-    LOG_VAR(LogLevel::Debug, Config::GetInstance()->GetDanmuSeverConfUrl().GetTargetWithQuery());
+    LOG_VAR(LogLevel::Debug, Config::GetInstance()->GetDanmuSeverConfUrl().GetTargetWithWbiParamSafeQuery());
     // 解析域名和端口
     const auto results = this->resolver.resolve(
         Config::GetInstance()->GetDanmuSeverConfUrl().GetHost(),
@@ -61,7 +61,7 @@ bool BiliLiveSession::InitRoomInfo()
     // 构建GET请求
     boost::beast::http::request<boost::beast::http::string_body> req{
         boost::beast::http::verb::get,
-        Config::GetInstance()->GetDanmuSeverConfUrl().GetTargetWithQuery(),
+        Config::GetInstance()->GetDanmuSeverConfUrl().GetTargetWithWbiParamSafeQuery(),
         11};
     req.set(boost::beast::http::field::host,
             Config::GetInstance()->GetDanmuSeverConfUrl().GetHost());
@@ -102,30 +102,33 @@ bool BiliLiveSession::InitRoomInfo()
     return true;
 }
 
-void BiliLiveSession::run()
+bool BiliLiveSession::run()
 {
     if (!this->stopFlag.load())
     {
         LOG_MESSAGE(LogLevel::Error, "Thread pool is already running");
-        return;
+        return false;
     }
 
     this->stopFlag.store(false);
     if (!this->InitSSLCert())
     {
         LOG_MESSAGE(LogLevel::Error, "Failed to init ssl cert");
-        return;
+        this->stop();
+        return false;
     }
     if (!this->InitRoomInfo())
     {
         LOG_MESSAGE(LogLevel::Error, "Failed to init room info");
-        return;
+        this->stop();
+        return false;
     }
     // 异步解析域名
     this->resolver.async_resolve(
         this->liveUrls.back().host,
         std::to_string(this->liveUrls.back().wss_port),
         boost::beast::bind_front_handler(&BiliLiveSession::on_resolve, shared_from_this()));
+    return true;
     // this->ws.async_read(
     //     this->buffer,
     //     boost::beast::bind_front_handler(&BiliLiveSession::on_read, shared_from_this()));
@@ -134,7 +137,8 @@ void BiliLiveSession::run()
 void BiliLiveSession::stop()
 {
     this->stopFlag.store(true);
-    this->runtime.timer_queue()->shutdown();
+    // this->runtime.timer_queue()->shutdown();
+    this->pingTimer.cancel();
     this->ws.async_close(
         boost::beast::websocket::close_code::normal,
         boost::beast::bind_front_handler(&BiliLiveSession::on_close, shared_from_this()));
@@ -314,12 +318,15 @@ void BiliLiveSession::on_auth(boost::beast::error_code ec, std::size_t bytes_tra
         this->buffer,
         boost::beast::bind_front_handler(&BiliLiveSession::on_read, shared_from_this()));
     // 定时发送心跳包
-    this->pingtimer =
-        std::move(this->runtime.timer_queue()->make_timer(std::chrono::seconds(0),
-                                                          std::chrono::seconds(28),
-                                                          this->runtime.thread_pool_executor(),
-                                                          [this] { this->do_ping(); }));
+    this->pingTimer.expires_after(std::chrono::seconds(28));
+    this->pingTimer.async_wait(
+        [this](const boost::system::error_code& ec) { this->ping_task(ec); });
 
+    // this->pingtimer =
+    //     std::move(this->runtime.timer_queue()->make_timer(std::chrono::seconds(0),
+    //                                                       std::chrono::seconds(28),
+    //                                                       this->runtime.thread_pool_executor(),
+    //                                                       [this] { this->do_ping(); }));
     // this->pingThread = std::move(std::jthread(&BiliLiveSession::do_ping, this));
     // this->pingThread.detach();
 }
@@ -425,4 +432,22 @@ void BiliLiveSession::do_ping()
     this->ws.async_write(
         boost::asio::buffer(authMessage),
         boost::beast::bind_front_handler(&BiliLiveSession::on_write, shared_from_this()));
+}
+void BiliLiveSession::ping_task(const boost::system::error_code& ec)
+{
+    if (ec)
+    {
+        LOG_VAR(LogLevel::Error, ec.message());
+        return;
+    }
+    if (this->stopFlag.load())
+    {
+        LOG_MESSAGE(LogLevel::Error, "BiliLiveSession is stopped");
+        return;
+    }
+    this->do_ping();
+    // 重新设置定时器
+    this->pingTimer.expires_after(std::chrono::seconds(28));
+    this->pingTimer.async_wait(
+        [this](const boost::system::error_code& ec) { this->ping_task(ec); });
 }

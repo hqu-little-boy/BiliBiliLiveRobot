@@ -16,3 +16,6 @@
 [submodule "ThirdParty/fmt"]
 	path = ThirdParty/fmt
 	url = https://github.com/fmtlib/fmt.git
+[submodule "ThirdParty/cryptopp-cmake"]
+	path = ThirdParty/cryptopp-cmake
+	url = https://github.com/abdes/cryptopp-cmake.git

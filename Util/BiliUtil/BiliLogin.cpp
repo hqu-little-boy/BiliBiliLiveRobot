@@ -97,7 +97,7 @@ bool BiliLogin::GetLoginQRCode()
         }
         std::cout << std::endl;
     }
-    delete qrcode;
+    // delete qrcode;
 
     for (int i = 0; i < 15; i++)
     {

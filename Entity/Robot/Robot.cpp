@@ -5,6 +5,7 @@
 #include "Robot.h"
 
 #include "../../Util/BiliUtil/BiliLiveSession.h"
+#include "../Global/Config.h"
 #include "../ThreadPool/ProcessingMessageThreadPool.h"
 
 #include <boost/asio/io_context.hpp>
@@ -21,6 +22,11 @@ void Robot::Run()
     if (!this->stopFlag.load())
     {
         LOG_MESSAGE(LogLevel::Error, "Robot is already running");
+        return;
+    }
+    if (!Config::GetInstance()->LoadUID())
+    {
+        LOG_MESSAGE(LogLevel::Error, "Failed to load UID");
         return;
     }
     this->stopFlag.store(false);
@@ -96,6 +102,12 @@ void Robot::RobotThread()
     }
     this->iocPtr         = std::make_unique<boost::asio::io_context>();
     this->liveSessionPtr = std::make_shared<BiliLiveSession>(*this->iocPtr);
-    this->liveSessionPtr->run();
+    bool res{this->liveSessionPtr->run()};
+    if (!res)
+    {
+        LOG_MESSAGE(LogLevel::Error, "Failed to run live session");
+        this->Stop();
+        return;
+    }
     this->iocPtr->run();
 }

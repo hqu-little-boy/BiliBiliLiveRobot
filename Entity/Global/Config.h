@@ -7,6 +7,8 @@
 #include "../Net/Url.h"
 #include "Logger.h"
 
+#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/ssl/context.hpp>
 #include <vector>
 
 /// @brief 配置类，单例模式
@@ -16,7 +18,9 @@ public:
     static Config* GetInstance();
     static void    DestroyInstance();
 
-    bool                             LoadFromJson(const std::string& jsonPath);
+    bool LoadFromJson(std::string_view jsonPath);
+    bool LoadUID();
+
     [[nodiscard]] uint64_t           GetRoomId() const;
     [[nodiscard]] const Url&         GetDanmuSeverConfUrl() const;
     [[nodiscard]] LogLevel           GetLogLevel() const;
@@ -38,6 +42,9 @@ public:
     [[nodiscard]] const std::string& GetNormalEntryNoticeWord() const;
     [[nodiscard]] const std::string& GetGuardEntryNoticeWord() const;
     [[nodiscard]] std::string        ToString() const;
+
+    [[nodiscard]] const std::string& GetWbiMixKey() const;
+    [[nodiscard]] uint64_t           GetRobotUID() const;
 
 #if defined(TEST)
     constexpr inline bool IsTest()
@@ -74,6 +81,14 @@ private:
     std::vector<std::string> guardEntryNoticeList;    // 欢迎普通弹幕列表内容
     bool                     canThanksFocus;          // 是否开启关注感谢
     bool                     canThanksShare;          // 是否开启分享感谢
+
+    uint64_t    robotUID;    // 机器人UID
+    std::string wbiMixKey;   // wbi混淆密钥
+    Url         uidUrl;      // 弹幕服务器URL
+private:
+    boost::asio::io_context        ioc;
+    boost::asio::ssl::context      ctx;
+    boost::asio::ip::tcp::resolver resolver;   // DNS解析器
 };
 
 #endif   // CONFIG_H
