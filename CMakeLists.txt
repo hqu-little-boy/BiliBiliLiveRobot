@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(BiliBiliLiveRobot)
+project(BiliBiliLiveRobot VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/_${CMAKE_BUILD_TYPE}Bin)
 if (POLICY CMP0167)
@@ -7,6 +7,7 @@ if (POLICY CMP0167)
 endif ()
 
 set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wall -Wextra")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Werror -fsanitize=address -fsanitize=undefined -fsanitize=leak") # 指定编译选项
@@ -27,6 +28,7 @@ if (STATIC_BUILD)
 endif ()
 
 set(Test ON)
+set(CRYPTOPP_BUILD_TESTING OFF)
 if (Test)
     add_definitions(-DTEST)
 endif ()
@@ -80,20 +82,22 @@ endif ()
 file(GLOB_RECURSE BASE_SOURCES "Base/*.h" "Base/*.cpp")
 file(GLOB_RECURSE ENTITY_SOURCES "Entity/*.h" "Entity/*.cpp")
 file(GLOB_RECURSE UTIL_SOURCES "Util/*.h" "Util/*.cpp")
+file(GLOB_RECURSE GUI_SOURCES "GUI/*.h" "GUI/*.cpp")
+file(GLOB_RECURSE RELATIVE GUI_QML_SOURCES "GUI/*.qml")
 
-add_executable(${PROJECT_NAME}
-        main.cpp
+add_executable(${PROJECT_NAME}-cli
+        cli.cpp
         ${BASE_SOURCES}
         ${ENTITY_SOURCES}
         ${UTIL_SOURCES}
         #        qml/qml.qrc
 )
 
-add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD
+add_custom_command(TARGET ${PROJECT_NAME}-cli PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_INSTALL_PREFIX}/Config"
 )
 
-add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD
+add_custom_command(TARGET ${PROJECT_NAME}-cli PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
         "${CMAKE_SOURCE_DIR}/Config/configure.json"
         "${CMAKE_INSTALL_PREFIX}/Config/configure.json"
@@ -121,12 +125,12 @@ add_subdirectory(ThirdParty/cryptopp-cmake)
 
 # GUI和CLI通用的库
 if (STATIC_BUILD)
-    target_link_libraries(${PROJECT_NAME} PRIVATE fmt::fmt-header-only)
+    target_link_libraries(${PROJECT_NAME}-cli PRIVATE fmt::fmt-header-only)
 else ()
-    target_link_libraries(${PROJECT_NAME} PRIVATE fmt::fmt)
+    target_link_libraries(${PROJECT_NAME}-cli PRIVATE fmt::fmt)
 endif ()
 
-target_link_libraries(${PROJECT_NAME} PRIVATE
+target_link_libraries(${PROJECT_NAME}-cli PRIVATE
         OpenSSL::SSL
         OpenSSL::Crypto
         Boost::context
@@ -139,35 +143,85 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
         cryptopp::cryptopp
 )
 ## GUI专用
-#find_package(QT NAMES Qt6 REQUIRED)
-#find_package(Qt6 REQUIRED COMPONENTS Core Quick Charts Widgets PrintSupport)
-#target_link_libraries(${PROJECT_NAME} PRIVATE
-#        Qt6::Core
-#        Qt6::Quick
-#        Qt6::Charts
-#        Qt6::Widgets
-#        Qt6::PrintSupport
-#)
-#list(APPEND QML_IMPORT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/qml")
-#list(REMOVE_DUPLICATES QML_IMPORT_PATH)
-#set(QML_IMPORT_PATH
-#        ${QML_IMPORT_PATH}
-#        CACHE STRING "Qt Creator 4.1 extra qml import paths" FORCE)
-#message(STATUS "QML_IMPORT_PATH=" ${QML_IMPORT_PATH})
-#set_target_properties(
-#        ${PROJECT_NAME}
-#        PROPERTIES
-#        AUTOMOC ON
-#        AUTORCC ON
-#        AUTOUIC ON
-#)
-#if (QT_VERSION_MAJOR EQUAL 6)
-#    qt_import_qml_plugins(${PROJECT_NAME})
-#    qt_finalize_executable(${PROJECT_NAME})
-#endif ()
+# Enable Qt MOC, RCC and UIC
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
 
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
-        "${CMAKE_BINARY_DIR}/${PROJECT_NAME}"
-        "${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}"
+
+find_package(Qt6 REQUIRED COMPONENTS Core Quick QuickControls2 Widgets)
+# Set Qt policy for QML modules
+if (POLICY CMP0071)
+    cmake_policy(SET CMP0071 NEW)
+endif ()
+qt_policy(SET QTP0001 NEW)
+qt_policy(SET QTP0004 NEW)
+
+qt_add_executable(${PROJECT_NAME}-gui
+        gui.cpp
+                ${GUI_SOURCES}
+                ${BASE_SOURCES}
+                ${ENTITY_SOURCES}
+                ${UTIL_SOURCES}
+
 )
+
+#qt_add_qml_module(${PROJECT_NAME}-gui
+#        URI BilibiliBot
+#        VERSION 1.0
+#        QML_FILES
+#        GUI/qml/main.qml
+#        GUI/qml/LoginPage.qml
+#        GUI/qml/MainPage.qml
+#        GUI/qml/Sidebar.qml
+#        GUI/qml/DanmakuPage.qml
+#        GUI/qml/StatsPage.qml
+#        GUI/qml/WelcomePage.qml
+#        GUI/qml/GiftPage.qml
+#        GUI/qml/InteractionPage.qml
+#        GUI/qml/BlindboxPage.qml
+#        GUI/qml/PKPage.qml
+#        GUI/qml/SettingsPage.qml
+#        GUI/qml/LoginInfoPage.qml
+#        GUI/qml/components/DanmakuMessage.qml
+#        GUI/qml/components/StatsCard.qml
+#        GUI/qml/components/ToggleSwitch.qml
+##        SOURCES
+##        ${GUI_SOURCES}
+##        ${BASE_SOURCES}
+##        ${ENTITY_SOURCES}
+##        ${UTIL_SOURCES}
+#)
+
+target_link_libraries(${PROJECT_NAME}-gui PRIVATE
+        Qt6::Core
+        Qt6::Quick
+        Qt6::QuickControls2
+        Qt6::Widgets
+        OpenSSL::SSL
+        OpenSSL::Crypto
+        Boost::context
+        Boost::iostreams
+        Boost::regex
+        nlohmann_json::nlohmann_json
+        qrencode
+        brotlidec
+        utf8cpp
+        cryptopp::cryptopp
+        fmt::fmt
+)
+
+# 设置应用图标和名称
+set_target_properties(${PROJECT_NAME}-gui PROPERTIES
+        WIN32_EXECUTABLE TRUE
+        MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_GUI_IDENTIFIER com.bilibilibot.app
+        MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
+        MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
+)
+
+#add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+#        COMMAND ${CMAKE_COMMAND} -E copy
+#        "${CMAKE_BINARY_DIR}/${PROJECT_NAME}"
+#        "${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}"
+#)

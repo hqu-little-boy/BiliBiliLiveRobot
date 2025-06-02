@@ -1,0 +1,6 @@
+module BilibiliBot
+prefer :/qt/qml/BilibiliBot/
+
+DanmakuMessage 1.0 components/DanmakuMessage.qml
+StatsCard 1.0 components/StatsCard.qml
+ToggleSwitch 1.0 components/ToggleSwitch.qml
