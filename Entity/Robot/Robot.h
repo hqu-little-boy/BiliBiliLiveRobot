@@ -25,12 +25,12 @@ private:
     void RobotThread();
 
 private:
-    std::atomic<bool>                        stopFlag;
-    std::thread                              robotThread;
-    std::unique_ptr<boost::asio::io_context> iocPtr;
-    std::shared_ptr<BiliLiveSession>         liveSessionPtr;
+    std::atomic<bool>                stopFlag;
+    std::thread                      robotThread;
+    boost::asio::io_context          ioc;
+    std::shared_ptr<BiliLiveSession> liveSessionPtr;
 };
 
 
 
-#endif //ROBOT_H
+#endif   // ROBOT_H

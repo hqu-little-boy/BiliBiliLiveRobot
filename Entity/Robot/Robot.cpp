@@ -11,7 +11,6 @@
 #include <boost/asio/io_context.hpp>
 Robot::Robot()
     : stopFlag{true}
-    , iocPtr(nullptr)
     , liveSessionPtr{nullptr}
 {
 }
@@ -56,10 +55,9 @@ void Robot::Stop()
         LOG_MESSAGE(LogLevel::Error, "liveSessionPtr is nullptr");
     }
 
-    if (this->iocPtr && !this->iocPtr->stopped())
+    if (!this->ioc.stopped())
     {
-        this->iocPtr->stop();
-        this->iocPtr.reset();
+        this->ioc.stop();
     }
     else
     {
@@ -74,6 +72,7 @@ void Robot::Stop()
     {
         LOG_MESSAGE(LogLevel::Error, "robotThread is not joinable");
     }
+    this->ioc.restart();
 }
 
 bool Robot::IsRunning() const
@@ -95,13 +94,13 @@ void Robot::RobotThread()
         return;
     }
     ProcessingMessageThreadPool::GetInstance()->Start();
-    if (this->liveSessionPtr || this->iocPtr)
+    if (this->liveSessionPtr)
     {
         LOG_MESSAGE(LogLevel::Error, "liveSessionPtr is not nullptr");
         return;
     }
-    this->iocPtr         = std::make_unique<boost::asio::io_context>();
-    this->liveSessionPtr = std::make_shared<BiliLiveSession>(*this->iocPtr);
+    // this->iocPtr         = std::make_unique<boost::asio::io_context>();
+    this->liveSessionPtr = std::make_shared<BiliLiveSession>(this->ioc);
     bool res{this->liveSessionPtr->run()};
     if (!res)
     {
@@ -109,5 +108,6 @@ void Robot::RobotThread()
         this->Stop();
         return;
     }
-    this->iocPtr->run();
+    auto work = boost::asio::make_work_guard(ioc);
+    this->ioc.run();
 }
