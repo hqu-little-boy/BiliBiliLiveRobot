@@ -73,6 +73,7 @@ void Robot::Stop()
         LOG_MESSAGE(LogLevel::Error, "robotThread is not joinable");
     }
     this->ioc.restart();
+    LOG_MESSAGE(LogLevel::Info, "Robot stopped successfully");
 }
 
 bool Robot::IsRunning() const

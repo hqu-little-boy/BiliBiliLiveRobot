@@ -47,7 +47,8 @@ bool BiliLiveSession::InitRoomInfo()
     LOG_VAR(LogLevel::Debug, Config::GetInstance()->GetDanmuSeverConfUrl().GetHost());
     LOG_VAR(LogLevel::Debug, Config::GetInstance()->GetDanmuSeverConfUrl().GetPort());
     LOG_VAR(LogLevel::Debug, Config::GetInstance()->GetDanmuSeverConfUrl().GetTarget());
-    LOG_VAR(LogLevel::Debug, Config::GetInstance()->GetDanmuSeverConfUrl().GetTargetWithWbiParamSafeQuery());
+    LOG_VAR(LogLevel::Debug,
+            Config::GetInstance()->GetDanmuSeverConfUrl().GetTargetWithWbiParamSafeQuery());
     // 解析域名和端口
     const auto results = this->resolver.resolve(
         Config::GetInstance()->GetDanmuSeverConfUrl().GetHost(),
@@ -139,9 +140,42 @@ void BiliLiveSession::stop()
     this->stopFlag.store(true);
     // this->runtime.timer_queue()->shutdown();
     this->pingTimer.cancel();
-    this->ws.async_close(
-        boost::beast::websocket::close_code::normal,
-        boost::beast::bind_front_handler(&BiliLiveSession::on_close, shared_from_this()));
+    // 1. 取消所有待处理的异步操作
+    boost::system::error_code ec_cancel;
+    this->ws.next_layer().lowest_layer().cancel(ec_cancel);
+    if (ec_cancel)
+    {
+        LOG_VAR(LogLevel::Error, ec_cancel.message());
+        // return;
+    }
+    // 2. 关闭 WebSocket
+    boost::beast::error_code ec_close;
+    this->ws.close(boost::beast::websocket::close_code::normal, ec_close);
+    if (ec_close)
+    {
+        LOG_VAR(LogLevel::Error, ec_close.message());
+        // return;
+    }
+    // 3. 关闭 SSL/TLS 流
+    boost::beast::error_code ec_ssl;
+    this->ws.next_layer().shutdown(ec_ssl);
+    if (ec_ssl)
+    {
+        LOG_VAR(LogLevel::Error, ec_ssl.message());
+        // return;
+    }
+    // 4. 强制关闭底层套接字（如果仍打开）
+    boost::beast::error_code ec_next_layer;
+    if (this->ws.next_layer().lowest_layer().is_open())
+    {
+        this->ws.next_layer().lowest_layer().close(ec_next_layer);
+        if (ec_next_layer)
+        {
+            LOG_VAR(LogLevel::Error, ec_next_layer.message());
+            // return;
+        }
+    }
+    return;
 }
 
 void BiliLiveSession::on_resolve(boost::beast::error_code                            ec,
@@ -302,6 +336,11 @@ void BiliLiveSession::on_write(boost::beast::error_code ec, std::size_t bytes_tr
     }
     if (this->stopFlag.load())
     {
+        LOG_MESSAGE(LogLevel::Warn, "BiliLiveSession is stopped");
+        return;
+    }
+    if (this->stopFlag.load())
+    {
         LOG_MESSAGE(LogLevel::Error, "BiliLiveSession is stopped");
         return;
     }
@@ -314,6 +353,16 @@ void BiliLiveSession::on_write(boost::beast::error_code ec, std::size_t bytes_tr
 
 void BiliLiveSession::on_auth(boost::beast::error_code ec, std::size_t bytes_transferred)
 {
+    if (ec)
+    {
+        LOG_VAR(LogLevel::Error, ec.message());
+        return;
+    }
+    if (this->stopFlag.load())
+    {
+        LOG_MESSAGE(LogLevel::Warn, "BiliLiveSession is stopped");
+        return;
+    }
     this->ws.async_read(
         this->buffer,
         boost::beast::bind_front_handler(&BiliLiveSession::on_read, shared_from_this()));
@@ -334,26 +383,54 @@ void BiliLiveSession::on_auth(boost::beast::error_code ec, std::size_t bytes_tra
 void BiliLiveSession::on_read(boost::beast::error_code ec, std::size_t bytes_transferred)
 {
     boost::ignore_unused(bytes_transferred);
-
     if (ec)
     {
-        // std::string bodyStr = R"({})";
-        // // body一行输出
-        // // std::this_thread::sleep_for(std::chrono::seconds(20));
-        // auto authMessage = BiliApiUtil::MakePack(bodyStr, BiliApiUtil::Operation::HEARTBEAT);
-        // // Send the message
-        // this->ws.async_write(
-        //     authMessage,
-        //     boost::beast::bind_front_handler(&BiliLiveSession::on_write, shared_from_this()));
         LOG_VAR(LogLevel::Error, ec.message());
-        this->ws.close(boost::beast::websocket::close_code::normal);
-        // 执行重连
-        this->run();
-        return;
     }
     if (this->stopFlag.load())
     {
-        LOG_MESSAGE(LogLevel::Error, "BiliLiveSession is stopped");
+        LOG_MESSAGE(LogLevel::Warn, "BiliLiveSession is stopped");
+        return;
+    }
+    if (ec)
+    {
+        // 1. 取消所有待处理的异步操作
+        boost::system::error_code ec_cancel;
+        this->ws.next_layer().lowest_layer().cancel(ec_cancel);
+        if (ec_cancel)
+        {
+            LOG_VAR(LogLevel::Error, ec_cancel.message());
+            return;
+        }
+        // 2. 关闭 WebSocket
+        boost::beast::error_code ec_close;
+        this->ws.close(boost::beast::websocket::close_code::normal, ec_close);
+        if (ec_close)
+        {
+            LOG_VAR(LogLevel::Error, ec_close.message());
+            return;
+        }
+        // 3. 关闭 SSL/TLS 流
+        boost::beast::error_code ec_ssl;
+        this->ws.next_layer().shutdown(ec_ssl);
+        if (ec_ssl)
+        {
+            LOG_VAR(LogLevel::Error, ec_ssl.message());
+            return;
+        }
+        // 4. 强制关闭底层套接字（如果仍打开）
+        boost::beast::error_code ec_next_layer;
+        if (this->ws.next_layer().lowest_layer().is_open())
+        {
+            this->ws.next_layer().lowest_layer().close(ec_next_layer);
+            if (ec_next_layer)
+            {
+                LOG_VAR(LogLevel::Error, ec_next_layer.message());
+                return;
+            }
+        }
+        // 执行重连
+        this->run();
         return;
     }
     // std::cout << boost::beast::make_printable(this->buffer.data()) << std::endl;
@@ -448,6 +525,11 @@ void BiliLiveSession::ping_task(const boost::system::error_code& ec)
     this->do_ping();
     // 重新设置定时器
     this->pingTimer.expires_after(std::chrono::seconds(28));
-    this->pingTimer.async_wait(
-        [this](const boost::system::error_code& ec) { this->ping_task(ec); });
+    this->pingTimer.async_wait([this](const boost::system::error_code& ec) {
+        if (this->stopFlag.load())
+        {
+            return;   // 如果停止了，就不再执行心跳任务
+        }
+        this->ping_task(ec);
+    });
 }

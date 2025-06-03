@@ -229,7 +229,7 @@ bool Config::LoadUID()
     }
     // newString的前32位赋值给this->wbiMixKey
     this->wbiMixKey = newString.substr(0, 32);
-    LOG_VAR(LogLevel::Info, fmt::format("WBI Mix Key: {}", this->wbiMixKey));
+    LOG_MESSAGE(LogLevel::Info, fmt::format("WBI Mix Key: {}", this->wbiMixKey));
     return true;
 }
 
