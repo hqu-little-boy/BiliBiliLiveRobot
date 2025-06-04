@@ -137,45 +137,56 @@ bool BiliLiveSession::run()
 
 void BiliLiveSession::stop()
 {
-    this->stopFlag.store(true);
-    // this->runtime.timer_queue()->shutdown();
-    this->pingTimer.cancel();
-    // 1. 取消所有待处理的异步操作
-    boost::system::error_code ec_cancel;
-    this->ws.next_layer().lowest_layer().cancel(ec_cancel);
-    if (ec_cancel)
+    // 原子地设置 stopFlag 为 true，并获取之前的值
+    // 如果之前已经是 true，说明停止操作已在进行或已完成
+    if (stopFlag.exchange(true, std::memory_order_acq_rel))
     {
-        LOG_VAR(LogLevel::Error, ec_cancel.message());
-        // return;
+        LOG_MESSAGE(LogLevel::Info,
+                    "BiliLiveSession stop procedure already initiated or completed.");
+        return;
     }
-    // 2. 关闭 WebSocket
-    boost::beast::error_code ec_close;
-    this->ws.close(boost::beast::websocket::close_code::normal, ec_close);
-    if (ec_close)
-    {
-        LOG_VAR(LogLevel::Error, ec_close.message());
-        // return;
-    }
-    // 3. 关闭 SSL/TLS 流
-    boost::beast::error_code ec_ssl;
-    this->ws.next_layer().shutdown(ec_ssl);
-    if (ec_ssl)
-    {
-        LOG_VAR(LogLevel::Error, ec_ssl.message());
-        // return;
-    }
-    // 4. 强制关闭底层套接字（如果仍打开）
-    boost::beast::error_code ec_next_layer;
-    if (this->ws.next_layer().lowest_layer().is_open())
-    {
-        this->ws.next_layer().lowest_layer().close(ec_next_layer);
-        if (ec_next_layer)
-        {
-            LOG_VAR(LogLevel::Error, ec_next_layer.message());
-            // return;
-        }
-    }
-    return;
+
+    LOG_MESSAGE(LogLevel::Info, "Stopping BiliLiveSession...");
+
+    // 使用 post 将取消/关闭操作提交到 io_context，以确保线程安全
+    // 并且这些操作在 io_context 的事件循环中执行
+
+    // 1. 取消 pingTimer
+    boost::asio::post(ioc, [self = shared_from_this()]() {
+        self->pingTimer.cancel();
+        LOG_MESSAGE(LogLevel::Debug, "Ping timer cancelled successfully.");
+    });
+
+    // 2. 取消 resolver (如果仍在解析)
+    // resolver 的操作通常在自己的 strand 上，但取消本身是线程安全的。
+    // 为了统一，也可以 post 到 ioc。或者直接在 resolver 的 strand 上操作。
+    // 由于 resolver 是在 ioc 上创建的 make_strand(ioc)，post到ioc是安全的。
+    boost::asio::post(ioc, [self = shared_from_this()]() {
+        self->resolver.cancel();   // Resolver的cancel是线程安全的
+        LOG_MESSAGE(LogLevel::Debug, "Resolver operations cancelled.");
+    });
+
+
+    // 3. 关闭 WebSocket stream
+    // 这将导致任何挂起的 async_read 或 async_write 操作以错误完成
+    boost::asio::post(
+        ws.get_executor(), [self = shared_from_this()]() {   // 在 websocket 的 strand 上执行
+            if (self->ws.is_open())
+            {
+                // 直接关闭底层TCP套接字，这会使所有WebSocket操作失败
+                boost::beast::get_lowest_layer(self->ws).close();
+                LOG_MESSAGE(LogLevel::Debug, "WebSocket lowest layer closed successfully.");
+                // 可选：尝试发送一个 WebSocket close 帧，但这可能不会成功，如果底层已关闭
+                // self->ws.async_close(boost::beast::websocket::close_code::normal,
+                //    boost::beast::bind_front_handler(&BiliLiveSession::on_ws_closed_logging,
+                //    self->shared_from_this()));
+            }
+            else
+            {
+                LOG_MESSAGE(LogLevel::Debug, "WebSocket was not open, no need to close.");
+            }
+        });
+    LOG_MESSAGE(LogLevel::Info, "BiliLiveSession stop sequence posted to IO context.");
 }
 
 void BiliLiveSession::on_resolve(boost::beast::error_code                            ec,
@@ -386,51 +397,11 @@ void BiliLiveSession::on_read(boost::beast::error_code ec, std::size_t bytes_tra
     if (ec)
     {
         LOG_VAR(LogLevel::Error, ec.message());
+        return;
     }
     if (this->stopFlag.load())
     {
         LOG_MESSAGE(LogLevel::Warn, "BiliLiveSession is stopped");
-        return;
-    }
-    if (ec)
-    {
-        // 1. 取消所有待处理的异步操作
-        boost::system::error_code ec_cancel;
-        this->ws.next_layer().lowest_layer().cancel(ec_cancel);
-        if (ec_cancel)
-        {
-            LOG_VAR(LogLevel::Error, ec_cancel.message());
-            return;
-        }
-        // 2. 关闭 WebSocket
-        boost::beast::error_code ec_close;
-        this->ws.close(boost::beast::websocket::close_code::normal, ec_close);
-        if (ec_close)
-        {
-            LOG_VAR(LogLevel::Error, ec_close.message());
-            return;
-        }
-        // 3. 关闭 SSL/TLS 流
-        boost::beast::error_code ec_ssl;
-        this->ws.next_layer().shutdown(ec_ssl);
-        if (ec_ssl)
-        {
-            LOG_VAR(LogLevel::Error, ec_ssl.message());
-            return;
-        }
-        // 4. 强制关闭底层套接字（如果仍打开）
-        boost::beast::error_code ec_next_layer;
-        if (this->ws.next_layer().lowest_layer().is_open())
-        {
-            this->ws.next_layer().lowest_layer().close(ec_next_layer);
-            if (ec_next_layer)
-            {
-                LOG_VAR(LogLevel::Error, ec_next_layer.message());
-                return;
-            }
-        }
-        // 执行重连
-        this->run();
         return;
     }
     // std::cout << boost::beast::make_printable(this->buffer.data()) << std::endl;
