@@ -10,8 +10,8 @@
 #include "../MessageDeque/MessageDeque.h"
 ProcessingMessageThreadPool* ProcessingMessageThreadPool::pInstance{
     new ProcessingMessageThreadPool()};
-const int ProcessingMessageThreadPool::threadNum{
-    static_cast<int>((std::thread::hardware_concurrency() + 15) / 16)};
+int ProcessingMessageThreadPool::threadNum =
+    static_cast<int>((std::thread::hardware_concurrency() + 3) / 4);
 ProcessingMessageThreadPool* ProcessingMessageThreadPool::GetInstance()
 {
     if (pInstance == nullptr)
@@ -30,15 +30,12 @@ void ProcessingMessageThreadPool::AddTask(
     this->processingMessageThreadPoolCondition.notify_one();
 }
 
-void ProcessingMessageThreadPool::Start()
+ProcessingMessageThreadPool::ProcessingMessageThreadPool()
 {
-    if (!this->processingMessageThreadPool.empty() || !this->stopFlag.load())
-    {
-        LOG_MESSAGE(LogLevel::Error, "Thread pool is already running");
-        return;
-    }
-
-    this->stopFlag.store(false);
+    ProcessingMessageThreadPool::threadNum =
+        static_cast<int>((std::thread::hardware_concurrency() + 3) / 4);
+    LOG_VAR(LogLevel::Debug, threadNum);
+    LOG_MESSAGE(LogLevel::Info, "ProcessingMessageThreadPool::ProcessingMessageThreadPool");
     for (int i = 0; i < threadNum; ++i)
     {
         this->processingMessageThreadPool.emplace_back(&ProcessingMessageThreadPool::ThreadRun,
@@ -46,36 +43,10 @@ void ProcessingMessageThreadPool::Start()
     }
 }
 
-void ProcessingMessageThreadPool::Stop()
-{
-    this->stopFlag.store(true);
-    EntityPool::GetInstance()->ClearCommandPool();
-    for (auto& thread : this->processingMessageThreadPool)
-    {
-        thread.join();
-    }
-    this->processingMessageThreadPool.clear();
-}
-
-bool ProcessingMessageThreadPool::IsRunning() const
-{
-    return !this->stopFlag.load();
-}
-
-ProcessingMessageThreadPool::ProcessingMessageThreadPool()
-    : stopFlag{true}
-{
-}
-
 void ProcessingMessageThreadPool::ThreadRun()
 {
     while (true)
     {
-        if (this->stopFlag.load())
-        {
-            break;
-        }
-
         std::tuple<BiliApiUtil::LiveCommand, std::string> message;
         // 及时释放锁
         {

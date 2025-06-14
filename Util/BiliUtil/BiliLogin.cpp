@@ -35,12 +35,34 @@ BiliLogin::BiliLogin()
 bool BiliLogin::GetLoginQRCode()
 {
     // 解析域名和端口
-    const auto results = this->resolver.resolve(this->qrCodeUrl.GetHost(),
-                                                std::to_string(this->qrCodeUrl.GetPort()));
-
+    boost::system::error_code ecResolver;
+    const auto                results = this->resolver.resolve(
+        this->qrCodeUrl.GetHost(), std::to_string(this->qrCodeUrl.GetPort()), ecResolver);
+    if (ecResolver)
+    {
+        LOG_VAR(LogLevel::Error,
+                fmt::format(
+                    "Failed to resolve {}: {}", this->qrCodeUrl.GetHost(), ecResolver.message()));
+        return false;
+    }
     boost::asio::ssl::stream<boost::asio::ip::tcp::socket> stream(this->ioc, this->ctx);
-    boost::asio::connect(stream.next_layer(), results.begin(), results.end());
-    stream.handshake(boost::asio::ssl::stream_base::client);
+    boost::system::error_code                              ecConnect;
+    boost::asio::connect(stream.next_layer(), results.begin(), results.end(), ecConnect);
+    if (ecConnect)
+    {
+        LOG_VAR(LogLevel::Error, fmt::format("Failed to connect: {}", ecConnect.message()));
+        return false;
+    }
+    // 执行SSL握手
+    boost::system::error_code ecHandshake;
+
+    stream.handshake(boost::asio::ssl::stream_base::client, ecHandshake);
+    if (ecHandshake)
+    {
+        LOG_VAR(LogLevel::Error,
+                fmt::format("Failed to perform SSL handshake: {}", ecHandshake.message()));
+        return false;
+    }
     // 构建GET请求
     boost::beast::http::request<boost::beast::http::string_body> req{
         boost::beast::http::verb::get, qrCodeUrl.GetTarget(), 11};
@@ -49,12 +71,23 @@ bool BiliLogin::GetLoginQRCode()
             BiliRequestHeader::GetInstance()->GetUserAgent());
 
     // 发送请求
-    boost::beast::http::write(stream, req);
-
+    boost::system::error_code ecSend;
+    boost::beast::http::write(stream, req, ecSend);
+    if (ecSend)
+    {
+        LOG_VAR(LogLevel::Error, fmt::format("Failed to send request: {}", ecSend.message()));
+        return false;
+    }
     // 接收响应
     boost::beast::flat_buffer                                      buffer;
     boost::beast::http::response<boost::beast::http::dynamic_body> res;
-    boost::beast::http::read(stream, buffer, res);
+    boost::system::error_code                                      ecRead;
+    boost::beast::http::read(stream, buffer, res, ecRead);
+    if (ecRead)
+    {
+        LOG_VAR(LogLevel::Error, fmt::format("Failed to read response: {}", ecRead.message()));
+        return false;
+    }
     if (res.result() != boost::beast::http::status::ok)
     {
         LOG_VAR(LogLevel::Error, res.result_int());
@@ -117,12 +150,42 @@ bool BiliLogin::GetLoginQRCode()
 bool BiliLogin::GetLoginInfo()
 {
     // 解析域名和端口
-    const auto results = this->resolver.resolve(this->loginInfoUrl.GetHost(),
-                                                std::to_string(this->loginInfoUrl.GetPort()));
+    boost::system::error_code ecResolver;
+    const auto                results = this->resolver.resolve(
+        this->loginInfoUrl.GetHost(), std::to_string(this->loginInfoUrl.GetPort()), ecResolver);
+    if (ecResolver)
+    {
+        LOG_VAR(
+            LogLevel::Error,
+            fmt::format(
+                "Failed to resolve {}: {}", this->loginInfoUrl.GetHost(), ecResolver.message()));
+        return false;
+    }
+    // 创建SSL流并连接
+    if (results.empty())
+    {
+        LOG_MESSAGE(LogLevel::Error, "No results found for resolver");
+        return false;
+    }
+    boost::system::error_code                              ecSslConnect;
     boost::asio::ssl::stream<boost::asio::ip::tcp::socket> stream(this->ioc, this->ctx);
-    boost::asio::connect(stream.next_layer(), results.begin(), results.end());
-    stream.handshake(boost::asio::ssl::stream_base::client);
+    boost::asio::connect(stream.next_layer(), results.begin(), results.end(), ecSslConnect);
+    if (ecSslConnect)
+    {
+        LOG_VAR(LogLevel::Error, fmt::format("Failed to connect: {}", ecSslConnect.message()));
+        return false;
+    }
+    // 执行SSL握手
+    boost::system::error_code ecHandshake;
+    stream.handshake(boost::asio::ssl::stream_base::client, ecHandshake);
+    if (ecHandshake)
+    {
+        LOG_VAR(LogLevel::Error,
+                fmt::format("Failed to perform SSL handshake: {}", ecHandshake.message()));
+        return false;
+    }
     // 构建Get请求
+    // 设置查询参数
     boost::beast::http::request<boost::beast::http::string_body> req{
         boost::beast::http::verb::get, loginInfoUrl.GetTargetWithQuery(), 11};
     req.set(boost::beast::http::field::host, loginInfoUrl.GetHost());
@@ -131,12 +194,24 @@ bool BiliLogin::GetLoginInfo()
 
 
     // 发送请求
-    boost::beast::http::write(stream, req);
-
+    boost::system::error_code ecGetRequest;
+    boost::beast::http::write(stream, req, ecGetRequest);
+    if (ecGetRequest)
+    {
+        LOG_VAR(LogLevel::Error, fmt::format("Failed to send request: {}", ecGetRequest.message()));
+        return false;
+    }
     // 接收响应
     boost::beast::flat_buffer                                      buffer;
     boost::beast::http::response<boost::beast::http::dynamic_body> res;
-    boost::beast::http::read(stream, buffer, res);
+    boost::system::error_code                                      ecRead;
+    boost::beast::http::read(stream, buffer, res, ecRead);
+    if (ecRead)
+    {
+        LOG_VAR(LogLevel::Error, fmt::format("Failed to read response: {}", ecRead.message()));
+        return false;
+    }
+    // 检查响应状态
     if (res.result() != boost::beast::http::status::ok)
     {
         LOG_VAR(LogLevel::Error, res.result_int());
@@ -226,10 +301,38 @@ bool BiliLogin::GetLoginInfo()
     }
     // 连接https://api.bilibili.com/x/frontend/finger/spi获取buvid
     // 解析域名和端口
-    const auto buvidResults = this->resolver.resolve("api.bilibili.com", "443");
+    boost::system::error_code ecApiResolver;
+    const auto buvidResults = this->resolver.resolve("api.bilibili.com", "443", ecApiResolver);
+    if (ecApiResolver)
+    {
+        LOG_VAR(LogLevel::Error,
+                fmt::format("Failed to resolve api.bilibili.com:443: {}", ecApiResolver.message()));
+        return false;
+    }
     boost::asio::ssl::stream<boost::asio::ip::tcp::socket> buvidStream(this->ioc, this->ctx);
-    boost::asio::connect(buvidStream.next_layer(), buvidResults.begin(), buvidResults.end());
-    buvidStream.handshake(boost::asio::ssl::stream_base::client);
+    // 发起链接
+    if (buvidResults.empty())
+    {
+        LOG_MESSAGE(LogLevel::Error, "No results found for resolver");
+        return false;
+    }
+    boost::system::error_code ecBuvidConnect;
+    boost::asio::connect(
+        buvidStream.next_layer(), buvidResults.begin(), buvidResults.end(), ecBuvidConnect);
+    if (ecBuvidConnect)
+    {
+        LOG_VAR(LogLevel::Error, fmt::format("Failed to connect: {}", ecBuvidConnect.message()));
+        return false;
+    }
+    // 执行SSL握手
+    boost::system::error_code ecBuvidHandshake;
+    buvidStream.handshake(boost::asio::ssl::stream_base::client, ecBuvidHandshake);
+    if (ecBuvidHandshake)
+    {
+        LOG_VAR(LogLevel::Error,
+                fmt::format("Failed to perform SSL handshake: {}", ecBuvidHandshake.message()));
+        return false;
+    }
     // 构建Get请求
     boost::beast::http::request<boost::beast::http::string_body> buvidReq{
         boost::beast::http::verb::get, "/x/frontend/finger/spi", 11};
@@ -247,11 +350,23 @@ bool BiliLogin::GetLoginInfo()
     //     }
     // }
     // 发送请求
-    boost::beast::http::write(buvidStream, buvidReq);
+    boost::system::error_code ecBuvidWrite;
+    boost::beast::http::write(buvidStream, buvidReq, ecBuvidWrite);
+    if (ecBuvidWrite)
+    {
+        LOG_VAR(LogLevel::Error, fmt::format("Failed to send request: {}", ecBuvidWrite.message()));
+        return false;
+    }
     // 接收响应
     boost::beast::flat_buffer                                      buvidBuffer;
     boost::beast::http::response<boost::beast::http::dynamic_body> buvidRes;
-    boost::beast::http::read(buvidStream, buvidBuffer, buvidRes);
+    boost::system::error_code                                      ecBuvidRead;
+    boost::beast::http::read(buvidStream, buvidBuffer, buvidRes, ecBuvidRead);
+    if (ecBuvidRead)
+    {
+        LOG_VAR(LogLevel::Error, fmt::format("Failed to read response: {}", ecBuvidRead.message()));
+        return false;
+    }
     if (buvidRes.result() != boost::beast::http::status::ok)
     {
         LOG_VAR(LogLevel::Error, buvidRes.result_int());

@@ -62,7 +62,7 @@ public:
         unsigned    wss_port;
     };
     ///@brief 构造函数，设置解析器和WebSocket流
-    explicit BiliLiveSession(boost::asio::io_context& ioc);
+    explicit BiliLiveSession();
     bool InitSSLCert();
     bool InitRoomInfo();
     // Start the asynchronous operation
@@ -93,7 +93,7 @@ public:
     void ping_task(const boost::system::error_code& ec);
 
 private:
-    boost::asio::io_context&       ioc;        // IO上下文
+    boost::asio::io_context        ioc;        // IO上下文
     std::list<LiveHostUrl>         liveUrls;   // 直播地址列表
     boost::asio::ssl::context      ctx;        // SSL上下文
     boost::asio::ip::tcp::resolver resolver;   // DNS解析器

@@ -111,12 +111,32 @@ bool MessageDeque::SendMessageToBili(const std::string& message)
 {
     LOG_VAR(LogLevel::Debug, url.ToString());
     // 解析域名和端口
-    const auto results = resolver.resolve(url.GetHost(), std::to_string(url.GetPort()));
-
+    boost::system::error_code ecResolver;
+    const auto results = resolver.resolve(url.GetHost(), std::to_string(url.GetPort()), ecResolver);
+    if (ecResolver)
+    {
+        LOG_VAR(LogLevel::Error,
+                fmt::format("Failed to resolve {}: {}", url.GetHost(), ecResolver.message()));
+        return false;
+    }
     // 创建SSL流并连接
     boost::asio::ssl::stream<boost::asio::ip::tcp::socket> stream(this->ioc, this->ctx);
-    boost::asio::connect(stream.next_layer(), results.begin(), results.end());
-    stream.handshake(boost::asio::ssl::stream_base::client);
+    boost::system::error_code                              ecConnect;
+    boost::asio::connect(stream.next_layer(), results.begin(), results.end(), ecConnect);
+    if (ecConnect)
+    {
+        LOG_VAR(LogLevel::Error, fmt::format("Failed to connect: {}", ecConnect.message()));
+        return false;
+    }
+    // 执行SSL握手
+    boost::system::error_code ecHandshake;
+    stream.handshake(boost::asio::ssl::stream_base::client, ecHandshake);
+    if (ecHandshake)
+    {
+        LOG_VAR(LogLevel::Error,
+                fmt::format("Failed to perform SSL handshake: {}", ecHandshake.message()));
+        return false;
+    }
     Multipart multipart{
         {"bubble", "5"},
         {"msg", message},
@@ -148,12 +168,23 @@ bool MessageDeque::SendMessageToBili(const std::string& message)
     req.body() = multipart.GetSerializeMultipartFormdata();
     req.prepare_payload();
     // 发送请求
-    boost::beast::http::write(stream, req);
-
+    boost::system::error_code ecSend;
+    boost::beast::http::write(stream, req, ecSend);
+    if (ecSend)
+    {
+        LOG_VAR(LogLevel::Error, fmt::format("Failed to send request: {}", ecSend.message()));
+        return false;
+    }
     // 获取响应
     boost::beast::flat_buffer                                      buffer;
     boost::beast::http::response<boost::beast::http::dynamic_body> res;
-    boost::beast::http::read(stream, buffer, res);
+    boost::system::error_code                                      ecRead;
+    boost::beast::http::read(stream, buffer, res, ecRead);
+    if (ecRead)
+    {
+        LOG_VAR(LogLevel::Error, fmt::format("Failed to read response: {}", ecRead.message()));
+        return false;
+    }
     if (res.result() != boost::beast::http::status::ok)
     {
         return false;

@@ -9,6 +9,7 @@
 
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/ssl/context.hpp>
+#include <shared_mutex>
 #include <vector>
 
 /// @brief 配置类，单例模式
@@ -19,33 +20,40 @@ public:
     static void    DestroyInstance();
 
     bool LoadFromJson(std::string_view jsonPath);
+    bool SaveToJson();
     bool LoadUID();
 
-    [[nodiscard]] uint64_t           GetRoomId() const;
-    [[nodiscard]] const Url&         GetDanmuSeverConfUrl() const;
-    [[nodiscard]] LogLevel           GetLogLevel() const;
-    [[nodiscard]] const std::string& GetLogPath() const;
-    [[nodiscard]] uint8_t            GetDanmuLength() const;
-    [[nodiscard]] bool               CanPKNotice() const;
-    [[nodiscard]] bool               CanGuardNotice() const;
-    [[nodiscard]] bool               CanThanksGift() const;
-    [[nodiscard]] bool               CanSuperChatNotice() const;
-    [[nodiscard]] uint8_t            GetThanksGiftTimeout() const;
-    [[nodiscard]] bool               CanDrawByLot() const;
-    [[nodiscard]] const std::string& GetDrawByLotWord() const;
-    [[nodiscard]] bool               CanThanksFocus() const;
-    void                             SetCanThanksFocus(bool canThanksFocus);
-    [[nodiscard]] bool               CanThanksShare() const;
-    void                             SetCanThanksShare(bool canThanksShare);
-    [[nodiscard]] bool               CanEntryNotice() const;
-    void                             SetCanEntryNotice(bool canEntryNotice);
-    [[nodiscard]] const std::string& GetNormalEntryNoticeWord() const;
-    [[nodiscard]] const std::string& GetGuardEntryNoticeWord() const;
-    [[nodiscard]] std::string        ToString() const;
+    [[nodiscard]] uint64_t                  GetRoomId() const;
+    [[nodiscard]] const Url&                GetDanmuSeverConfUrl() const;
+    [[nodiscard]] LogLevel                  GetLogLevel() const;
+    [[nodiscard]] const std::string&        GetLogPath() const;
+    [[nodiscard]] uint8_t                   GetDanmuLength() const;
+    [[nodiscard]] bool                      CanPKNotice() const;
+    [[nodiscard]] bool                      CanGuardNotice() const;
+    [[nodiscard]] bool                      CanThanksGift() const;
+    [[nodiscard]] bool                      CanSuperChatNotice() const;
+    [[nodiscard]] uint8_t                   GetThanksGiftTimeout() const;
+    [[nodiscard]] bool                      CanDrawByLot() const;
+    [[nodiscard]] const std::string&        GetDrawByLotWord() const;
+    [[nodiscard]] bool                      CanThanksFocus() const;
+    void                                    SetCanThanksFocus(bool canThanksFocus);
+    [[nodiscard]] bool                      CanThanksShare() const;
+    void                                    SetCanThanksShare(bool canThanksShare);
+    [[nodiscard]] bool                      CanEntryNotice() const;
+    void                                    SetCanEntryNotice(bool canEntryNotice);
+    [[nodiscard]] const std::string&        GetNormalEntryNoticeWord() const;
+    [[nodiscard]] std::vector<std::string>& GetNormalEntryNoticeList();
+    [[nodiscard]] std::vector<std::string>& GetGuardEntryNoticeList();
+    [[nodiscard]] const std::string&        GetGuardEntryNoticeWord() const;
+    [[nodiscard]] std::string               ToString() const;
 
+public:
     [[nodiscard]] const std::string& GetWbiMixKey() const;
     [[nodiscard]] uint64_t           GetRobotUID() const;
 
+public:
+    [[nodiscard]] std::shared_lock<std::shared_mutex> GetSharedLock();
+    [[nodiscard]] std::unique_lock<std::shared_mutex> GetUniqueLock();
 #if defined(TEST)
     constexpr inline bool IsTest()
     {
@@ -89,6 +97,10 @@ private:
     boost::asio::io_context        ioc;
     boost::asio::ssl::context      ctx;
     boost::asio::ip::tcp::resolver resolver;   // DNS解析器
+private:
+    std::string configPath;   // 配置文件路径
+private:
+    mutable std::shared_mutex configMutex;
 };
 
 #endif   // CONFIG_H

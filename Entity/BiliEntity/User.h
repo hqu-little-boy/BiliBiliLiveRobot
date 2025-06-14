@@ -28,6 +28,7 @@ public:
     [[nodiscard]] unsigned           GetGuardCount() const;
     void                             SetGuardCount(unsigned guardCount);
     [[nodiscard]] const std::string  GetGuardLevel() const;
+    [[nodiscard]] unsigned           GetGuardLevelInt() const;
     [[nodiscard]] bool               IsGuard() const;
     [[nodiscard]] std::string        ToString() const;
 
@@ -35,9 +36,10 @@ private:
     uint64_t    uid;
     std::string uname;
     unsigned    level;        // 荣耀等级
-    unsigned    guardLevel;   // 舰长等级
-    unsigned    fanCount;     // 粉丝数
-    unsigned    guardCount;   // 舰长数量
+    unsigned    guardLevel;   // 舰长等级 0:普通人 1: 总督 2: 提督 3: 舰长
+
+    unsigned fanCount;     // 粉丝数
+    unsigned guardCount;   // 舰长数量
 };
 
 

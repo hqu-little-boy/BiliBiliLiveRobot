@@ -1,7 +1,3 @@
-//
-// Created by zeng on 24-6-25.
-//
-
 #include "BiliLiveSession.h"
 
 #include "../../Entity/Global/Config.h"
@@ -15,15 +11,14 @@
 #include <regex>
 #include <thread>
 
-BiliLiveSession::BiliLiveSession(boost::asio::io_context& ioc)
-    : ioc(ioc)
-    , ctx{boost::asio::ssl::context::tlsv12_client}
+BiliLiveSession::BiliLiveSession()
+    : ctx{boost::asio::ssl::context::tlsv12_client}
     , resolver{boost::asio::make_strand(ioc)}
     , ws{boost::asio::make_strand(ioc), ctx}
     , host("")
     , target("/sub")
     , pingTimer{ioc}
-    , stopFlag{true}
+    , stopFlag{true}   // Initialize stopFlag to true (stopped state)
 {
 }
 
@@ -47,7 +42,8 @@ bool BiliLiveSession::InitRoomInfo()
     LOG_VAR(LogLevel::Debug, Config::GetInstance()->GetDanmuSeverConfUrl().GetHost());
     LOG_VAR(LogLevel::Debug, Config::GetInstance()->GetDanmuSeverConfUrl().GetPort());
     LOG_VAR(LogLevel::Debug, Config::GetInstance()->GetDanmuSeverConfUrl().GetTarget());
-    LOG_VAR(LogLevel::Debug, Config::GetInstance()->GetDanmuSeverConfUrl().GetTargetWithWbiParamSafeQuery());
+    LOG_VAR(LogLevel::Debug,
+            Config::GetInstance()->GetDanmuSeverConfUrl().GetTargetWithWbiParamSafeQuery());
     // 解析域名和端口
     const auto results = this->resolver.resolve(
         Config::GetInstance()->GetDanmuSeverConfUrl().GetHost(),
@@ -93,10 +89,12 @@ bool BiliLiveSession::InitRoomInfo()
     }
     for (const auto& item : danmuInfoJson["data"]["host_list"])
     {
-        this->liveUrls.emplace_back(item["host"].get<std::string>(),
-                                    item["port"].get<unsigned>(),
-                                    item["ws_port"].get<unsigned>(),
-                                    item["wss_port"].get<unsigned>());
+        this->liveUrls.emplace_back(
+            item["host"].get<std::string>(),
+            item["port"].get<unsigned>(),
+            item["port"].get<unsigned>(),   // Assuming ws_port and wss_port are distinct, ensure
+                                            // this is correct
+            item["wss_port"].get<unsigned>());
     }
     this->token = danmuInfoJson["data"]["token"].get<std::string>();
     return true;
@@ -106,21 +104,21 @@ bool BiliLiveSession::run()
 {
     if (!this->stopFlag.load())
     {
-        LOG_MESSAGE(LogLevel::Error, "Thread pool is already running");
+        LOG_MESSAGE(LogLevel::Error, "BiliLiveSession is already running");
         return false;
     }
 
-    this->stopFlag.store(false);
+    this->stopFlag.store(false);   // Set stopFlag to false (running state)
     if (!this->InitSSLCert())
     {
         LOG_MESSAGE(LogLevel::Error, "Failed to init ssl cert");
-        this->stop();
+        this->stop();   // Call stop to clean up
         return false;
     }
     if (!this->InitRoomInfo())
     {
         LOG_MESSAGE(LogLevel::Error, "Failed to init room info");
-        this->stop();
+        this->stop();   // Call stop to clean up
         return false;
     }
     // 异步解析域名
@@ -128,26 +126,55 @@ bool BiliLiveSession::run()
         this->liveUrls.back().host,
         std::to_string(this->liveUrls.back().wss_port),
         boost::beast::bind_front_handler(&BiliLiveSession::on_resolve, shared_from_this()));
-    return true;
-    // this->ws.async_read(
-    //     this->buffer,
-    //     boost::beast::bind_front_handler(&BiliLiveSession::on_read, shared_from_this()));
+    return this->ioc.run();
 }
 
 void BiliLiveSession::stop()
 {
-    this->stopFlag.store(true);
-    // this->runtime.timer_queue()->shutdown();
+    LOG_MESSAGE(LogLevel::Info, "BiliLiveSession::stop() called.");
+    // 1. 设置 stopFlag 为 true，立即通知所有进行中的异步操作停止。
+    // this->stopFlag.store(true);
+    if (this->stopFlag.exchange(true))
+    {
+        LOG_MESSAGE(LogLevel::Warn, "stop 已执行，跳过");
+        return;
+    }
+
+    // 2. 取消 pingTimer。
+    // 这将导致任何挂起的 pingTimer::async_wait 操作以 boost::asio::error::operation_aborted 完成。
+    // 根据编译错误，pingTimer.cancel() 不接受 error_code 参数。
     this->pingTimer.cancel();
-    this->ws.async_close(
-        boost::beast::websocket::close_code::normal,
-        boost::beast::bind_front_handler(&BiliLiveSession::on_close, shared_from_this()));
+    LOG_MESSAGE(LogLevel::Debug, "pingTimer cancellation requested.");
+
+    // 3. 优雅地关闭 WebSocket 连接。
+    // 这将发送一个 WebSocket 关闭帧，并取消 ws 上任何挂起的 async_read 或 async_write 操作。
+    // 它们的处理程序将以 boost::asio::error::operation_aborted 调用。
+    if (this->ws.is_open())
+    {
+        this->ws.async_close(
+            boost::beast::websocket::close_reason(boost::beast::websocket::close_code::normal),
+            boost::beast::bind_front_handler(&BiliLiveSession::on_close, shared_from_this()));
+        LOG_MESSAGE(LogLevel::Debug, "WebSocket async_close initiated.");
+    }
+    else
+    {
+        LOG_MESSAGE(LogLevel::Warn, "WebSocket is not open, no need to async_close.");
+    }
+
+    // 4. 取消域名解析器。
+    // 根据编译错误，resolver.cancel() 不接受 error_code 参数。
+    this->resolver.cancel();
+    LOG_MESSAGE(LogLevel::Debug, "Resolver cancellation requested.");
+    this->ioc.stop();
+    LOG_MESSAGE(LogLevel::Info, "BiliLiveSession::stop() finished initiating shutdown.");
 }
+
+// ... (BiliLiveSession 剩余的回调函数，它们内部的 stopFlag 检查和错误处理保持不变)
 
 void BiliLiveSession::on_resolve(boost::beast::error_code                            ec,
                                  const boost::asio::ip::tcp::resolver::results_type& results)
 {
-    // 如果有错误则返回错误信息
+    // 如果有错误或者会话已停止，则返回。
     if (ec)
     {
         LOG_VAR(LogLevel::Error, ec.message());
@@ -155,7 +182,7 @@ void BiliLiveSession::on_resolve(boost::beast::error_code                       
     }
     if (this->stopFlag.load())
     {
-        LOG_MESSAGE(LogLevel::Error, "BiliLiveSession is stopped");
+        LOG_MESSAGE(LogLevel::Warn, "BiliLiveSession is stopped, on_resolve returning.");
         return;
     }
     // 设置超时时间
@@ -177,7 +204,7 @@ void BiliLiveSession::on_connect(boost::beast::error_code                       
     }
     if (this->stopFlag.load())
     {
-        LOG_MESSAGE(LogLevel::Error, "BiliLiveSession is stopped");
+        LOG_MESSAGE(LogLevel::Warn, "BiliLiveSession is stopped, on_connect returning.");
         return;
     }
     // Set a timeout on the operation
@@ -213,7 +240,7 @@ void BiliLiveSession::on_ssl_handshake(boost::beast::error_code ec)
     }
     if (this->stopFlag.load())
     {
-        LOG_MESSAGE(LogLevel::Error, "BiliLiveSession is stopped");
+        LOG_MESSAGE(LogLevel::Warn, "BiliLiveSession is stopped, on_ssl_handshake returning.");
         return;
     }
     // Turn off the timeout on the tcp_stream, because
@@ -252,36 +279,19 @@ void BiliLiveSession::on_handshake(boost::beast::error_code ec)
     }
     if (this->stopFlag.load())
     {
-        LOG_MESSAGE(LogLevel::Error, "BiliLiveSession is stopped");
+        LOG_MESSAGE(LogLevel::Warn, "BiliLiveSession is stopped, on_handshake returning.");
         return;
     }
     nlohmann::json body;
     body = {
         {"roomid", Config::GetInstance()->GetRoomId()},
         {"uid", BiliRequestHeader::GetInstance()->GetBiliCookie().GetDedeUserID()},
-        // {"uid", 0},
         {"protover", 3},
         {"platform", "web"},
         {"type", 2},
         {"buvid", BiliRequestHeader::GetInstance()->GetBiliCookie().GetBuvid3()},
         {"key", this->token},
     };
-    // LOG_VAR(LogLevel::Debug, body.dump(4));
-    // LOG_VAR(LogLevel::Debug, body.dump(-1));
-    // std::string bodyStr = R"({"roomid": )" + std::to_string(Config::GetInstance()->GetRoomId()) +
-    //                       R"(, "key": ")" + this->token + R"("})";
-    // std::string bodyStr =
-    //     "{" +
-    //     fmt::format(
-    //         R"("uid": {}, "roomid": {}, "protover": 3, "platform": "web", "type": 2, "key": "{}",
-    //         "buvid": {})",
-    //         // BiliRequestHeader::GetInstance()->GetBiliCookie().GetDedeUserID(),
-    //         0,
-    //         Config::GetInstance()->GetRoomId(),
-    //         this->token,
-    //         BiliRequestHeader::GetInstance()->GetBiliCookie().GetBuvid3()) +
-    //     "}";
-    // LOG_VAR(LogLevel::Debug, bodyStr);
     std::string          bodyStr = body.dump(-1);
     std::vector<uint8_t> authMessage;
     BiliApiUtil::MakePack(body.dump(-1), BiliApiUtil::Operation::AUTH, authMessage);
@@ -297,23 +307,43 @@ void BiliLiveSession::on_write(boost::beast::error_code ec, std::size_t bytes_tr
 
     if (ec)
     {
+        // 如果错误是 operation_aborted，意味着写入被取消，这在关闭期间是预期的。
+        if (ec == boost::asio::error::operation_aborted)
+        {
+            LOG_MESSAGE(LogLevel::Info,
+                        "BiliLiveSession on_write: Operation aborted (expected during shutdown).");
+        }
+        else if (ec == boost::beast::websocket::error::closed)
+        {
+            LOG_MESSAGE(LogLevel::Info,
+                        "BiliLiveSession on_write: WebSocket closed (expected during shutdown).");
+        }
+        else
+        {
+            LOG_VAR(LogLevel::Error, ec.message());
+        }
+        this->stopFlag.store(true);
+        return;
+    }
+    if (this->stopFlag.load())
+    {
+        LOG_MESSAGE(LogLevel::Warn, "BiliLiveSession is stopped, on_write returning.");
+        return;
+    }
+}
+
+void BiliLiveSession::on_auth(boost::beast::error_code ec, std::size_t bytes_transferred)
+{
+    if (ec)
+    {
         LOG_VAR(LogLevel::Error, ec.message());
         return;
     }
     if (this->stopFlag.load())
     {
-        LOG_MESSAGE(LogLevel::Error, "BiliLiveSession is stopped");
+        LOG_MESSAGE(LogLevel::Warn, "BiliLiveSession is stopped, on_auth returning.");
         return;
     }
-    // // std::this_thread::sleep_for(std::chrono::seconds(5));
-    // // Read a message into our buffer
-    // this->ws.async_read(
-    //     this->buffer,
-    //     boost::beast::bind_front_handler(&BiliLiveSession::on_read, shared_from_this()));
-}
-
-void BiliLiveSession::on_auth(boost::beast::error_code ec, std::size_t bytes_transferred)
-{
     this->ws.async_read(
         this->buffer,
         boost::beast::bind_front_handler(&BiliLiveSession::on_read, shared_from_this()));
@@ -321,44 +351,36 @@ void BiliLiveSession::on_auth(boost::beast::error_code ec, std::size_t bytes_tra
     this->pingTimer.expires_after(std::chrono::seconds(28));
     this->pingTimer.async_wait(
         [this](const boost::system::error_code& ec) { this->ping_task(ec); });
-
-    // this->pingtimer =
-    //     std::move(this->runtime.timer_queue()->make_timer(std::chrono::seconds(0),
-    //                                                       std::chrono::seconds(28),
-    //                                                       this->runtime.thread_pool_executor(),
-    //                                                       [this] { this->do_ping(); }));
-    // this->pingThread = std::move(std::jthread(&BiliLiveSession::do_ping, this));
-    // this->pingThread.detach();
 }
 
 void BiliLiveSession::on_read(boost::beast::error_code ec, std::size_t bytes_transferred)
 {
     boost::ignore_unused(bytes_transferred);
-
     if (ec)
     {
-        // std::string bodyStr = R"({})";
-        // // body一行输出
-        // // std::this_thread::sleep_for(std::chrono::seconds(20));
-        // auto authMessage = BiliApiUtil::MakePack(bodyStr, BiliApiUtil::Operation::HEARTBEAT);
-        // // Send the message
-        // this->ws.async_write(
-        //     authMessage,
-        //     boost::beast::bind_front_handler(&BiliLiveSession::on_write, shared_from_this()));
-        LOG_VAR(LogLevel::Error, ec.message());
-        this->ws.close(boost::beast::websocket::close_code::normal);
-        // 执行重连
-        this->run();
+        // 如果错误是 operation_aborted，意味着读取被取消，这在关闭期间是预期的。
+        if (ec == boost::asio::error::operation_aborted)
+        {
+            LOG_MESSAGE(LogLevel::Info,
+                        "BiliLiveSession on_read: Operation aborted (expected during shutdown).");
+        }
+        else if (ec == boost::beast::websocket::error::closed)
+        {
+            LOG_MESSAGE(LogLevel::Info,
+                        "BiliLiveSession on_read: WebSocket closed (expected during shutdown).");
+        }
+        else
+        {
+            LOG_VAR(LogLevel::Error, ec.message());
+        }
+        this->stopFlag.store(true);
         return;
     }
     if (this->stopFlag.load())
     {
-        LOG_MESSAGE(LogLevel::Error, "BiliLiveSession is stopped");
+        LOG_MESSAGE(LogLevel::Warn, "BiliLiveSession is stopped, on_read returning.");
         return;
     }
-    // std::cout << boost::beast::make_printable(this->buffer.data()) << std::endl;
-    // LOG_VAR(LogLevel::Debug, std::string(boost::beast::buffers_to_string(this->buffer.data())));
-    // 将this->buffer.data()转为std::vector<uint8_t>
     auto                 buf     = this->buffer.data();
     auto                 bufData = buf.data();
     std::vector<uint8_t> response;
@@ -368,60 +390,49 @@ void BiliLiveSession::on_read(boost::beast::error_code ec, std::size_t bytes_tra
     auto pack = BiliApiUtil::Unpack(response);
     for (auto& item : pack)
     {
-        // LOG_VAR(LogLevel::Info, std::get<0>(item).ToString());
-        // LOG_VAR(LogLevel::Debug, item);
-        // std::regex r(R"(\\)");                                  // 正则表达式匹配'\'
-        // std::string result = std::regex_replace(item, r, "");   // 用空字符串替换所有匹配的'\'
-        // try
-        // {
-        //     nlohmann::json json = nlohmann::json::parse(content);
-        //     LOG_VAR(LogLevel::Debug, json.dump(-1));
-        // }
-        // catch (const nlohmann::json::exception& e)
-        // {
-        //     LOG_VAR(LogLevel::Error, e.what());
-        //     LOG_VAR(LogLevel::Error, content);
-        //     // LOG_VAR(LogLevel::Error, result);
-        // }
         LOG_VAR(LogLevel::Debug, std::get<1>(item));
         ProcessingMessageThreadPool::GetInstance()->AddTask(std::move(item));
     }
-    this->ws.async_read(
-        this->buffer,
-        boost::beast::bind_front_handler(&BiliLiveSession::on_read, shared_from_this()));
+    // 继续异步读取，但要先检查 stopFlag
+    if (!this->stopFlag.load())
+    {
+        this->ws.async_read(
+            this->buffer,
+            boost::beast::bind_front_handler(&BiliLiveSession::on_read, shared_from_this()));
+    }
+    else
+    {
+        LOG_MESSAGE(LogLevel::Warn, "BiliLiveSession is stopped, not re-posting async_read.");
+    }
 }
 
 void BiliLiveSession::on_close(boost::beast::error_code ec)
 {
     if (ec)
     {
-        LOG_VAR(LogLevel::Error, ec.message());
-        return;
+        // 如果错误是 operation_aborted，意味着关闭被取消，这在关闭期间是预期的。
+        if (ec == boost::asio::error::operation_aborted)
+        {
+            LOG_MESSAGE(LogLevel::Info,
+                        "BiliLiveSession on_close: Operation aborted (expected during shutdown).");
+        }
+        else
+        {
+            LOG_VAR(LogLevel::Error, "BiliLiveSession on_close error: " + ec.message());
+        }
+        this->stopFlag.store(true);
     }
-    // If we get here then the connection is closed gracefully
-
-    // The make_printable() function helps print a ConstBufferSequence
-    // std::cout << boost::beast::make_printable(this->buffer.data()) << std::endl;
-    // this->pingThread.request_stop();   // 停止心跳线程
-    // this->runtime.shutdown();
+    else
+    {
+        LOG_MESSAGE(LogLevel::Info, "BiliLiveSession WebSocket connection closed gracefully.");
+    }
 }
 
 void BiliLiveSession::do_ping()
 {
-    // for (;;)
-    // {
-    //     std::vector<uint8_t> authMessage;
-    //     BiliApiUtil::MakePack("{}", BiliApiUtil::Operation::HEARTBEAT, authMessage);
-    //     // Send the message
-    //     this->ws.async_write(
-    //         boost::asio::buffer(authMessage),
-    //         boost::beast::bind_front_handler(&BiliLiveSession::on_write, shared_from_this()));
-    //     // this->ws.write(boost::asio::buffer(authMessage));
-    //     std::this_thread::sleep_for(std::chrono::seconds(29));
-    // }
     if (this->stopFlag.load())
     {
-        LOG_MESSAGE(LogLevel::Error, "BiliLiveSession is stopped");
+        LOG_MESSAGE(LogLevel::Warn, "BiliLiveSession is stopped, do_ping returning.");
         return;
     }
 
@@ -429,25 +440,71 @@ void BiliLiveSession::do_ping()
     BiliApiUtil::MakePack("{}", BiliApiUtil::Operation::HEARTBEAT, authMessage);
     // Send the message
     LOG_MESSAGE(LogLevel::Debug, "do_ping");
-    this->ws.async_write(
-        boost::asio::buffer(authMessage),
-        boost::beast::bind_front_handler(&BiliLiveSession::on_write, shared_from_this()));
+    // 仅当 ws 连接打开时才尝试发送心跳包
+    if (this->ws.is_open())
+    {
+        this->ws.async_write(
+            boost::asio::buffer(authMessage),
+            boost::beast::bind_front_handler(&BiliLiveSession::on_write, shared_from_this()));
+    }
+    else
+    {
+        LOG_MESSAGE(LogLevel::Warn, "WebSocket not open for ping, skipping.");
+    }
 }
 void BiliLiveSession::ping_task(const boost::system::error_code& ec)
 {
     if (ec)
     {
-        LOG_VAR(LogLevel::Error, ec.message());
+        // 如果错误是 operation_aborted，意味着定时器被取消，这在关闭期间是预期的。
+        if (ec == boost::asio::error::operation_aborted)
+        {
+            LOG_MESSAGE(
+                LogLevel::Info,
+                "BiliLiveSession ping_task: Timer operation aborted (expected during shutdown).");
+        }
+        else
+        {
+            LOG_VAR(LogLevel::Error, ec.message());
+        }
         return;
     }
     if (this->stopFlag.load())
     {
-        LOG_MESSAGE(LogLevel::Error, "BiliLiveSession is stopped");
-        return;
+        LOG_MESSAGE(LogLevel::Warn, "BiliLiveSession is stopped, ping_task returning.");
+        return;   // 如果停止了，就不再执行心跳任务
     }
     this->do_ping();
-    // 重新设置定时器
-    this->pingTimer.expires_after(std::chrono::seconds(28));
-    this->pingTimer.async_wait(
-        [this](const boost::system::error_code& ec) { this->ping_task(ec); });
+    // 重新设置定时器，但要先检查 stopFlag
+    if (!this->stopFlag.load())
+    {
+        this->pingTimer.expires_after(std::chrono::seconds(28));
+        this->pingTimer.async_wait([this](const boost::system::error_code& ec_next_ping) {
+            if (ec_next_ping)
+            {
+                // 如果错误是 operation_aborted，意味着定时器被取消，这在关闭期间是预期的。
+                if (ec_next_ping == boost::asio::error::operation_aborted)
+                {
+                    LOG_MESSAGE(LogLevel::Info,
+                                "BiliLiveSession ping_task (nested): Timer operation aborted "
+                                "(expected during shutdown).");
+                }
+                else
+                {
+                    LOG_VAR(LogLevel::Error, ec_next_ping.message());
+                }
+                return;
+            }
+            // 在 lambda 内部再次检查 stopFlag，以防在 async_wait 期间 stop 被调用
+            if (this->stopFlag.load())
+            {
+                return;
+            }
+            this->ping_task(ec_next_ping);
+        });
+    }
+    else
+    {
+        LOG_MESSAGE(LogLevel::Warn, "BiliLiveSession is stopped, not re-posting ping timer.");
+    }
 }

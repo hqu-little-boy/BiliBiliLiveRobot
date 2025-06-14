@@ -83,13 +83,14 @@ std::string User::ToString() const
 {
     // return fmt::format(
     //     "uid: {}, uname: {}, guardLevel: {}", this->uid, this->uname, this->guardLevel);
-    return fmt::format("uid: {}, uname: {}, guardLevel: {}, level: {}, fanCount: {}, guardCount: {}",
-                  this->uid,
-                  this->uname,
-                  this->guardLevel,
-                  this->level,
-                  this->fanCount,
-                  this->guardCount);
+    return fmt::format(
+        "uid: {}, uname: {}, guardLevel: {}, level: {}, fanCount: {}, guardCount: {}",
+        this->uid,
+        this->uname,
+        this->guardLevel,
+        this->level,
+        this->fanCount,
+        this->guardCount);
 }
 
 void User::SetUid(uint64_t uid)
@@ -149,6 +150,10 @@ const std::string User::GetGuardLevel() const
     }
     }
     return "";
+}
+unsigned User::GetGuardLevelInt() const
+{
+    return this->guardLevel;
 }
 
 bool User::IsGuard() const

@@ -14,7 +14,7 @@ class Robot
 {
 public:
     Robot();
-    ~Robot() = default;
+    ~Robot();
 
     /// @brief 启动机器人
     void Run();
@@ -27,7 +27,6 @@ private:
 private:
     std::atomic<bool>                stopFlag;
     std::thread                      robotThread;
-    boost::asio::io_context          ioc;
     std::shared_ptr<BiliLiveSession> liveSessionPtr;
 };
 

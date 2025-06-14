@@ -46,6 +46,7 @@ void Config::DestroyInstance()
 
 bool Config::LoadFromJson(std::string_view jsonPath)
 {
+    std::unique_lock<std::shared_mutex> lock(this->configMutex);
     if (jsonPath.empty())
     {
         LOG_MESSAGE(LogLevel::Error, "jsonPath is empty");
@@ -59,7 +60,7 @@ bool Config::LoadFromJson(std::string_view jsonPath)
         throw std::runtime_error(fmt::format("File not exists: {}", jsonPath));
         return false;
     }
-
+    this->configPath = jsonPath;
     std::ifstream ifs(jsonPath.data());
     if (!ifs.is_open())
     {
@@ -81,7 +82,7 @@ bool Config::LoadFromJson(std::string_view jsonPath)
                                       "/xlive/web-room/v1/index/getDanmuInfo",
                                       {{"id", std::to_string(this->roomId)}, {"type", "0"}});
         this->logPath           = fmt::format(
-            "{}.{}", configJson["logPath"].get<std::string>(), TimeStamp::Now().ToString());
+            "{}", configJson["logPath"].get<std::string>(), TimeStamp::Now().ToString());
         this->danmuLength        = configJson["danmuLength"].get<uint8_t>();
         this->canPKNotice        = configJson["canPKNotice"].get<bool>();
         this->canGuardNotice     = configJson["canGuardNotice"].get<bool>();
@@ -107,8 +108,52 @@ bool Config::LoadFromJson(std::string_view jsonPath)
     }
     return true;
 }
+bool Config::SaveToJson()
+{
+    std::unique_lock<std::shared_mutex> lock(this->configMutex);
+    if (this->configPath.empty())
+    {
+        LOG_MESSAGE(LogLevel::Error, "configPath is empty");
+        throw std::runtime_error("configPath is empty");
+        return false;
+    }
+    // if (!std::filesystem::exists(this->configPath))
+    // {
+    //     LOG_MESSAGE(LogLevel::Error, fmt::format("File not exists: {}", this->configPath));
+    //     throw std::runtime_error(fmt::format("File not exists: {}", this->configPath));
+    //     return false;
+    // }
+    nlohmann::json configJson;
+    configJson["roomId"]                = this->roomId;
+    configJson["logLevel"]              = static_cast<unsigned>(this->logLevel);
+    configJson["logPath"]               = this->logPath;
+    configJson["danmuLength"]           = this->danmuLength;
+    configJson["canPKNotice"]           = this->canPKNotice;
+    configJson["canGuardNotice"]        = this->canGuardNotice;
+    configJson["canThanksGift"]         = this->canThanksGift;
+    configJson["canSuperChatNotice"]    = this->canSuperChatNotice;
+    configJson["thanksGiftTimeout"]     = this->thanksGiftTimeout;
+    configJson["canDrawByLot"]          = this->canDrawByLot;
+    configJson["drawByLotList"]         = this->drawByLotList;
+    configJson["canEntryNotice"]        = this->canEntryNotice;
+    configJson["normalEntryNoticeList"] = this->normalEntryNoticeList;
+    configJson["guardEntryNoticeList"]  = this->guardEntryNoticeList;
+    configJson["canThanksFocus"]        = this->canThanksFocus;
+    configJson["canThanksShare"]        = this->canThanksShare;
+
+    std::ofstream ofs(this->configPath.data());
+    if (!ofs.is_open())
+    {
+        LOG_MESSAGE(LogLevel::Error, fmt::format("Failed to open file: {}", this->configPath));
+        throw std::runtime_error(fmt::format("Failed to open file: {}", this->configPath));
+        return false;
+    }
+    ofs << std::setw(4) << configJson << std::endl;   // 格式化输出
+    return true;
+}
 bool Config::LoadUID()
 {
+    std::unique_lock<std::shared_mutex>                lock(this->configMutex);
     boost::asio::ssl::stream<boost::beast::tcp_stream> stream(ioc, ctx);
     if (!SSL_set_tlsext_host_name(stream.native_handle(), this->uidUrl.GetHost().c_str()))
     {
@@ -119,10 +164,32 @@ bool Config::LoadUID()
     stream.set_verify_callback(
         boost::asio::ssl::host_name_verification(this->uidUrl.GetHost().c_str()));
     // 解析域名和端口
-    const auto results{
-        this->resolver.resolve(this->uidUrl.GetHost(), std::to_string(this->uidUrl.GetPort()))};
-    boost::beast::get_lowest_layer(stream).connect(results);   // 连接到IP地址
-    stream.handshake(boost::asio::ssl::stream_base::client);   // 进行SSL握手
+    boost::system::error_code ecResolver;
+    const auto                results{this->resolver.resolve(
+        this->uidUrl.GetHost(), std::to_string(this->uidUrl.GetPort()), ecResolver)};
+    if (ecResolver)
+    {
+        LOG_VAR(
+            LogLevel::Error,
+            fmt::format("Failed to resolve {}: {}", this->uidUrl.GetHost(), ecResolver.message()));
+        return false;
+    }
+    boost::system::error_code ecConnect;
+    boost::beast::get_lowest_layer(stream).connect(results, ecConnect);   // 连接到IP地址
+    if (ecConnect)
+    {
+        LOG_VAR(LogLevel::Error, fmt::format("Failed to connect: {}", ecConnect.message()));
+        return false;
+    }
+    // 执行SSL握手
+    boost::system::error_code ecHandshake;
+    stream.handshake(boost::asio::ssl::stream_base::client, ecHandshake);   // 进行SSL握手
+    if (ecHandshake)
+    {
+        LOG_VAR(LogLevel::Error,
+                fmt::format("Failed to perform SSL handshake: {}", ecHandshake.message()));
+        return false;
+    }
     // 构建请求
     boost::beast::http::request<boost::beast::http::string_body> req{
         boost::beast::http::verb::get, this->uidUrl.GetTarget(), 11};
@@ -134,11 +201,23 @@ bool Config::LoadUID()
             BiliRequestHeader::GetInstance()->GetBiliCookie().ToString());
 
     // 发送HTTP请求
-    boost::beast::http::write(stream, req);
+    boost::system::error_code ecSend;
+    boost::beast::http::write(stream, req, ecSend);
+    if (ecSend)
+    {
+        LOG_VAR(LogLevel::Error, fmt::format("Failed to send request: {}", ecSend.message()));
+        return false;
+    }
     // 读取响应
     boost::beast::flat_buffer                                     buffer;
     boost::beast::http::response<boost::beast::http::string_body> res;
-    boost::beast::http::read(stream, buffer, res);
+    boost::system::error_code                                     ecRead;
+    boost::beast::http::read(stream, buffer, res, ecRead);
+    if (ecRead)
+    {
+        LOG_VAR(LogLevel::Error, fmt::format("Failed to read response: {}", ecRead.message()));
+        return false;
+    }
     if (res.result() != boost::beast::http::status::ok)
     {
         LOG_MESSAGE(LogLevel::Error,
@@ -229,121 +308,152 @@ bool Config::LoadUID()
     }
     // newString的前32位赋值给this->wbiMixKey
     this->wbiMixKey = newString.substr(0, 32);
-    LOG_VAR(LogLevel::Info, fmt::format("WBI Mix Key: {}", this->wbiMixKey));
+    LOG_MESSAGE(LogLevel::Info, fmt::format("WBI Mix Key: {}", this->wbiMixKey));
     return true;
 }
 
 uint64_t Config::GetRoomId() const
 {
+    std::shared_lock<std::shared_mutex> lock(this->configMutex);
     return this->roomId;
 }
 
 const Url& Config::GetDanmuSeverConfUrl() const
 {
+    std::shared_lock<std::shared_mutex> lock(this->configMutex);
     return this->danmuSeverConfUrl;
 }
 
 LogLevel Config::GetLogLevel() const
 {
+    std::shared_lock<std::shared_mutex> lock(this->configMutex);
     return this->logLevel;
 }
 
 const std::string& Config::GetLogPath() const
 {
+    std::shared_lock<std::shared_mutex> lock(this->configMutex);
     return this->logPath;
 }
 
 uint8_t Config::GetDanmuLength() const
 {
+    std::shared_lock<std::shared_mutex> lock(this->configMutex);
     return this->danmuLength;
 }
 
 bool Config::CanPKNotice() const
 {
+    std::shared_lock<std::shared_mutex> lock(this->configMutex);
     return this->canPKNotice;
 }
 
 bool Config::CanGuardNotice() const
 {
+    std::shared_lock<std::shared_mutex> lock(this->configMutex);
     return this->canGuardNotice;
 }
 
 bool Config::CanThanksGift() const
 {
+    std::shared_lock<std::shared_mutex> lock(this->configMutex);
     return this->canThanksGift;
 }
 
 bool Config::CanSuperChatNotice() const
 {
+    std::shared_lock<std::shared_mutex> lock(this->configMutex);
     return this->canSuperChatNotice;
 }
 
 uint8_t Config::GetThanksGiftTimeout() const
 {
+    std::shared_lock<std::shared_mutex> lock(this->configMutex);
     return this->thanksGiftTimeout;
 }
 
 bool Config::CanDrawByLot() const
 {
+    std::shared_lock<std::shared_mutex> lock(this->configMutex);
     return this->canDrawByLot;
 }
 
 const std::string& Config::GetDrawByLotWord() const
 {
-    std::random_device seed_gen;
-    std::seed_seq      seed_sequence{seed_gen(), seed_gen(), seed_gen(), seed_gen()};
-    std::mt19937       engine(seed_sequence);
+    std::shared_lock<std::shared_mutex> lock(this->configMutex);
+    std::random_device                  seed_gen;
+    std::seed_seq seed_sequence{seed_gen(), seed_gen(), seed_gen(), seed_gen()};
+    std::mt19937  engine(seed_sequence);
     return this->drawByLotList[engine() % this->drawByLotList.size()];
 }
 
 bool Config::CanThanksFocus() const
 {
+    std::shared_lock<std::shared_mutex> lock(this->configMutex);
     return this->canThanksFocus;
 }
 
 void Config::SetCanThanksFocus(bool canThanksFocus)
 {
+    std::shared_lock<std::shared_mutex> lock(this->configMutex);
     this->canThanksFocus = canThanksFocus;
 }
 
 bool Config::CanThanksShare() const
 {
+    std::shared_lock<std::shared_mutex> lock(this->configMutex);
     return this->canThanksShare;
 }
 
 void Config::SetCanThanksShare(bool canThanksShare)
 {
+    std::shared_lock<std::shared_mutex> lock(this->configMutex);
     this->canThanksShare = canThanksShare;
 }
 
 bool Config::CanEntryNotice() const
 {
+    std::shared_lock<std::shared_mutex> lock(this->configMutex);
     return this->canEntryNotice;
 }
 
 void Config::SetCanEntryNotice(bool canEntryNotice)
 {
+    std::shared_lock<std::shared_mutex> lock(this->configMutex);
     this->canEntryNotice = canEntryNotice;
 }
 
 const std::string& Config::GetNormalEntryNoticeWord() const
 {
-    std::random_device seed_gen;
-    std::seed_seq      seed_sequence{seed_gen(), seed_gen(), seed_gen(), seed_gen()};
-    std::mt19937       engine(seed_sequence);
+    std::shared_lock<std::shared_mutex> lock(this->configMutex);
+    std::random_device                  seed_gen;
+    std::seed_seq seed_sequence{seed_gen(), seed_gen(), seed_gen(), seed_gen()};
+    std::mt19937  engine(seed_sequence);
     return this->normalEntryNoticeList[engine() % this->normalEntryNoticeList.size()];
+}
+std::vector<std::string>& Config::GetNormalEntryNoticeList()
+{
+    std::shared_lock<std::shared_mutex> lock(this->configMutex);
+    return this->normalEntryNoticeList;
+}
+std::vector<std::string>& Config::GetGuardEntryNoticeList()
+{
+    std::shared_lock<std::shared_mutex> lock(this->configMutex);
+    return this->guardEntryNoticeList;
 }
 
 const std::string& Config::GetGuardEntryNoticeWord() const
 {
-    std::random_device seed_gen;
-    std::seed_seq      seed_sequence{seed_gen(), seed_gen(), seed_gen(), seed_gen()};
-    std::mt19937       engine(seed_sequence);
+    std::shared_lock<std::shared_mutex> lock(this->configMutex);
+    std::random_device                  seed_gen;
+    std::seed_seq seed_sequence{seed_gen(), seed_gen(), seed_gen(), seed_gen()};
+    std::mt19937  engine(seed_sequence);
     return this->guardEntryNoticeList[engine() % this->guardEntryNoticeList.size()];
 }
 
 std::string Config::ToString() const
 {
+    std::shared_lock<std::shared_mutex> lock(this->configMutex);
     // return fmt::format("roomId: {}, danmuSeverConfUrl: {}", roomId,
     // danmuSeverConfUrl.ToString());
     return fmt::format(
@@ -369,14 +479,24 @@ std::string Config::ToString() const
 
 const std::string& Config::GetWbiMixKey() const
 {
+    std::shared_lock<std::shared_mutex> lock(this->configMutex);
     return this->wbiMixKey;
 }
 
 uint64_t Config::GetRobotUID() const
 {
+    std::shared_lock<std::shared_mutex> lock(this->configMutex);
     return this->robotUID;
 }
+std::shared_lock<std::shared_mutex> Config::GetSharedLock()
+{
+    return std::shared_lock<std::shared_mutex>(configMutex);
+}
 
+std::unique_lock<std::shared_mutex> Config::GetUniqueLock()
+{
+    return std::unique_lock<std::shared_mutex>(configMutex);
+}
 Config::Config()
     : roomId{0}
     , danmuSeverConfUrl{"", 0, "", {}}

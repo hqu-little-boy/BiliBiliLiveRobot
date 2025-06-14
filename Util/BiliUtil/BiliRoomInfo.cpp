@@ -23,7 +23,9 @@ BiliRoomInfo::BiliRoomInfo(uint64_t roomId)
           443,
           "/room/v1/Room/get_info",
           {{"id", std::to_string(Config::GetInstance()->GetRoomId())}})
-// , stream(ioc, ctx)
+    , attentionCount(0)
+    , onlineCount(0)
+    , isLiving(false)
 {
 }
 bool BiliRoomInfo::Init()
@@ -33,33 +35,73 @@ bool BiliRoomInfo::Init()
 }
 bool BiliRoomInfo::GetRoomInfo()
 {
-    // #ifdef TEST
-    //     // 读取json文件
-    //     std::ifstream ifs("/home/zpf/git/BiliBiliLiveRobot/test.json");
-    //     if (!ifs.is_open())
-    //     {
-    //         LOG_MESSAGE(LogLevel::Error, "Failed to open file");
-    //         return false;
-    //     }
-    //     auto resStr = std::string((std::istreambuf_iterator<char>(ifs)),
-    //     std::istreambuf_iterator<char>());
-    // #else
+// #ifndef TEST
+//     // 读取json文件
+//     std::ifstream ifs("/home/zpf/git/BiliBiliLiveRobot/test.json");
+//     if (!ifs.is_open())
+//     {
+//         LOG_MESSAGE(LogLevel::Error, "Failed to open file");
+//         return false;
+//     }
+//     auto resStr =
+//         std::string((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+// #else
     boost::asio::ssl::stream<boost::beast::tcp_stream> stream(ioc, ctx);
+    // 设置SNI主机名
     if (!SSL_set_tlsext_host_name(stream.native_handle(), url.GetHost().c_str()))
     {
-        throw boost::beast::system_error(static_cast<int>(::ERR_get_error()),
-                                         boost::asio::error::get_ssl_category());
+        LOG_VAR(LogLevel::Error, "Failed to set SNI Hostname");
+        return false;
     }
     // 设置对等验证回调，并指定预期的主机名
-    stream.set_verify_callback(boost::asio::ssl::host_name_verification(url.GetHost().c_str()));
+    boost::system::error_code ecVerifyCallback;
+    stream.set_verify_callback(boost::asio::ssl::host_name_verification(url.GetHost().c_str()),
+                               ecVerifyCallback);
+    if (ecVerifyCallback)
+    {
+        LOG_VAR(LogLevel::Error,
+                fmt::format("Failed to set verify callback: {}", ecVerifyCallback.message()));
+        return false;
+    }
     // 解析域名和端口
-    const auto results{
-        this->resolver.resolve(this->url.GetHost(), std::to_string(this->url.GetPort()))};
-    boost::beast::get_lowest_layer(stream).connect(results);   // 连接到IP地址
-    stream.handshake(boost::asio::ssl::stream_base::client);   // 进行SSL握手
+    LOG_VAR(
+        LogLevel::Debug,
+        fmt::format("Resolving {}:{}", this->url.GetHost(), std::to_string(this->url.GetPort())));
+    boost::system::error_code ecResolver;
+    const auto                results{this->resolver.resolve(
+        this->url.GetHost(), std::to_string(this->url.GetPort()), ecResolver)};
+    if (ecResolver)
+    {
+        LOG_VAR(LogLevel::Error,
+                fmt::format("Failed to resolve {}: {}", this->url.GetHost(), ecResolver.message()));
+        return false;
+    }
+
+    // 连接到IP地址
+
+    boost::system::error_code ecConnect;
+    boost::beast::get_lowest_layer(stream).connect(results, ecConnect);   // 连接到IP地址
+    if (ecConnect)
+    {
+        LOG_VAR(LogLevel::Error, fmt::format("Failed to connect: {}", ecConnect.message()));
+        return false;
+    }
+
+    // 执行SSL握手
+
+    boost::system::error_code ecHandshake;
+    stream.handshake(boost::asio::ssl::stream_base::client, ecHandshake);   // 进行SSL握手
+    if (ecHandshake)
+    {
+        LOG_VAR(LogLevel::Error,
+                fmt::format("Failed to perform SSL handshake: {}", ecHandshake.message()));
+        return false;
+    }
     // 构建请求
+
     boost::beast::http::request<boost::beast::http::string_body> req{
         boost::beast::http::verb::post, this->url.GetTargetWithQuery(), 11};
+    // 设置请求头
     req.set(boost::beast::http::field::host, this->url.GetHost());
     req.set(boost::beast::http::field::user_agent,
             BiliRequestHeader::GetInstance()->GetUserAgent());
@@ -68,18 +110,32 @@ bool BiliRoomInfo::GetRoomInfo()
             BiliRequestHeader::GetInstance()->GetBiliCookie().ToString());
 
     // 发送HTTP请求
-    boost::beast::http::write(stream, req);
+
+    boost::system::error_code ecSend;
+    boost::beast::http::write(stream, req, ecSend);
+    if (ecSend)
+    {
+        LOG_VAR(LogLevel::Error, fmt::format("Failed to send request: {}", ecSend.message()));
+        return false;
+    }
     // 读取响应
     boost::beast::flat_buffer                                     buffer;
     boost::beast::http::response<boost::beast::http::string_body> res;
-    boost::beast::http::read(stream, buffer, res);
+
+    boost::system::error_code ecResponse;
+    boost::beast::http::read(stream, buffer, res, ecResponse);
+    if (ecResponse)
+    {
+        LOG_VAR(LogLevel::Error, fmt::format("Failed to read response: {}", ecResponse.message()));
+        return false;
+    }
     if (res.result() != boost::beast::http::status::ok)
     {
         return false;
     }
     // 解析json
     auto resStr = res.body();
-    // #endif
+// #endif
     nlohmann::json roomInfoJson = nlohmann::json::parse(resStr);
     LOG_VAR(LogLevel::Debug, roomInfoJson.dump(-1));
     if (roomInfoJson["code"] != 0 || roomInfoJson["msg"] != "ok")
@@ -89,7 +145,7 @@ bool BiliRoomInfo::GetRoomInfo()
     this->attentionCount = roomInfoJson["data"]["attention"].get<uint64_t>();
     this->onlineCount    = roomInfoJson["data"]["online"].get<uint64_t>();
     this->isLiving       = roomInfoJson["data"]["live_status"].get<uint64_t>() == 1;
-    LOG_MESSAGE(LogLevel::Info,
+    LOG_MESSAGE(LogLevel::Debug,
                 fmt::format("RoomId: {}, Attention: {}, Online: {}, IsLiving: {}",
                             this->roomId,
                             this->attentionCount,
