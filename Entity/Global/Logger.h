@@ -6,15 +6,17 @@
 #define LOGGER_H
 #include "../../Base/noncopyable.h"
 
+#include <atomic>
 #include <fmt/format.h>
 #include <fstream>
+#include <mutex>
 #include <source_location>
 #include <string_view>
 
-#ifndef MACOS
-#    include <syncstream>
-#else
-#endif
+// #ifndef MACOS
+// #    include <syncstream>
+// #else
+// #endif
 
 // 定义日志级别
 enum class LogLevel
@@ -22,9 +24,9 @@ enum class LogLevel
     Fatal = 0,
     Error = 1,
     Warn  = 2,
-    Info  = 3,
-    Debug = 4,
-    Test  = 5,
+    Test  = 3,
+    Info  = 4,
+    Debug = 5,
 };
 
 class Logger : noncopyable
@@ -49,7 +51,9 @@ public:
     ///@brief 获取日志级别
     [[nodiscard]] LogLevel GetLogLevel() const;
     ///@brief 设置日志保存地址
-    void SetLogPath(const std::string& path);
+    void                             SetLogPath(const std::string& path);
+    [[nodiscard]] const std::string& GetLogPath() const;
+    void                             SetIsLogInFile(bool isLogInFile);
 
 private:
     constexpr inline std::string GetSign(LogLevel level);
@@ -59,10 +63,11 @@ private:
     // 日志级别
     LogLevel logLevel;
     // 单例对象
-    static Logger* pInstance;
-    std::mutex     printMutex;
-    std::ofstream  logFile;
-    bool           isLogInFile;
+    static Logger*    pInstance;
+    std::mutex        printMutex;
+    std::ofstream     logFile;
+    std::string       logFilePath;
+    std::atomic<bool> isLogInFile;
 
 #ifdef WIN32
     using DWORD = unsigned long;

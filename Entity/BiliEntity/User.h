@@ -18,6 +18,7 @@ public:
     // User(User&& other);
     // User& operator=(const User& other);
     // User& operator=(User&& other);
+    User()  = default;
     ~User() = default;
     [[nodiscard]] uint64_t           GetUid() const;
     void                             SetUid(uint64_t uid);

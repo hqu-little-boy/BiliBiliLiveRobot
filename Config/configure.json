@@ -1,13 +1,15 @@
 {
-  "roomId": 32388165,
-  "logLevel": 5,
+  "roomId": 4036251,
+  "logLevel": 3,
   "logPath": "./log.txt",
   "danmuLength": 20,
   "canPKNotice": true,
+  "canComeAroundNotice": true,
   "canGuardNotice": true,
   "canThanksGift": true,
+  "canThanksBlindBox": true,
   "canSuperChatNotice": true,
-  "thanksGiftTimeout": 10,
+  "thanksGiftTimeout": 5,
   "canDrawByLot": true,
   "drawByLotList": [
     "恭喜您抽到吉签，好运常伴，心想事成！",
@@ -33,11 +35,13 @@
   ],
   "canEntryNotice": true,
   "normalEntryNoticeList": [
-    "欢迎 {} 的到来，最喜欢你捏！"
+    "欢迎{0}的到来，最喜欢你捏！"
   ],
   "guardEntryNoticeList": [
-    "{} {}来给主播打call啦！"
+    "{1}{0}来给主播打call啦！"
   ],
   "canThanksFocus": true,
-  "canThanksShare": true
+  "thanksFocusNotice": "感谢{0}的关注，期待与你的每一次互动！",
+  "canThanksShare": true,
+  "thanksShareNotice": "感谢{0}的分享，您的支持是我前进的动力！"
 }

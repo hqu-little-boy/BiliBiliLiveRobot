@@ -19,3 +19,6 @@
 [submodule "ThirdParty/cryptopp-cmake"]
 	path = ThirdParty/cryptopp-cmake
 	url = https://github.com/abdes/cryptopp-cmake.git
+[submodule "ThirdParty/SQLiteCpp"]
+	path = ThirdParty/SQLiteCpp
+	url = https://github.com/SRombauts/SQLiteCpp.git

@@ -41,7 +41,7 @@ std::string TimeStamp::ToString() const
     // std::stringstream ss;
     // ss << std::put_time(&tm, "%Y-%m-%d %H:%M:%S");
     // return ss.str();
-    return fmt::format("{:%Y-%m-%d %H:%M:%S}", std::chrono::current_zone()->to_local(timePoint));
+    return fmt::format("{:%Y-%m-%d-%H:%M:%S}", std::chrono::current_zone()->to_local(timePoint));
 }
 
 bool TimeStamp::IsTimeOut(std::chrono::milliseconds milliseconds) const

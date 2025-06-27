@@ -43,6 +43,14 @@ void Config::DestroyInstance()
         pInstance = nullptr;
     }
 }
+std::string Config::GetConfigPath()
+{
+    return "configure.json";
+}
+std::string Config::GetCookiePath()
+{
+    return "bili_cookie.json";
+}
 
 bool Config::LoadFromJson(std::string_view jsonPath)
 {
@@ -81,12 +89,18 @@ bool Config::LoadFromJson(std::string_view jsonPath)
                                       443,
                                       "/xlive/web-room/v1/index/getDanmuInfo",
                                       {{"id", std::to_string(this->roomId)}, {"type", "0"}});
-        this->logPath           = fmt::format(
-            "{}", configJson["logPath"].get<std::string>(), TimeStamp::Now().ToString());
-        this->danmuLength        = configJson["danmuLength"].get<uint8_t>();
-        this->canPKNotice        = configJson["canPKNotice"].get<bool>();
-        this->canGuardNotice     = configJson["canGuardNotice"].get<bool>();
-        this->canThanksGift      = configJson["canThanksGift"].get<bool>();
+        if (!std::filesystem::exists("./Log"))
+        {
+            std::filesystem::create_directory("./Log");
+        }
+        this->logPath     = fmt::format("{}-{}", "./Log/log.txt", TimeStamp::Now().ToString());
+        this->danmuLength = configJson["danmuLength"].get<uint8_t>();
+        this->canPKNotice = configJson["canPKNotice"].get<bool>();
+        this->canComeAroundNotice = configJson["canComeAroundNotice"].get<bool>();
+        this->canGuardNotice      = configJson["canGuardNotice"].get<bool>();
+        this->canThanksGift       = configJson["canThanksGift"].get<bool>();
+        // this->giftThanksWord      = configJson["giftThanksWord"].get<std::string>();
+        this->canThanksBlindBox  = configJson["canThanksBlindBox"].get<bool>();
         this->canSuperChatNotice = configJson["canSuperChatNotice"].get<bool>();
         this->thanksGiftTimeout  = configJson["thanksGiftTimeout"].get<uint8_t>();
         this->canDrawByLot       = configJson["canDrawByLot"].get<bool>();
@@ -97,8 +111,10 @@ bool Config::LoadFromJson(std::string_view jsonPath)
         this->guardEntryNoticeList =
             configJson["guardEntryNoticeList"].get<std::vector<std::string>>();
 
-        this->canThanksFocus = configJson["canThanksFocus"].get<bool>();
-        this->canThanksShare = configJson["canThanksShare"].get<bool>();
+        this->canThanksFocus    = configJson["canThanksFocus"].get<bool>();
+        this->thanksFocusNotice = configJson["thanksFocusNotice"].get<std::string>();
+        this->canThanksShare    = configJson["canThanksShare"].get<bool>();
+        this->thanksShareNotice = configJson["thanksShareNotice"].get<std::string>();
     }
     catch (const nlohmann::json::exception& e)
     {
@@ -110,7 +126,7 @@ bool Config::LoadFromJson(std::string_view jsonPath)
 }
 bool Config::SaveToJson()
 {
-    std::unique_lock<std::shared_mutex> lock(this->configMutex);
+    std::shared_lock<std::shared_mutex> lock(this->configMutex);
     if (this->configPath.empty())
     {
         LOG_MESSAGE(LogLevel::Error, "configPath is empty");
@@ -124,13 +140,16 @@ bool Config::SaveToJson()
     //     return false;
     // }
     nlohmann::json configJson;
-    configJson["roomId"]                = this->roomId;
-    configJson["logLevel"]              = static_cast<unsigned>(this->logLevel);
-    configJson["logPath"]               = this->logPath;
-    configJson["danmuLength"]           = this->danmuLength;
-    configJson["canPKNotice"]           = this->canPKNotice;
-    configJson["canGuardNotice"]        = this->canGuardNotice;
-    configJson["canThanksGift"]         = this->canThanksGift;
+    configJson["roomId"]   = this->roomId;
+    configJson["logLevel"] = static_cast<unsigned>(this->logLevel);
+    // configJson["logPath"]             = this->logPath;
+    configJson["danmuLength"]         = this->danmuLength;
+    configJson["canPKNotice"]         = this->canPKNotice;
+    configJson["canComeAroundNotice"] = this->canComeAroundNotice;
+    configJson["canGuardNotice"]      = this->canGuardNotice;
+    configJson["canThanksGift"]       = this->canThanksGift;
+    // configJson["giftThanksWord"]        = this->giftThanksWord;
+    configJson["canThanksBlindBox"]     = this->canThanksBlindBox;
     configJson["canSuperChatNotice"]    = this->canSuperChatNotice;
     configJson["thanksGiftTimeout"]     = this->thanksGiftTimeout;
     configJson["canDrawByLot"]          = this->canDrawByLot;
@@ -139,7 +158,9 @@ bool Config::SaveToJson()
     configJson["normalEntryNoticeList"] = this->normalEntryNoticeList;
     configJson["guardEntryNoticeList"]  = this->guardEntryNoticeList;
     configJson["canThanksFocus"]        = this->canThanksFocus;
+    configJson["thanksFocusNotice"]     = this->thanksFocusNotice;
     configJson["canThanksShare"]        = this->canThanksShare;
+    configJson["thanksShareNotice"]     = this->thanksShareNotice;
 
     std::ofstream ofs(this->configPath.data());
     if (!ofs.is_open())
@@ -149,6 +170,7 @@ bool Config::SaveToJson()
         return false;
     }
     ofs << std::setw(4) << configJson << std::endl;   // 格式化输出
+    LOG_MESSAGE(LogLevel::Info, fmt::format("Config saved to: {}", this->configPath));
     return true;
 }
 bool Config::LoadUID()
@@ -252,7 +274,10 @@ bool Config::LoadUID()
         LOG_VAR(LogLevel::Error, roomInfoJson.dump(-1));
         return false;
     }
-    this->robotUID = roomInfoJson["data"]["mid"].get<uint64_t>();
+    this->robotUID   = roomInfoJson["data"]["mid"].get<uint64_t>();
+    this->robotUname = roomInfoJson["data"]["uname"].get<std::string>();
+    this->isLogined  = roomInfoJson["data"]["isLogin"].get<bool>();
+    this->robotFace  = roomInfoJson["data"]["face"].get<std::string>();
     LOG_VAR(LogLevel::Info, this->robotUID);
     // 检查 wbi_img 及其子字段是否存在
     if (!roomInfoJson["data"].contains("wbi_img") ||
@@ -317,6 +342,16 @@ uint64_t Config::GetRoomId() const
     std::shared_lock<std::shared_mutex> lock(this->configMutex);
     return this->roomId;
 }
+void Config::SetRoomId(uint64_t roomId)
+{
+    std::unique_lock<std::shared_mutex> lock(this->configMutex);
+    this->roomId = roomId;
+    // 更新弹幕服务器配置URL
+    this->danmuSeverConfUrl = Url("api.live.bilibili.com",
+                                  443,
+                                  "/xlive/web-room/v1/index/getDanmuInfo",
+                                  {{"id", std::to_string(this->roomId)}, {"type", "0"}});
+}
 
 const Url& Config::GetDanmuSeverConfUrl() const
 {
@@ -347,11 +382,30 @@ bool Config::CanPKNotice() const
     std::shared_lock<std::shared_mutex> lock(this->configMutex);
     return this->canPKNotice;
 }
-
+void Config::SetCanPKNotice(bool canPK)
+{
+    std::unique_lock<std::shared_mutex> lock(this->configMutex);
+    this->canPKNotice = canPK;
+}
+bool Config::CanComeAroundNotice() const
+{
+    std::shared_lock<std::shared_mutex> lock(this->configMutex);
+    return this->canComeAroundNotice;
+}
+void Config::SetCanComeAroundNotice(bool canComeAroundNotice)
+{
+    std::unique_lock<std::shared_mutex> lock(this->configMutex);
+    this->canComeAroundNotice = canComeAroundNotice;
+}
 bool Config::CanGuardNotice() const
 {
     std::shared_lock<std::shared_mutex> lock(this->configMutex);
     return this->canGuardNotice;
+}
+void Config::SetCanGuardNotice(bool canGuard)
+{
+    std::unique_lock<std::shared_mutex> lock(this->configMutex);
+    this->canGuardNotice = canGuard;
 }
 
 bool Config::CanThanksGift() const
@@ -359,11 +413,21 @@ bool Config::CanThanksGift() const
     std::shared_lock<std::shared_mutex> lock(this->configMutex);
     return this->canThanksGift;
 }
+void Config::SetCanThanksGift(bool canThanksGift)
+{
+    std::unique_lock<std::shared_mutex> lock(this->configMutex);
+    this->canThanksGift = canThanksGift;
+}
 
 bool Config::CanSuperChatNotice() const
 {
     std::shared_lock<std::shared_mutex> lock(this->configMutex);
     return this->canSuperChatNotice;
+}
+void Config::SetCanSuperChatNotice(bool canSuperChat)
+{
+    std::unique_lock<std::shared_mutex> lock(this->configMutex);
+    this->canSuperChatNotice = canSuperChat;
 }
 
 uint8_t Config::GetThanksGiftTimeout() const
@@ -371,11 +435,51 @@ uint8_t Config::GetThanksGiftTimeout() const
     std::shared_lock<std::shared_mutex> lock(this->configMutex);
     return this->thanksGiftTimeout;
 }
+void Config::SetThanksGiftTimeout(uint8_t timeout)
+{
+    std::unique_lock<std::shared_mutex> lock(this->configMutex);
+    if (timeout < 0)
+    {
+        LOG_MESSAGE(LogLevel::Warn, "Thanks gift timeout must be greater than or equal to 0");
+        return;
+    }
+    this->thanksGiftTimeout = timeout;
+}
+// const std::string& Config::GetGiftThanksWord() const
+// {
+//     std::shared_lock<std::shared_mutex> lock(this->configMutex);
+//     return this->giftThanksWord;
+// }
+// void Config::SetGiftThanksWord(const std::string& word)
+// {
+//     std::unique_lock<std::shared_mutex> lock(this->configMutex);
+//     if (word.empty())
+//     {
+//         LOG_MESSAGE(LogLevel::Warn, "Gift thanks word cannot be empty");
+//         return;
+//     }
+//     this->giftThanksWord = word;
+// }
+bool Config::CanThanksBlindBox() const
+{
+    std::shared_lock<std::shared_mutex> lock(this->configMutex);
+    return this->canThanksBlindBox;
+}
+void Config::SetCanThanksBlindBox(bool canThanksBlindBox)
+{
+    std::unique_lock<std::shared_mutex> lock(this->configMutex);
+    this->canThanksBlindBox = canThanksBlindBox;
+}
 
 bool Config::CanDrawByLot() const
 {
     std::shared_lock<std::shared_mutex> lock(this->configMutex);
     return this->canDrawByLot;
+}
+void Config::SetCanDrawByLot(bool canDrawByLot)
+{
+    std::unique_lock<std::shared_mutex> lock(this->configMutex);
+    this->canDrawByLot = canDrawByLot;
 }
 
 const std::string& Config::GetDrawByLotWord() const
@@ -385,6 +489,11 @@ const std::string& Config::GetDrawByLotWord() const
     std::seed_seq seed_sequence{seed_gen(), seed_gen(), seed_gen(), seed_gen()};
     std::mt19937  engine(seed_sequence);
     return this->drawByLotList[engine() % this->drawByLotList.size()];
+}
+std::vector<std::string>& Config::GetDrawByLotWordList()
+{
+    std::shared_lock<std::shared_mutex> lock(this->configMutex);
+    return this->drawByLotList;
 }
 
 bool Config::CanThanksFocus() const
@@ -398,6 +507,16 @@ void Config::SetCanThanksFocus(bool canThanksFocus)
     std::shared_lock<std::shared_mutex> lock(this->configMutex);
     this->canThanksFocus = canThanksFocus;
 }
+const std::string& Config::GetThanksFocusWord() const
+{
+    std::shared_lock<std::shared_mutex> lock(this->configMutex);
+    return this->thanksFocusNotice;
+}
+void Config::SetThanksFocusWord(std::string_view thanksFocusWord)
+{
+    std::unique_lock<std::shared_mutex> lock(this->configMutex);
+    this->thanksFocusNotice = thanksFocusWord;
+}
 
 bool Config::CanThanksShare() const
 {
@@ -409,6 +528,16 @@ void Config::SetCanThanksShare(bool canThanksShare)
 {
     std::shared_lock<std::shared_mutex> lock(this->configMutex);
     this->canThanksShare = canThanksShare;
+}
+const std::string& Config::GetThanksShareWord() const
+{
+    std::shared_lock<std::shared_mutex> lock(this->configMutex);
+    return this->thanksShareNotice;
+}
+void Config::SetThanksShareWord(std::string_view thanksShareWord)
+{
+    std::unique_lock<std::shared_mutex> lock(this->configMutex);
+    this->thanksShareNotice = thanksShareWord;
 }
 
 bool Config::CanEntryNotice() const
@@ -488,6 +617,21 @@ uint64_t Config::GetRobotUID() const
     std::shared_lock<std::shared_mutex> lock(this->configMutex);
     return this->robotUID;
 }
+const std::string& Config::GetRobotUname() const
+{
+    std::shared_lock<std::shared_mutex> lock(this->configMutex);
+    return this->robotUname;
+}
+const std::string& Config::GetRobotFace() const
+{
+    std::shared_lock<std::shared_mutex> lock(this->configMutex);
+    return this->robotFace;
+}
+bool Config::IsLogined() const
+{
+    std::shared_lock<std::shared_mutex> lock(this->configMutex);
+    return this->isLogined;
+}
 std::shared_lock<std::shared_mutex> Config::GetSharedLock()
 {
     return std::shared_lock<std::shared_mutex>(configMutex);
@@ -501,24 +645,31 @@ Config::Config()
     : roomId{0}
     , danmuSeverConfUrl{"", 0, "", {}}
     , logLevel{LogLevel::Debug}
-    , logPath{"log.txt"}
+    , logPath{"./Log/log.txt"}
     , danmuLength{20}
-    , canPKNotice{true}
-    , canGuardNotice{true}
-    , canThanksGift{true}
-    , canSuperChatNotice{true}
+    , canPKNotice{false}
+    , canComeAroundNotice(false)
+    , canGuardNotice{false}
+    , canThanksGift{false}
+    , canThanksBlindBox(false)
+    , canSuperChatNotice{false}
     , thanksGiftTimeout{10}
-    , canDrawByLot{true}
+    , canDrawByLot{false}
     , drawByLotList{}
-    , canEntryNotice{true}
+    , canEntryNotice{false}
     , normalEntryNoticeList{}
     , guardEntryNoticeList{}
-    , canThanksFocus{true}
-    , canThanksShare{true}
-    , robotUID{0}
+    , canThanksFocus{false}
+    , canThanksShare{false}
     , wbiMixKey{}
     , uidUrl{"api.bilibili.com", 443, "/x/web-interface/nav"}
+    , robotUID{0}
+    , robotUname{}
+    , isLogined{false}
+    , robotFace{}
     , ctx(boost::asio::ssl::context::tlsv12_client)
     , resolver(ioc)
+    , configPath{}
+    , configMutex{}
 {
 }

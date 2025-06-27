@@ -6,6 +6,7 @@
 #define BILILOGIN_H
 #include "../../Base/noncopyable.h"
 #include "../../Entity/Net/Url.h"
+#include "qrencode.h"
 
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/ssl/context.hpp>
@@ -17,8 +18,10 @@ class BiliLogin : noncopyable
 public:
     BiliLogin();
     ~BiliLogin() = default;
-    bool GetLoginQRCode();
-    bool GetLoginInfo();
+    std::optional<std::string> GetLoginUrl();
+    QRcode*                    GetLoginQRCodeImage();
+    bool                       GetLoginQRCode();
+    bool                       GetLoginInfo();
 
 private:
     boost::asio::io_context        ioc;        // IO上下文

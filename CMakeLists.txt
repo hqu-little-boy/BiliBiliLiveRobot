@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(BiliBiliLiveRobot)
+project(BiliBiliLiveRobot VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/_${CMAKE_BUILD_TYPE}Bin)
 if (POLICY CMP0167)
@@ -7,6 +7,7 @@ if (POLICY CMP0167)
 endif ()
 
 set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wall -Wextra")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Werror -fsanitize=address -fsanitize=undefined -fsanitize=leak") # 指定编译选项
@@ -27,19 +28,20 @@ if (STATIC_BUILD)
 endif ()
 
 set(Test ON)
+set(CRYPTOPP_BUILD_TESTING OFF)
 if (Test)
     add_definitions(-DTEST)
 endif ()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_definitions(-DDEBUG)
-    if (NOT STATIC_BUILD)
-        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address")
-        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-var-tracking")
-        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-stack-protector")
-        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize-address-use-after-scope")
-        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=signed-integer-overflow")
-    endif ()
+    #    if (NOT STATIC_BUILD)
+    #        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address")
+    #        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-var-tracking")
+    #        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-stack-protector")
+    #        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize-address-use-after-scope")
+    #        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=signed-integer-overflow")
+    #    endif ()
 elseif (CMAKE_BUILD_TYPE STREQUAL "Release")
     add_definitions(-DRELEASE)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
@@ -80,20 +82,22 @@ endif ()
 file(GLOB_RECURSE BASE_SOURCES "Base/*.h" "Base/*.cpp")
 file(GLOB_RECURSE ENTITY_SOURCES "Entity/*.h" "Entity/*.cpp")
 file(GLOB_RECURSE UTIL_SOURCES "Util/*.h" "Util/*.cpp")
+file(GLOB_RECURSE GUI_SOURCES "GUI/*.h" "GUI/*.cpp")
+file(GLOB_RECURSE RELATIVE GUI_QML_SOURCES "GUI/*.qml")
 
-add_executable(${PROJECT_NAME}
-        main.cpp
+add_executable(${PROJECT_NAME}-cli
+        cli.cpp
         ${BASE_SOURCES}
         ${ENTITY_SOURCES}
         ${UTIL_SOURCES}
         #        qml/qml.qrc
 )
 
-add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD
+add_custom_command(TARGET ${PROJECT_NAME}-cli PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_INSTALL_PREFIX}/Config"
 )
 
-add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD
+add_custom_command(TARGET ${PROJECT_NAME}-cli PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
         "${CMAKE_SOURCE_DIR}/Config/configure.json"
         "${CMAKE_INSTALL_PREFIX}/Config/configure.json"
@@ -104,6 +108,7 @@ find_package(Boost COMPONENTS context iostreams regex REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 find_package(OpenSSL REQUIRED)
 include_directories(${OPENSSL_INCLUDE_DIR})
+find_package(zstd CONFIG REQUIRED)
 add_subdirectory(ThirdParty/json)
 include_directories(ThirdParty/json/include)
 add_subdirectory(ThirdParty/brotli)
@@ -118,15 +123,10 @@ add_subdirectory(ThirdParty/fmt)
 include_directories(ThirdParty/fmt/include)
 # 查找 Crypto++ 库
 add_subdirectory(ThirdParty/cryptopp-cmake)
-
-# GUI和CLI通用的库
-if (STATIC_BUILD)
-    target_link_libraries(${PROJECT_NAME} PRIVATE fmt::fmt-header-only)
-else ()
-    target_link_libraries(${PROJECT_NAME} PRIVATE fmt::fmt)
-endif ()
-
-target_link_libraries(${PROJECT_NAME} PRIVATE
+# 添加SQLiteCpp
+add_subdirectory(ThirdParty/SQLiteCpp)
+include_directories(ThirdParty/SQLiteCpp/include)
+target_link_libraries(${PROJECT_NAME}-cli PRIVATE
         OpenSSL::SSL
         OpenSSL::Crypto
         Boost::context
@@ -137,37 +137,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
         brotlidec
         utf8cpp
         cryptopp::cryptopp
-)
-## GUI专用
-#find_package(QT NAMES Qt6 REQUIRED)
-#find_package(Qt6 REQUIRED COMPONENTS Core Quick Charts Widgets PrintSupport)
-#target_link_libraries(${PROJECT_NAME} PRIVATE
-#        Qt6::Core
-#        Qt6::Quick
-#        Qt6::Charts
-#        Qt6::Widgets
-#        Qt6::PrintSupport
-#)
-#list(APPEND QML_IMPORT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/qml")
-#list(REMOVE_DUPLICATES QML_IMPORT_PATH)
-#set(QML_IMPORT_PATH
-#        ${QML_IMPORT_PATH}
-#        CACHE STRING "Qt Creator 4.1 extra qml import paths" FORCE)
-#message(STATUS "QML_IMPORT_PATH=" ${QML_IMPORT_PATH})
-#set_target_properties(
-#        ${PROJECT_NAME}
-#        PROPERTIES
-#        AUTOMOC ON
-#        AUTORCC ON
-#        AUTOUIC ON
-#)
-#if (QT_VERSION_MAJOR EQUAL 6)
-#    qt_import_qml_plugins(${PROJECT_NAME})
-#    qt_finalize_executable(${PROJECT_NAME})
-#endif ()
-
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
-        "${CMAKE_BINARY_DIR}/${PROJECT_NAME}"
-        "${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}"
+        fmt::fmt-header-only
+        zstd::libzstd
+        SQLiteCpp
+        sqlite3
 )

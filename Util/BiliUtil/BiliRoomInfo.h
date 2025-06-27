@@ -25,22 +25,24 @@ public:
     bool GetRoomInfo();
     // [[nodiscard]] bool     IsSuccess() const;
     [[nodiscard]] uint64_t GetRoomId() const;
-    [[nodiscard]] uint64_t GetAttentionCount() const;
-    [[nodiscard]] uint64_t GetOnlineCount() const;
-    [[nodiscard]] bool     IsLiving() const;
+    void                   SetRoomId(uint64_t roomId);
+    [[nodiscard]] uint64_t GetAttentionCount();
+    [[nodiscard]] uint64_t GetOnlineCount();
+    [[nodiscard]] bool     IsLiving();
 
 private:
     Url url;
     // bool     isSuccess;
-    uint64_t roomId;
-    uint64_t attentionCount;
-    uint64_t onlineCount;
-    bool     isLiving;
+    uint64_t                                           roomId;
+    uint64_t                                           attentionCount;
+    uint64_t                                           onlineCount;
+    std::chrono::time_point<std::chrono::system_clock> lastAttentionTime;   // 上次关注时间
+    bool                                               isLiving;
 
 private:
-    boost::asio::io_context                            ioc;
-    boost::asio::ssl::context                          ctx;
-    boost::asio::ip::tcp::resolver                     resolver;   // DNS解析器
+    boost::asio::io_context        ioc;
+    boost::asio::ssl::context      ctx;
+    boost::asio::ip::tcp::resolver resolver;   // DNS解析器
     // boost::asio::ssl::stream<boost::beast::tcp_stream> stream;
 };
 

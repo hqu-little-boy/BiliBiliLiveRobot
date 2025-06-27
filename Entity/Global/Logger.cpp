@@ -65,7 +65,7 @@ bool Logger::Log(LogLevel level, const std::string_view& file, int line,
     // 输出到标准输出
     // std::println(std::cout, "{}", strLog);
     std::cout << fmt::format("[{:<7}] {}", this->GetSignWithColor(level), strLog) << std::endl;
-    if (isLogInFile)
+    if (this->isLogInFile)
     {
         this->logFile << fmt::format("[{:<7}] {}", this->GetSign(level), strLog) << std::endl;
         // std::println(this->logFile, "{}", strLog);
@@ -94,15 +94,24 @@ void Logger::SetLogPath(const std::string& path)
 {
     if (path.empty())
     {
-        isLogInFile = false;
+        this->isLogInFile.store(false);
         return;
     }
-    logFile.open(path);
-    isLogInFile = true;
-    if (!logFile.is_open())
+    this->logFilePath = path;
+    this->logFile.open(path);
+    this->isLogInFile.store(true);
+    if (!this->logFile.is_open())
     {
         std::cerr << "Open log file failed!" << std::endl;
     }
+}
+const std::string& Logger::GetLogPath() const
+{
+    return this->logFilePath;
+}
+void Logger::SetIsLogInFile(bool isLogInFile)
+{
+    this->isLogInFile.store(isLogInFile);
 }
 
 constexpr std::string Logger::GetSign(LogLevel level)

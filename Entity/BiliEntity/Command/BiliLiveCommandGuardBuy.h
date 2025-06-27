@@ -13,9 +13,9 @@ public:
     explicit BiliLiveCommandGuardBuy();
     ~BiliLiveCommandGuardBuy() override = default;
 
-    [[nodiscard]] std::string              ToString() const override;
-    void                                   Run() const override;
-    bool                                   LoadMessage(const nlohmann::json& message) override;
+    [[nodiscard]] std::string ToString() const override;
+    void                      Run() const override;
+    bool                      LoadMessage(const nlohmann::json& message) override;
     // [[nodiscard]] BiliApiUtil::LiveCommand GetCommandType() const;
 
 private:
@@ -24,6 +24,7 @@ private:
     unsigned                                  num;
     unsigned                                  price;
     static constexpr BiliApiUtil::LiveCommand commandType = BiliApiUtil::LiveCommand::GUARD_BUY;
+    static std::map<int, std::string>         guardLevelMap;
 };
 
 

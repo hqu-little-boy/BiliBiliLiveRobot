@@ -45,6 +45,8 @@ void Robot::Run()
         LOG_MESSAGE(LogLevel::Error, "Failed to load UID");
         return;
     }
+    Logger::GetInstance()->SetLogLevel(Config::GetInstance()->GetLogLevel());
+    Logger::GetInstance()->SetLogPath(Config::GetInstance()->GetLogPath());
     this->stopFlag.store(false);
     this->robotThread = std::thread(&Robot::RobotThread, this);
 }
@@ -113,5 +115,6 @@ void Robot::RobotThread()
         this->Stop();   // 如果 BiliLiveSession::run() 失败，则调用 Robot::Stop() 进行清理
         return;
     }
+    this->stopFlag.store(true);
     LOG_MESSAGE(LogLevel::Info, "Robot::RobotThread io_context::run() returned successfully");
 }

@@ -30,12 +30,12 @@ void BiliLiveCommandRedPocketEnd::Run() const
         Config::GetInstance()->SetCanEntryNotice(true);
         MessageDeque::GetInstance()->PushWaitedMessage("红包抽奖结束，重新开启欢迎信息。");
     }
-    if (Config::GetInstance()->CanThanksFocus())
-    {
-        Config::GetInstance()->SetCanThanksFocus(true);
-    }
-    if (Config::GetInstance()->CanThanksShare())
-    {
-        Config::GetInstance()->SetCanThanksShare(true);
-    }
+    // if (Config::GetInstance()->CanThanksFocus())
+    // {
+    //     Config::GetInstance()->SetCanThanksFocus(true);
+    // }
+    // if (Config::GetInstance()->CanThanksShare())
+    // {
+    //     Config::GetInstance()->SetCanThanksShare(true);
+    // }
 }

@@ -82,6 +82,45 @@ void MessageDeque::ClearWaitedMessage()
         this->messageQueue.pop();
     }
 }
+void MessageDeque::AddGiftMessage(const std::string& user,
+                                  const std::string& giftName,
+                                  uint32_t           giftCount)
+{
+    std::unique_lock<std::mutex> lock{this->giftMapMutex};
+    auto&                        giftMap{this->giftMap[user]};
+    if (giftMap.contains(giftName))
+    {
+        giftMap[giftName] += giftCount;
+    }
+    else
+    {
+        giftMap[giftName] = giftCount;
+    }
+    this->sendGiftMessageTip = false;   // 设置发送弹幕标志
+}
+void MessageDeque::AddBlindBoxMessage(const std::string& user,
+                                      const std::string& giftName,
+                                      uint32_t           giftCount,
+                                      int32_t            profitAndLoss)
+{
+    std::unique_lock<std::mutex> lock{this->giftMapMutex};
+    auto&                        blindBoxMap{this->blindBoxMap[user]};
+    if (blindBoxMap.contains(giftName))
+    {
+        blindBoxMap[giftName].first += giftCount;
+        blindBoxMap[giftName].second += static_cast<double>(profitAndLoss) / 1000;
+    }
+    else
+    {
+        blindBoxMap[giftName] = {giftCount, static_cast<double>(profitAndLoss) / 1000};
+    }
+    this->sendGiftMessageTip = false;
+}
+// void MessageDeque::ClearGiftMessage()
+// {
+//     std::unique_lock<std::mutex> lock{this->giftMapMutex};
+//     this->giftMap.clear();
+// }
 
 void MessageDeque::SendMessageInThread()
 {
@@ -208,11 +247,106 @@ bool MessageDeque::SendMessageToBili(const std::string& message)
     }
     return true;
 }
+bool MessageDeque::SendGiftMessageToBili()
+{
+    std::unique_lock<std::mutex> lock{this->giftMapMutex};
+    if (this->giftMap.empty() || this->blindBoxMap.empty())
+    {
+        LOG_MESSAGE(LogLevel::Debug, "No gift message to send");
+        return true;   // 没有礼物消息，直接返回
+    }
+    for (const auto& [user, gifts] : this->giftMap)
+    {
+        std::string giftMessage;
+        for (const auto& [giftName, giftCount] : gifts)
+        {
+            if (!giftMessage.empty())
+            {
+                giftMessage += "、";
+            }
+            giftMessage += fmt::format("{}x{}", giftName, giftCount);
+        }
+        this->PushWaitedMessage(fmt::format("感谢{}的礼物: {}", user, giftMessage));
+    }
+    for (const auto& [user, blindBoxs] : this->blindBoxMap)
+    {
+        std::string blindBoxMessage;
+        for (const auto& [giftName, giftInfo] : blindBoxs)
+        {
+            if (!blindBoxMessage.empty())
+            {
+                blindBoxMessage += "、";
+            }
+            if (giftInfo.second > 0)
+            {
+                blindBoxMessage +=
+                    fmt::format("{}x{}(赚{:.2f}元)", giftName, giftInfo.first, giftInfo.second);
+            }
+            else if (giftInfo.second < 0)
+            {
+                blindBoxMessage +=
+                    fmt::format("{}x{}(亏{:.2f}元)", giftName, giftInfo.first, -giftInfo.second);
+            }
+            else
+            {
+                blindBoxMessage += fmt::format("{}x{}(不亏，不赚)", giftName, giftInfo.first);
+            }
+        }
+        this->PushWaitedMessage(fmt::format("感谢{}的盲盒: {}", user, blindBoxMessage));
+    }
+    this->giftMap.clear();
+    this->blindBoxMap.clear();
+    this->sendGiftMessageTip = false;
+    return true;
+}
+bool MessageDeque::CheckSendMessageToBili()
+{
+    if (this->sendGiftMessageTip)
+    {
+        this->SendGiftMessageToBili();
+    }
+    else
+    {
+        std::unique_lock<std::mutex> lock{this->messageQueueMutex};
+        if (!this->giftMap.empty())
+        {
+            this->sendGiftMessageTip = true;
+        }
+    }
+    this->sendGiftMessageTimer.expires_after(
+        std::chrono::seconds(Config::GetInstance()->GetThanksGiftTimeout()));
+    this->sendGiftMessageTimer.async_wait([this](const boost::system::error_code& ec) {
+        if (ec)
+        {
+            LOG_VAR(LogLevel::Error, fmt::format("sendGiftMessageTimer error: {}", ec.message()));
+            return;
+        }
+        this->CheckSendMessageToBili();
+    });
+    return true;
+}
 
 MessageDeque::MessageDeque()
-    : ioc(1)
+    : sendMessageThread(&MessageDeque::SendMessageInThread, this)
+    , ioc(1)
     , ctx(boost::asio::ssl::context::tlsv12_client)
     , resolver(this->ioc)
-    , snedMessageThread(&MessageDeque::SendMessageInThread, this)
+    , sendGiftMessageIoc{}
+    , sendGiftMessageTimer(this->sendGiftMessageIoc)
+    , sendGiftMessageTip(false)
 {
+    this->sendGiftMessageTimer.expires_after(
+        std::chrono::seconds(Config::GetInstance()->GetThanksGiftTimeout()));
+    this->sendGiftMessageTimer.async_wait([this](const boost::system::error_code& ec) {
+        if (ec)
+        {
+            LOG_VAR(LogLevel::Error, fmt::format("sendGiftMessageTimer error: {}", ec.message()));
+            return;
+        }
+        this->CheckSendMessageToBili();
+    });
+    this->checkGiftThread = std::thread([this] {
+        LOG_MESSAGE(LogLevel::Info, "Check gift thread started");
+        this->sendGiftMessageIoc.run();
+    });
 }

@@ -4,6 +4,7 @@
 
 #include "BiliLiveCommandInteractWord.h"
 
+#include "../../DataBase/DataBase.h"
 #include "../../Global/Config.h"
 #include "../../MessageDeque/MessageDeque.h"
 
@@ -89,19 +90,27 @@ void BiliLiveCommandInteractWord::Run() const
     {
         try
         {
+            // const auto  usernameArg   = fmt::arg("用户名", this->user.GetUname());
+            // const auto  guardLevelArg = fmt::arg("舰长等级", this->user.GetGuardLevel());
             std::string message{};
             if (!this->user.IsGuard())
             {
                 message = fmt::vformat(Config::GetInstance()->GetNormalEntryNoticeWord(),
-                                  fmt::make_format_args(this->user.GetUname()));
+                                       fmt::make_format_args(this->user.GetUname()));
             }
             else
             {
                 message = fmt::vformat(
                     Config::GetInstance()->GetGuardEntryNoticeWord(),
-                    fmt::make_format_args(this->user.GetGuardLevel(), this->user.GetUname()));
+                    fmt::make_format_args(this->user.GetUname(), this->user.GetGuardLevel()));
             }
             MessageDeque::GetInstance()->PushWaitedMessage(message);
+            if (const auto res = DataBase::GetInstance()->AddEnterRoomUser(this->user); !res)
+            {
+                LOG_MESSAGE(
+                    LogLevel::Error,
+                    fmt::format("Failed to add enter room user: {}", this->user.ToString()));
+            }
             LOG_VAR(LogLevel::Debug, message);
         }
         catch (const std::exception& e)
@@ -113,7 +122,8 @@ void BiliLiveCommandInteractWord::Run() const
     {
         // MessageDeque::GetInstance()->PushWaitedMessage(
         //     fmt::format("感谢{}关注了主播", this->user.GetUname()));
-        std::string message{fmt::format("感谢{}关注了主播", this->user.GetUname())};
+        std::string message{fmt::vformat(Config::GetInstance()->GetThanksFocusWord(),
+                                         fmt::make_format_args(this->user.GetUname()))};
         MessageDeque::GetInstance()->PushWaitedMessage(message);
         LOG_VAR(LogLevel::Debug, message);
     }
@@ -121,7 +131,8 @@ void BiliLiveCommandInteractWord::Run() const
     {
         // MessageDeque::GetInstance()->PushWaitedMessage(
         //     fmt::format("感谢{}分享了直播间", this->user.GetUname()));
-        std::string message{fmt::format("感谢{}分享了直播间", this->user.GetUname())};
+        std::string message{fmt::vformat(Config::GetInstance()->GetThanksShareWord(),
+                                         fmt::make_format_args(this->user.GetUname()))};
         MessageDeque::GetInstance()->PushWaitedMessage(message);
         LOG_VAR(LogLevel::Debug, message);
     }

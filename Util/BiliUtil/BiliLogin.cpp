@@ -4,6 +4,7 @@
 
 #include "BiliLogin.h"
 
+#include "../../Entity/Global/Config.h"
 #include "../../Entity/Global/Logger.h"
 #include "BiliRequestHeader.h"
 #include "qrencode.h"
@@ -32,7 +33,7 @@ BiliLogin::BiliLogin()
 {
 }
 
-bool BiliLogin::GetLoginQRCode()
+std::optional<std::string> BiliLogin::GetLoginUrl()
 {
     // 解析域名和端口
     boost::system::error_code ecResolver;
@@ -43,7 +44,7 @@ bool BiliLogin::GetLoginQRCode()
         LOG_VAR(LogLevel::Error,
                 fmt::format(
                     "Failed to resolve {}: {}", this->qrCodeUrl.GetHost(), ecResolver.message()));
-        return false;
+        return std::nullopt;
     }
     boost::asio::ssl::stream<boost::asio::ip::tcp::socket> stream(this->ioc, this->ctx);
     boost::system::error_code                              ecConnect;
@@ -51,7 +52,7 @@ bool BiliLogin::GetLoginQRCode()
     if (ecConnect)
     {
         LOG_VAR(LogLevel::Error, fmt::format("Failed to connect: {}", ecConnect.message()));
-        return false;
+        return std::nullopt;
     }
     // 执行SSL握手
     boost::system::error_code ecHandshake;
@@ -61,7 +62,7 @@ bool BiliLogin::GetLoginQRCode()
     {
         LOG_VAR(LogLevel::Error,
                 fmt::format("Failed to perform SSL handshake: {}", ecHandshake.message()));
-        return false;
+        return std::nullopt;
     }
     // 构建GET请求
     boost::beast::http::request<boost::beast::http::string_body> req{
@@ -76,7 +77,7 @@ bool BiliLogin::GetLoginQRCode()
     if (ecSend)
     {
         LOG_VAR(LogLevel::Error, fmt::format("Failed to send request: {}", ecSend.message()));
-        return false;
+        return std::nullopt;
     }
     // 接收响应
     boost::beast::flat_buffer                                      buffer;
@@ -86,12 +87,12 @@ bool BiliLogin::GetLoginQRCode()
     if (ecRead)
     {
         LOG_VAR(LogLevel::Error, fmt::format("Failed to read response: {}", ecRead.message()));
-        return false;
+        return std::nullopt;
     }
     if (res.result() != boost::beast::http::status::ok)
     {
         LOG_VAR(LogLevel::Error, res.result_int());
-        return false;
+        return std::nullopt;
     }
     // 解析json
     std::string    resStr        = boost::beast::buffers_to_string(res.body().data());
@@ -100,7 +101,7 @@ bool BiliLogin::GetLoginQRCode()
     if (danmuInfoJson["code"] != 0)
     {
         LOG_VAR(LogLevel::Error, danmuInfoJson["message"].dump(4));
-        return false;
+        return std::nullopt;
     }
     std::string url;
     try
@@ -111,10 +112,25 @@ bool BiliLogin::GetLoginQRCode()
     catch (const nlohmann::json::exception& e)
     {
         LOG_VAR(LogLevel::Error, e.what());
-        return false;
+        return std::nullopt;
     }
     this->loginInfoUrl.SetQuery({{"qrcode_key", this->qrCodeKey}});
-    QRcode* qrcode = QRcode_encodeString(url.data(), 2, QR_ECLEVEL_L, QR_MODE_8, 1);
+    return url;
+}
+QRcode* BiliLogin::GetLoginQRCodeImage()
+{
+    auto url = this->GetLoginUrl();
+    if (!url.has_value())
+    {
+        LOG_MESSAGE(LogLevel::Error, "Failed to get login URL");
+        return nullptr;
+    }
+    QRcode* qrcode = QRcode_encodeString(url.value().data(), 2, QR_ECLEVEL_L, QR_MODE_8, 1);
+    return qrcode;
+}
+bool BiliLogin::GetLoginQRCode()
+{
+    QRcode* qrcode = this->GetLoginQRCodeImage();
     if (qrcode == nullptr)
     {
         LOG_MESSAGE(LogLevel::Error, "Failed to encode QRCode");
@@ -130,7 +146,7 @@ bool BiliLogin::GetLoginQRCode()
         }
         std::cout << std::endl;
     }
-    // delete qrcode;
+    QRcode_free(qrcode);
 
     for (int i = 0; i < 15; i++)
     {
@@ -283,17 +299,17 @@ bool BiliLogin::GetLoginInfo()
         LOG_MESSAGE(LogLevel::Error, "Failed to get cookie");
         return false;
     }
-    // 保存cookie，判断cookie文件夹是否存在
-    if (!std::filesystem::exists("cookie"))
-    {
-        // 创建文件夹
-        if (!std::filesystem::create_directories("cookie"))
-        {
-            LOG_MESSAGE(LogLevel::Error, "Failed to create directory");
-            return false;
-        }
-    }
-    std::ofstream ofs("cookie/bili_cookie.json");
+    // // 保存cookie，判断cookie文件夹是否存在
+    // if (!std::filesystem::exists("cookie"))
+    // {
+    //     // 创建文件夹
+    //     if (!std::filesystem::create_directories("cookie"))
+    //     {
+    //         LOG_MESSAGE(LogLevel::Error, "Failed to create directory");
+    //         return false;
+    //     }
+    // }
+    std::ofstream ofs(Config::GetCookiePath());
     if (!ofs.is_open())
     {
         LOG_MESSAGE(LogLevel::Error, "Failed to open file");
@@ -395,5 +411,10 @@ bool BiliLogin::GetLoginInfo()
 
     ofs << cookieJson.dump(4);
     ofs.close();
-    return BiliRequestHeader::GetInstance()->LoadBiliCookieByJson(cookieJson);
+    if (!BiliRequestHeader::GetInstance()->LoadBiliCookieByJson(cookieJson))
+    {
+        return false;
+    }
+    Config::GetInstance()->LoadUID();
+    return Config::GetInstance()->IsLogined();
 }
